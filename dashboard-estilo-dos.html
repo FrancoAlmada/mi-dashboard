@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Morning Command Center — Franco</title>
+  <title>Dashboard — Franco</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -43,11 +43,15 @@
       padding: 7px 16px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
       text-transform: uppercase; color: var(--t2); margin-bottom: 22px; white-space: nowrap;
     }
+    /* Título grande con gradiente */
     .hero-title {
-      font-size: clamp(40px, 5.4vw, 68px); font-weight: 800;
-      line-height: 0.98; letter-spacing: -2.4px; color: var(--t1); margin-bottom: 14px;
+      font-size: clamp(56px, 9vw, 120px); font-weight: 800;
+      line-height: 0.92; letter-spacing: -4px; margin-bottom: 16px;
+      background: linear-gradient(100deg, var(--lime) 0%, var(--sky) 48%, var(--peri) 100%);
+      -webkit-background-clip: text; background-clip: text;
+      -webkit-text-fill-color: transparent; color: transparent;
+      width: fit-content;
     }
-    .hero-title em { font-style: normal; color: var(--lime); }
     .hero-sub { font-size: 15px; font-weight: 500; color: var(--t3); margin-bottom: 26px; }
 
     /* Stats */
@@ -61,99 +65,124 @@
       content:''; position:absolute; top:22px; right:22px;
       width:10px; height:10px; border-radius:50%; background: var(--sc, var(--lime));
     }
-    .stat:nth-child(1){--sc:var(--lime)} .stat:nth-child(3){--sc:var(--sky)}
-    .stat:nth-child(5){--sc:var(--butter)} .stat:nth-child(7){--sc:var(--coral)}
+    .stat:nth-child(1){--sc:var(--lime)} .stat:nth-child(2){--sc:var(--coral)}
+    .stat:nth-child(3){--sc:var(--sky)}  .stat:nth-child(4){--sc:var(--butter)}
     .stat-num {
       font-size: 52px; font-weight: 800; letter-spacing: -2.5px;
       color: var(--t1); line-height: 1; margin-bottom: 10px; font-variant-numeric: tabular-nums;
     }
     .stat-label { font-size: 12px; font-weight: 600; color: var(--t3); }
-    .stat-div { display: none; }
 
     /* ══════════ MAIN ══════════ */
     .main { padding: 14px 40px 56px; max-width: 1560px; margin: 0 auto; }
     @media (max-width: 700px) { .main { padding: 14px 18px 40px; } }
 
-    /* ── Narrative: bloque de color plano ── */
-    .narrative {
+    /* ── Frase del día: bloque de color plano ── */
+    .frase {
       background: var(--coral); border: none; border-radius: var(--r);
-      padding: 34px 38px 36px; margin-bottom: 14px; color: #140502;
+      padding: 34px 38px 36px; margin-bottom: 14px; color: #140502; position: relative;
     }
-    .narrative-label {
+    .frase-label {
       display: inline-block; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase;
       color: #140502; margin-bottom: 18px; font-weight: 800;
       background: rgba(0,0,0,0.14); padding: 7px 13px; border-radius: 100px;
     }
-    .narrative-title {
+    .frase-txt {
       font-size: 36px; font-weight: 800; letter-spacing: -1.6px; color: #140502;
       line-height: 1.04; margin-bottom: 12px; max-width: 24ch;
     }
-    .narrative-title em { font-style: normal; color: #FFF3EF; }
-    .narrative-body { font-size: 15px; font-weight: 500; line-height: 1.6; color: rgba(20,5,2,0.78); max-width: 68ch; text-wrap: pretty; }
+    @media (max-width: 700px) { .frase-txt { font-size: 27px; letter-spacing: -1px; } }
+    .frase-bajada { font-size: 15px; font-weight: 500; line-height: 1.6; color: rgba(20,5,2,0.72); max-width: 60ch; text-wrap: pretty; }
+    .frase-btn {
+      position: absolute; top: 30px; right: 30px;
+      width: 40px; height: 40px; border-radius: 100px; border: none; cursor: pointer;
+      background: rgba(0,0,0,0.14); color: #140502; font-size: 17px; font-weight: 700;
+      display: flex; align-items: center; justify-content: center;
+      transition: background 0.18s, transform 0.3s;
+    }
+    .frase-btn:hover { background: rgba(0,0,0,0.28); transform: rotate(180deg); }
 
-    /* ── 3-col grid ── */
-    .grid3 { display: grid; grid-template-columns: 1fr 1fr 1fr; gap: 14px; margin-bottom: 14px; }
-    @media (max-width: 1000px) { .grid3 { grid-template-columns: 1fr; } }
+    /* ── 2-col grid ── */
+    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; align-items: start; }
+    @media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }
+    /* La tarjeta de hoy acompaña el scroll mientras recorrés la semana */
+    @media (min-width: 1001px) { #card-hoy { position: sticky; top: 14px; } }
 
     /* ── Cards ── */
     .card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; }
     .card-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
     .card-label { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--lime); margin-bottom: 7px; font-weight: 800; }
     .card-title { font-size: 22px; font-weight: 700; letter-spacing: -0.8px; color: var(--t1); line-height: 1.15; }
-    .card-link {
-      display: inline-flex; align-items: center; gap: 4px;
-      font-size: 11px; font-weight: 700; color: var(--t1); text-decoration: none;
-      border: none; border-radius: 100px; padding: 8px 14px; white-space: nowrap; flex-shrink: 0;
-      background: var(--surf3); transition: background 0.18s, color 0.18s;
+    .card-count {
+      font-size: 12px; font-weight: 700; color: var(--t3); background: var(--surf3);
+      padding: 8px 14px; border-radius: 100px; white-space: nowrap; flex-shrink: 0;
     }
-    .card-link:hover { background: var(--t1); color: #0A0A0A; }
 
-    /* Task items */
+    /* ── Task items ── */
     .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; border: none; cursor: pointer; transition: background .16s; }
     .task:hover { background: var(--surf3); }
     .task-box { width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--line2); border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
     .task-box.checked { background: var(--lime); border-color: var(--lime); }
     .task-box.checked::after { content: '✓'; color: #0A1A0C; font-size: 12px; font-weight: 800; }
+    .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; word-break: break-word; }
     .task-text.done { text-decoration: line-through; color: var(--t4); }
-    .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; }
-    .ttag { font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 100px; text-transform: uppercase; flex-shrink: 0; color: #0A0A0A; }
-    .ttag-pink   { background: var(--coral); color:#FFF0EC; }
-    .ttag-green  { background: var(--lime); }
-    .ttag-yellow { background: var(--butter); }
-    .ttag-blue   { background: var(--peri); color:#F2F2FF; }
-    .ttag-red    { background: #FF6B4A; color:#FFF0EC; }
+    .task-del {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 16px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .task:hover .task-del { opacity: 1; }
+    .task-del:hover { background: var(--coral); color: #FFF0EC; }
 
-    /* ══════ CALENDAR 3-DAY ══════ */
-    .cal-day-group { margin-bottom: 18px; }
-    .cal-day-group:last-child { margin-bottom: 0; }
-    .cal-day-header { display: flex; align-items: center; gap: 9px; margin-bottom: 9px; }
-    .cal-day-chip { font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; padding: 5px 11px; border-radius: 100px; white-space: nowrap; color: #0A0A0A; }
-    .cal-day-chip.today   { background: var(--lime); }
-    .cal-day-chip.manana  { background: var(--sky); }
-    .cal-day-chip.pasado  { background: var(--surf4); color: var(--t2); }
-    .cal-day-date { font-size: 11px; font-weight: 600; color: var(--t3); }
-    .cal-separator { flex: 1; height: 1px; background: var(--line); }
+    /* ── Input de alta ── */
+    .add-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 0 12px; }
+    .add-plus { color: var(--t4); font-size: 18px; font-weight: 700; flex-shrink: 0; width: 20px; text-align: center; }
+    .add-input {
+      flex: 1; background: transparent; border: none; outline: none;
+      color: var(--t1); font-size: 14px; font-weight: 500; font-family: var(--ui);
+      padding: 11px 0; border-bottom: 1px solid var(--line);
+      transition: border-color .18s;
+    }
+    .add-input::placeholder { color: var(--t4); }
+    .add-input:focus { border-bottom-color: var(--lime); }
+    .empty-msg { font-size: 13px; color: var(--t4); font-weight: 500; padding: 14px 12px; }
 
-    .ev-item { display: flex; align-items: center; gap: 11px; padding: 13px 14px; background: var(--surf3); border-radius: 16px; margin-bottom: 7px; border: none; transition: background .16s; }
-    .ev-item:hover { background: var(--surf4); }
-    .ev-dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
-    .ev-dot.today-dot   { background: var(--lime); }
-    .ev-dot.manana-dot  { background: var(--sky); }
-    .ev-dot.pasado-dot  { background: var(--peri); }
-    .ev-info { flex: 1; min-width: 0; }
-    .ev-name { font-size: 13.5px; color: var(--t1); font-weight: 700; margin-bottom: 2px; }
-    .ev-time { font-size: 11.5px; font-weight: 500; color: var(--t3); }
-    .ev-free { font-size: 12px; color: var(--t4); font-weight: 500; padding: 10px 4px; }
+    /* ── Filas de la semana ── */
+    .dia-row { border-radius: 18px; padding: 12px 12px 8px; margin-bottom: 6px; border: 1px solid transparent; transition: background .16s; }
+    .dia-row.es-hoy { background: var(--surf2); border-color: var(--line2); }
+    .dia-row.pasado { opacity: 0.62; }
+    .dia-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; padding: 0 12px; }
+    .dia-chip {
+      font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
+      padding: 5px 11px; border-radius: 100px; white-space: nowrap;
+      background: var(--surf4); color: var(--t2);
+    }
+    .dia-row.es-hoy .dia-chip { background: var(--lime); color: #0A0A0A; }
+    .dia-num { font-size: 11px; font-weight: 600; color: var(--t3); }
+    .dia-sep { flex: 1; height: 1px; background: var(--line); }
+    .dia-cant { font-size: 11px; font-weight: 700; color: var(--t4); }
+    .dia-row .task { padding: 8px 12px; }
+    .dia-row .task-text { font-size: 13px; }
+    .dia-row .add-wrap { margin-top: 2px; }
+    .dia-row .add-input { font-size: 13px; padding: 8px 0; border-bottom: none; }
 
-    /* Email items */
-    .em { padding: 13px 12px; border-radius: 14px; border: none; transition: background .16s; }
-    .em:hover { background: var(--surf3); }
-    .em-top { display: flex; align-items: center; gap: 8px; margin-bottom: 4px; }
-    .em-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--butter); flex-shrink: 0; }
-    .em-sender { font-size: 13px; font-weight: 700; color: var(--t1); flex: 1; white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
-    .em-date   { font-size: 11px; font-weight: 600; color: var(--t3); flex-shrink: 0; }
-    .em-subject { font-size: 12.5px; font-weight: 500; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; margin-bottom: 2px; }
-    .em-snippet { font-size: 11.5px; color: var(--t4); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    /* ── Tareas No Completadas ── */
+    .pend-box {
+      margin-top: 18px; border: 1px solid rgba(240,81,46,0.42); background: rgba(240,81,46,0.08);
+      border-radius: 20px; padding: 18px 20px 14px;
+    }
+    .pend-title {
+      font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
+      font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
+    }
+    .pend-item { display: flex; align-items: center; gap: 11px; padding: 8px 4px; cursor: pointer; border-radius: 12px; transition: background .16s; }
+    .pend-item:hover { background: rgba(240,81,46,0.1); }
+    .pend-day {
+      font-size: 10px; font-weight: 800; color: var(--coral); min-width: 34px; flex-shrink: 0;
+      background: rgba(240,81,46,0.16); padding: 4px 7px; border-radius: 100px; text-align: center;
+    }
+    .pend-text { font-size: 13px; font-weight: 500; color: var(--t2); flex: 1; word-break: break-word; }
 
     /* ══════════ HABIT TRACKER ══════════ */
     .habit-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 30px 28px 28px; }
@@ -209,6 +238,24 @@
     .hb-prio-line { display: flex; gap: 11px; margin-bottom: 8px; align-items: flex-start; }
     .hb-prio-day { font-size: 11px; font-weight: 800; min-width: 16px; padding-top: 1px; }
 
+    /* ══════════ MAILS SIN RESPONDER ══════════ */
+    .mail-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-top: 14px; }
+    .mail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
+    @media (max-width: 1000px) { .mail-grid { grid-template-columns: 1fr; } }
+    .em { padding: 15px 16px; border-radius: 18px; background: var(--surf2); border: 1px solid var(--line); transition: background .16s, border-color .16s; }
+    .em:hover { background: var(--surf3); border-color: var(--line2); }
+    .em-subject {
+      font-size: 15px; font-weight: 700; color: var(--t1); letter-spacing: -0.3px;
+      line-height: 1.3; margin-bottom: 6px;
+      display: flex; align-items: flex-start; gap: 8px;
+    }
+    .em-dot { width: 8px; height: 8px; border-radius: 50%; background: var(--coral); flex-shrink: 0; margin-top: 6px; }
+    .em-snippet { font-size: 12.5px; font-weight: 500; color: var(--t3); line-height: 1.5; margin-bottom: 10px; }
+    .em-top { display: flex; align-items: center; gap: 8px; }
+    .em-sender { font-size: 11.5px; font-weight: 700; color: var(--t2); white-space: nowrap; overflow: hidden; text-overflow: ellipsis; }
+    .em-date { font-size: 11px; font-weight: 600; color: var(--t4); flex-shrink: 0; margin-left: auto; }
+    .mail-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 16px; text-align: center; }
+
     /* Status */
     .status-bar { text-align: center; padding-top: 32px; font-size: 11px; font-weight: 600; color: var(--t4); }
     .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); margin-right: 8px; vertical-align: middle; animation: blink 2.5s ease-in-out infinite; }
@@ -220,17 +267,14 @@
 
 <!-- ══════════════════ HERO ══════════════════ -->
 <div class="hero">
-  <div class="brand"><span class="brand-star">✦</span> Claude Cowork</div>
-  <div class="date-pill" id="date-pill">· SÁBADO 23 DE MAYO ·</div>
-  <h1 class="hero-title">Morning <em>command</em> center</h1>
+  <div class="brand"><span class="brand-star">✦</span> Mi Dashboard</div>
+  <div class="date-pill" id="date-pill">·</div>
+  <h1 class="hero-title">Dashboard</h1>
   <p class="hero-sub" id="hero-sub">Buenos días, Franco — esto es lo que te espera hoy.</p>
   <div class="stats">
-    <div class="stat"><div class="stat-num" id="s-tasks">5</div><div class="stat-label">Tareas hoy</div></div>
-    <div class="stat-div"></div>
-    <div class="stat"><div class="stat-num" id="s-events">0</div><div class="stat-label">Eventos hoy</div></div>
-    <div class="stat-div"></div>
-    <div class="stat"><div class="stat-num" id="s-emails">10</div><div class="stat-label">Emails sin leer</div></div>
-    <div class="stat-div"></div>
+    <div class="stat"><div class="stat-num" id="s-tasks">0</div><div class="stat-label">Tareas hoy</div></div>
+    <div class="stat"><div class="stat-num" id="s-pendientes">0</div><div class="stat-label">Pendientes semana</div></div>
+    <div class="stat"><div class="stat-num" id="s-emails">0</div><div class="stat-label">Sin responder</div></div>
     <div class="stat"><div class="stat-num" id="s-habits">0</div><div class="stat-label">Hábitos hoy</div></div>
   </div>
 </div>
@@ -238,51 +282,44 @@
 <!-- ══════════════════ MAIN ══════════════════ -->
 <div class="main">
 
-  <!-- Narrative -->
-  <div class="narrative">
-    <div class="narrative-label">· El resumen de hoy ·</div>
-    <h2 class="narrative-title" id="narrative-title">Aquí está lo que <em>importa</em> hoy.</h2>
-    <p class="narrative-body" id="narrative-body">Cargando resumen del día...</p>
+  <!-- Frase del día -->
+  <div class="frase">
+    <div class="frase-label">· Frase del día ·</div>
+    <h2 class="frase-txt" id="frase-txt">—</h2>
+    <p class="frase-bajada" id="frase-bajada"></p>
+    <button class="frase-btn" onclick="renderFrase()" title="Otra frase">↻</button>
   </div>
 
-  <!-- 3 cards -->
-  <div class="grid3">
+  <!-- Tareas: hoy | semana -->
+  <div class="grid2">
 
-    <!-- Tareas -->
-    <div class="card">
+    <!-- Tareas de hoy -->
+    <div class="card" id="card-hoy">
       <div class="card-hd">
         <div>
-          <div class="card-label" id="tasks-card-label">· Tareas de hoy ·</div>
-          <div class="card-title">Tu lista de hoy</div>
+          <div class="card-label" id="hoy-label">· Tareas de hoy ·</div>
+          <div class="card-title" id="hoy-titulo">Hoy</div>
         </div>
-        <a class="card-link" href="https://www.notion.so/6a785207556f4291898fdb219c9e415b" target="_blank" rel="noopener">↗ Notion</a>
+        <div class="card-count" id="hoy-count">0 / 0</div>
       </div>
-      <div id="tasks-list"></div>
-      <div id="tasks-checked-note" style="font-size:10.5px;color:var(--t4);margin-top:12px;font-style:italic"></div>
+      <div id="lista-hoy"></div>
+      <div class="add-wrap">
+        <span class="add-plus">+</span>
+        <input class="add-input" id="add-hoy" type="text" placeholder="Agregar tarea a hoy..." onkeydown="onAddKey(event,-1,this)">
+      </div>
     </div>
 
-    <!-- Calendario -->
-    <div class="card">
+    <!-- Tareas de la semana -->
+    <div class="card" id="card-semana">
       <div class="card-hd">
         <div>
-          <div class="card-label">· Próximos 3 días ·</div>
-          <div class="card-title">Agenda de la semana</div>
+          <div class="card-label">· Toda la semana ·</div>
+          <div class="card-title" id="semana-rango">Semana</div>
         </div>
-        <a class="card-link" href="https://calendar.google.com" target="_blank" rel="noopener">↗ Calendar</a>
+        <div class="card-count" id="semana-count">0 / 0</div>
       </div>
-      <div id="events-list"></div>
-    </div>
-
-    <!-- Emails -->
-    <div class="card">
-      <div class="card-hd">
-        <div>
-          <div class="card-label">· Emails importantes ·</div>
-          <div class="card-title">Para responder</div>
-        </div>
-        <a class="card-link" href="https://mail.google.com" target="_blank" rel="noopener">↗ Gmail</a>
-      </div>
-      <div id="emails-list"></div>
+      <div id="lista-semana"></div>
+      <div id="lista-pendientes"></div>
     </div>
 
   </div>
@@ -308,203 +345,238 @@
     <div id="hb-content"></div>
   </div>
 
+  <!-- Mails sin responder -->
+  <div class="mail-card">
+    <div class="card-hd">
+      <div>
+        <div class="card-label">· Últimos 3 días ·</div>
+        <div class="card-title">Mails sin responder</div>
+      </div>
+      <div class="card-count" id="mails-count">0</div>
+    </div>
+    <div id="lista-mails"></div>
+    <div class="mail-nota" id="mails-nota"></div>
+  </div>
+
   <div class="status-bar">
     <span class="live-dot"></span>
-    <span id="status-txt">Datos de la última sesión</span>
+    <span id="status-txt">Cargando...</span>
   </div>
 </div>
 
 <script>
 /* ═══════════════════ HELPERS ═══════════════════ */
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
-function fmtTime(iso){
-  if(!iso)return'';
-  try{ return new Date(iso).toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit',hour12:false}); }catch(e){return'';}
-}
+
+/* Convierte una fecha ISO en texto relativo: "2h", "ayer", "9 ago" */
 function relDate(iso){
   if(!iso)return'';
   var d=new Date(iso); if(isNaN(d))return String(iso);
   var diff=Date.now()-d.getTime(),h=Math.floor(diff/3600000),dd=Math.floor(diff/86400000);
-  if(h<1)return'<1h'; if(h<24)return h+'h'; if(dd===1)return'ayer';
+  if(h<1)return'recién'; if(h<24)return'hace '+h+'h'; if(dd===1)return'ayer';
   return d.toLocaleDateString('es-AR',{day:'numeric',month:'short'});
 }
+
+/* Saca un nombre legible a partir de una dirección de mail */
 function senderDisplay(raw){
   if(!raw)return'?';
-  if(raw.includes('hospitalitaliano'))return'Hospital Italiano';
-  if(raw.includes('linkedin'))return'LinkedIn';
-  if(raw.includes('uber'))return'Uber';
-  if(raw.includes('skool'))return'Skool';
-  if(raw.includes('didi'))return'DiDi';
-  var l=raw.split('@')[0].replace(/[<"]/g,'');
-  return l.charAt(0).toUpperCase()+l.slice(1);
+  var r=raw.toLowerCase();
+  if(r.includes('linkedin'))return'LinkedIn';
+  if(r.includes('utdt'))return'UTDT';
+  if(r.includes('mercadopago'))return'Mercado Pago';
+  if(r.includes('github'))return'GitHub';
+  var l=raw.split('@')[0].replace(/[<">]/g,'').replace(/[._-]+/g,' ').trim();
+  return l.split(' ').map(function(p){return p.charAt(0).toUpperCase()+p.slice(1);}).join(' ');
 }
+
+/* Índices de día: 0=Lunes … 6=Domingo (misma convención que los hábitos) */
+var DS=['L','M','X','J','V','S','D'],DF=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
+var DS3=['LUN','MAR','MIÉ','JUE','VIE','SÁB','DOM'];
+var MN2=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+
+function getMonday(){var n=new Date(),d=n.getDay(),m=new Date(n);m.setDate(n.getDate()+(d===0?-6:1-d));m.setHours(0,0,0,0);return m;}
+function getWeekKey(){var m=getMonday();return'wk_'+m.getFullYear()+'_'+m.getMonth()+'_'+m.getDate();}
+function getWeekDates(){var m=getMonday();return Array.from({length:7},function(_,i){var d=new Date(m);d.setDate(m.getDate()+i);return d;});}
+function getTodayIdx(){var d=new Date().getDay();return d===0?6:d-1;}
+
 function setupHeader(){
   var h=new Date().getHours();
   var g=h>=5&&h<12?'Buenos días':h>=12&&h<20?'Buenas tardes':'Buenas noches';
   document.getElementById('hero-sub').textContent=g+', Franco — esto es lo que te espera hoy.';
-  var wdays=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  var dname=wdays[new Date().getDay()];
   document.getElementById('date-pill').textContent=
     '· '+new Date().toLocaleDateString('es-AR',{weekday:'long',day:'numeric',month:'long'}).toUpperCase()+' ·';
-  var lbl=document.getElementById('tasks-card-label');
-  if(lbl)lbl.textContent='· Tareas del '+dname+' ·';
 }
 
-/* ═══════════════════ FALLBACK DATA (actualizado Vie 29/05/2026) ═══════════════════ */
-var FB_TASKS=[
-  {text:'ESTA y TD5',color:'pink'},
-  {text:'Continuar Guía de ESTA',color:'yellow'},
-  {text:'Preguntar por las faltas',color:null},
-  {text:'Hasta Ej.16',color:'yellow'},
-  {text:'Hábitos',color:null},
-  {text:'Llamar a abuela',color:null}
+/* ═══════════════════ FRASE DEL DÍA ═══════════════════ */
+var FRASES=[
+  {frase:'Hecho es mejor que perfecto.',
+   bajada:'Lo que entregás hoy a medias enseña más que lo que nunca terminás.'},
+  {frase:'El día se gana en la primera hora.',
+   bajada:'Si arrancás con lo difícil, el resto viene solo.'},
+  {frase:'La disciplina pesa gramos. El arrepentimiento, toneladas.',
+   bajada:'Elegí cuál de los dos querés cargar esta noche.'},
+  {frase:'No necesitás motivación. Necesitás empezar.',
+   bajada:'Las ganas aparecen después de los primeros cinco minutos, no antes.'},
+  {frase:'Una hora enfocada vale más que un día disperso.',
+   bajada:'Cerrá las pestañas que no sirven y ponéle nombre a lo que estás haciendo.'},
+  {frase:'Lo difícil de hoy es lo fácil de dentro de un mes.',
+   bajada:'Lo que hoy te cuesta pensar, en unas semanas lo vas a hacer sin mirar.'},
+  {frase:'Constante le gana a intenso.',
+   bajada:'Una hora todos los días construye más que diez horas un domingo.'},
+  {frase:'Todo lo que querés está del otro lado de lo incómodo.',
+   bajada:'La incomodidad no es la señal de parar, es la señal de que estás creciendo.'},
+  {frase:'Progreso, no perfección.',
+   bajada:'Cerrá el día con algo terminado, aunque no sea todo lo que planeaste.'},
+  {frase:'Nadie llega lejos haciendo solo lo que tiene ganas.',
+   bajada:'Los días en que no querés son justamente los que cuentan doble.'}
 ];
 
-var FB_EVENTS=[
-  {summary:'UNI',          start:{dateTime:'2026-05-27T11:30:00-03:00'},end:{dateTime:'2026-05-27T13:00:00-03:00'}},
-  {summary:'UNI',          start:{dateTime:'2026-05-27T17:10:00-03:00'},end:{dateTime:'2026-05-27T20:10:00-03:00'}},
-  {summary:'UNI',          start:{dateTime:'2026-05-28T07:00:00-03:00'},end:{dateTime:'2026-05-28T08:30:00-03:00'}},
-  {summary:'UNI y AGENCIA',start:{dateTime:'2026-05-28T15:30:00-03:00'},end:{dateTime:'2026-05-28T20:20:00-03:00'}},
-  {summary:'UNI y AGENCIA',start:{dateTime:'2026-05-29T15:30:00-03:00'},end:{dateTime:'2026-05-29T20:20:00-03:00'}}
-];
-
-var FB_EMAILS=[
-  {sender:'Facebook',subject:'Tenés una solicitud de amistad',
-   snippet:'Alguien quiere conectar con vos en Facebook',date:'hoy',important:false},
-  {sender:'Skool / AI Automation',subject:'2 nuevas notificaciones',
-   snippet:'Tienes 2 nuevas notificaciones en AI Automation Society',date:'hoy',important:false},
-  {sender:'AI Automation Society',subject:'n8n experts — newsletter',
-   snippet:'Los mejores flujos de automatización de esta semana',date:'hoy',important:false},
-  {sender:'Client Acquisition',subject:'Stop aiming for $10K/month',
-   snippet:'Here\'s why your revenue goal might be holding you back',date:'hoy',important:false},
-  {sender:'LinkedIn',subject:'Añadir a Martina del Castillo',
-   snippet:'Martina del Castillo quiere conectar contigo',date:'ayer',important:false}
-];
-
-/* ═══════════════════ TASK CHECKBOXES (localStorage, resets daily) ═══════════════════ */
-var COLOR_MAP={pink:'ttag-pink',green:'ttag-green',yellow:'ttag-yellow',blue:'ttag-blue',red:'ttag-red'};
-var _currentTasks=[];
-function getTasksKey(){
-  var d=new Date();
-  return'tasks_checked_'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0');
-}
-function loadChecked(){
-  try{var s=localStorage.getItem(getTasksKey());return s?JSON.parse(s):{};}catch(e){return{};}
-}
-function saveChecked(obj){
-  try{localStorage.setItem(getTasksKey(),JSON.stringify(obj));}catch(e){}
-}
-function toggleTask(idx){
-  var ch=loadChecked();ch[idx]=!ch[idx];saveChecked(ch);renderTasks(_currentTasks,true);
-}
-function renderTasks(tasks,keepScroll){
-  _currentTasks=tasks;
-  var ch=loadChecked();
-  var done=Object.values(ch).filter(Boolean).length;
-  document.getElementById('s-tasks').textContent=tasks.length;
-  if(!tasks.length){document.getElementById('tasks-list').innerHTML='<p class="ev-free">Sin tareas para hoy</p>';return;}
-  document.getElementById('tasks-list').innerHTML=tasks.map(function(t,i){
-    var isDone=!!ch[i];
-    var tag=t.color?'<span class="ttag '+(COLOR_MAP[t.color]||'ttag-yellow')+'">'+t.color.toUpperCase()+'</span>':'';
-    return '<div class="task" onclick="toggleTask('+i+')">'+
-      '<div class="task-box'+(isDone?' checked':'')+'"></div>'+
-      '<span class="task-text'+(isDone?' done':'')+'">'+esc(t.text)+'</span>'+tag+
-    '</div>';
-  }).join('');
-  var noteEl=document.getElementById('tasks-checked-note');
-  if(noteEl)noteEl.textContent=done>0?done+' de '+tasks.length+' completadas localmente':'';
+function renderFrase(){
+  var ultima=-1;
+  try{ ultima=parseInt(localStorage.getItem('ultima_frase'),10); }catch(e){}
+  var i;
+  /* Elige una al azar, evitando repetir la anterior */
+  do { i=Math.floor(Math.random()*FRASES.length); } while(FRASES.length>1 && i===ultima);
+  try{ localStorage.setItem('ultima_frase',String(i)); }catch(e){}
+  document.getElementById('frase-txt').textContent=FRASES[i].frase;
+  document.getElementById('frase-bajada').textContent=FRASES[i].bajada;
 }
 
-/* ═══════════════════ NARRATIVE ═══════════════════ */
-function setupNarrative(tasks,events,emails){
-  var todayEvs=events.filter(function(ev){
-    var s=(ev.start&&(ev.start.dateTime||ev.start.date))||'';
-    return s&&new Date(s).toDateString()===new Date().toDateString();
-  });
-  var wdays=['domingo','lunes','martes','miércoles','jueves','viernes','sábado'];
-  var dname=wdays[new Date().getDay()];
-  var evStr=todayEvs.length?'Tenés '+todayEvs.length+' evento'+(todayEvs.length>1?'s':'')+ ' en el calendario de hoy.':'El día está libre en el calendario.';
-  var tStr=tasks.length?'Tenés '+tasks.length+' tareas anotadas':'Sin tareas registradas';
-  var eStr=emails.length?'Hay '+emails.length+' mails en tu inbox.':'El inbox está limpio.';
-  document.getElementById('narrative-body').textContent=
-    'Es '+dname+'. '+tStr+' para hoy — foco en lo importante. '+evStr+' '+eStr+' Registrá tus hábitos antes de terminar el día.';
-}
+/* ═══════════════════ TAREAS (hoy + semana, misma fuente) ═══════════════════ */
+/* Estructura guardada: { dias: [ [ {id,texto,hecha} ], ... x7 ] }  0=Lunes */
+function getTareasKey(){ return 'tareas_'+getWeekKey(); }
+function mkTareasDefault(){ return { dias: Array.from({length:7},function(){return [];}) }; }
 
-/* ═══════════════════ RENDER CALENDAR — 3 DÍAS ═══════════════════ */
-var WDAYS=['Dom','Lun','Mar','Mié','Jue','Vie','Sáb'];
-var MONTHS=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
+var tareasData=mkTareasDefault();
+var _focusDia=null;   /* qué input de la semana tenía el foco, para devolvérselo tras re-render */
 
-function renderEvents(events){
-  var now=new Date();
-  /* Build 3 day buckets */
-  var buckets=[];
-  for(var offset=0;offset<3;offset++){
-    var d=new Date(now); d.setDate(now.getDate()+offset); d.setHours(0,0,0,0);
-    var chipClass=offset===0?'today':offset===1?'manana':'pasado';
-    var evClass=offset===0?'today-ev':offset===1?'manana-ev':'pasado-ev';
-    var dotClass=offset===0?'today-dot':offset===1?'manana-dot':'pasado-dot';
-    var shortDay=WDAYS[d.getDay()].toUpperCase()+' '+d.getDate();
-    var chipLabel=offset===0?'HOY':offset===1?'MAÑANA':shortDay;
-    var dateStr=offset===0||offset===1?shortDay+' '+MONTHS[d.getMonth()].toUpperCase():'';
-    buckets.push({date:d,dateStr:d.toDateString(),chipClass:chipClass,evClass:evClass,
-      dotClass:dotClass,chipLabel:chipLabel,dateStr2:dateStr,events:[]});
-  }
-  /* Put events into buckets */
-  (events||[]).forEach(function(ev){
-    var start=(ev.start&&(ev.start.dateTime||ev.start.date))||'';
-    if(!start)return;
-    var evDate=new Date(start).toDateString();
-    buckets.forEach(function(b){if(b.dateStr===evDate)b.events.push(ev);});
-  });
-  /* Stat: today's events */
-  document.getElementById('s-events').textContent=buckets[0].events.length;
-  /* Render */
-  document.getElementById('events-list').innerHTML=buckets.map(function(b){
-    var evHtml=b.events.length
-      ? b.events.map(function(ev){
-          var s=(ev.start&&(ev.start.dateTime||ev.start.date))||'';
-          var e=(ev.end&&(ev.end.dateTime||ev.end.date))||'';
-          var t=s?fmtTime(s)+(e?' – '+fmtTime(e):''):'';
-          return '<div class="ev-item '+b.evClass+'">'+
-            '<div class="ev-dot '+b.dotClass+'"></div>'+
-            '<div class="ev-info">'+
-              '<div class="ev-name">'+esc(ev.summary||'Evento')+'</div>'+
-              (t?'<div class="ev-time">'+t+'</div>':'')+
-            '</div></div>';
-        }).join('')
-      : '<div class="ev-free">Día libre — sin eventos</div>';
-    return '<div class="cal-day-group">'+
-      '<div class="cal-day-header">'+
-        '<span class="cal-day-chip '+b.chipClass+'">'+b.chipLabel+'</span>'+
-        (b.dateStr2?'<span class="cal-day-date">'+b.dateStr2+'</span>':'')+
-        '<div class="cal-separator"></div>'+
-      '</div>'+
-      evHtml+
-    '</div>';
-  }).join('');
-}
-
-/* ═══════════════════ RENDER EMAILS ═══════════════════ */
-function renderEmails(emails){
-  var normalized=emails.map(function(item){
-    if(item.messages){
-      var m=item.messages[0]||{};
-      return{sender:senderDisplay(m.sender||''),subject:m.subject||'(sin asunto)',
-        snippet:(m.snippet||'').replace(/[‌‍﻿­]/g,'').replace(/&#39;/g,"'").slice(0,80),
-        date:m.date?relDate(m.date):'',important:(m.labelIds||[]).includes('IMPORTANT')};
+function loadTareas(){
+  try{
+    var s=localStorage.getItem(getTareasKey());
+    if(s){
+      var d=JSON.parse(s);
+      if(d&&Array.isArray(d.dias)){
+        tareasData=d;
+        /* Por si una versión vieja guardó menos de 7 días */
+        while(tareasData.dias.length<7) tareasData.dias.push([]);
+      }
     }
-    return item;
+  }catch(e){}
+}
+function saveTareas(){
+  try{ localStorage.setItem(getTareasKey(),JSON.stringify(tareasData)); }catch(e){}
+}
+
+function addTarea(diaIdx,texto){
+  tareasData.dias[diaIdx].push({
+    id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+    texto: texto,
+    hecha: false
   });
-  normalized.sort(function(a,b){return(b.important?1:0)-(a.important?1:0);});
-  document.getElementById('s-emails').textContent=emails.length;
-  document.getElementById('emails-list').innerHTML=normalized.slice(0,6).map(function(e){
-    return '<div class="em"><div class="em-top">'+
-      (e.important?'<div class="em-dot"></div>':'')+
-      '<span class="em-sender">'+esc(e.sender)+'</span>'+
-      '<span class="em-date">'+esc(e.date||'')+'</span>'+
-      '</div><div class="em-subject">'+esc(e.subject)+'</div>'+
-      '<div class="em-snippet">'+esc(e.snippet)+'</div></div>';
+  saveTareas(); renderTareas();
+}
+function toggleTarea(diaIdx,i){
+  var t=tareasData.dias[diaIdx][i]; if(!t)return;
+  t.hecha=!t.hecha;                 /* queda tachada pero visible */
+  saveTareas(); renderTareas();
+}
+function deleteTarea(diaIdx,i,ev){
+  if(ev) ev.stopPropagation();      /* que el click no dispare también el toggle */
+  tareasData.dias[diaIdx].splice(i,1);
+  saveTareas(); renderTareas();
+}
+
+/* Enter en un input de alta. diaIdx -1 significa "hoy" */
+function onAddKey(ev,diaIdx,el){
+  if(ev.key!=='Enter') return;
+  var txt=el.value.trim(); if(!txt) return;
+  var idx = diaIdx===-1 ? getTodayIdx() : diaIdx;
+  if(diaIdx!==-1) _focusDia=diaIdx;
+  el.value='';
+  addTarea(idx,txt);
+}
+
+/* Dibuja una fila de tarea reutilizable */
+function tareaHTML(diaIdx,t,i,chica){
+  return '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
+    '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
+    '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
+    '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
+  '</div>';
+}
+
+function renderTareas(){
+  var hoyIdx=getTodayIdx(), fechas=getWeekDates();
+
+  /* ── Tarjeta de hoy ── */
+  var hoy=tareasData.dias[hoyIdx];
+  var hechasHoy=hoy.filter(function(t){return t.hecha;}).length;
+  document.getElementById('hoy-label').textContent='· Tareas del '+DF[hoyIdx].toLowerCase()+' ·';
+  document.getElementById('hoy-titulo').textContent=DF[hoyIdx]+' '+fechas[hoyIdx].getDate();
+  document.getElementById('hoy-count').textContent=hechasHoy+' / '+hoy.length;
+  document.getElementById('lista-hoy').innerHTML = hoy.length
+    ? hoy.map(function(t,i){return tareaHTML(hoyIdx,t,i);}).join('')
+    : '<div class="empty-msg">Sin tareas para hoy. Agregá una abajo.</div>';
+
+  /* ── Tarjeta de la semana ── */
+  var totalSem=0, hechasSem=0;
+  tareasData.dias.forEach(function(d){ totalSem+=d.length; hechasSem+=d.filter(function(t){return t.hecha;}).length; });
+  document.getElementById('semana-rango').textContent=
+    fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
+  document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
+
+  document.getElementById('lista-semana').innerHTML=fechas.map(function(fecha,d){
+    var tareas=tareasData.dias[d];
+    var hechas=tareas.filter(function(t){return t.hecha;}).length;
+    var cls='dia-row'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
+    return '<div class="'+cls+'">'+
+      '<div class="dia-hd">'+
+        '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
+        '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
+        '<div class="dia-sep"></div>'+
+        (tareas.length?'<span class="dia-cant">'+hechas+'/'+tareas.length+'</span>':'')+
+      '</div>'+
+      tareas.map(function(t,i){return tareaHTML(d,t,i);}).join('')+
+      '<div class="add-wrap">'+
+        '<span class="add-plus">+</span>'+
+        '<input class="add-input" id="add-dia-'+d+'" type="text" placeholder="Agregar..." onkeydown="onAddKey(event,'+d+',this)">'+
+      '</div>'+
+    '</div>';
   }).join('');
+
+  /* Devolver el foco al input donde estaba escribiendo */
+  if(_focusDia!==null){
+    var el=document.getElementById('add-dia-'+_focusDia);
+    if(el) el.focus();
+    _focusDia=null;
+  }
+
+  renderPendientes(hoyIdx);
+  document.getElementById('s-tasks').textContent=hoy.length;
+}
+
+/* Junta las tareas sin completar de los días YA PASADOS de esta semana */
+function renderPendientes(hoyIdx){
+  var pend=[];
+  for(var d=0; d<hoyIdx; d++){
+    tareasData.dias[d].forEach(function(t,i){
+      if(!t.hecha) pend.push({dia:d,idx:i,texto:t.texto});
+    });
+  }
+  document.getElementById('s-pendientes').textContent=pend.length;
+
+  var cont=document.getElementById('lista-pendientes');
+  if(!pend.length){ cont.innerHTML=''; return; }   /* si no hay nada, el bloque no existe */
+
+  cont.innerHTML='<div class="pend-box">'+
+    '<div class="pend-title">⚠ Tareas No Completadas</div>'+
+    pend.map(function(p){
+      return '<div class="pend-item" onclick="toggleTarea('+p.dia+','+p.idx+')">'+
+        '<span class="pend-day">'+DS3[p.dia]+'</span>'+
+        '<span class="pend-text">'+esc(p.texto)+'</span>'+
+      '</div>';
+    }).join('')+
+  '</div>';
 }
 
 /* ═══════════════════ HABIT TRACKER ═══════════════════ */
@@ -519,13 +591,7 @@ var HABITS=[
   {id:7,name:'30min Aprendizaje', icon:'✏️',color:'#5EE0C0'},
   {id:8,name:'1 Prioridad del día',icon:'⭐',color:'#FFD166'}
 ];
-var DS=['L','M','X','J','V','S','D'],DF=['Lunes','Martes','Miércoles','Jueves','Viernes','Sábado','Domingo'];
-var MN2=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
 
-function getMonday(){var n=new Date(),d=n.getDay(),m=new Date(n);m.setDate(n.getDate()+(d===0?-6:1-d));m.setHours(0,0,0,0);return m;}
-function getWeekKey(){var m=getMonday();return'wk_'+m.getFullYear()+'_'+m.getMonth()+'_'+m.getDate();}
-function getWeekDates(){var m=getMonday();return Array.from({length:7},function(_,i){var d=new Date(m);d.setDate(m.getDate()+i);return d;});}
-function getTodayIdx(){var d=new Date().getDay();return d===0?6:d-1;}
 function mkDefault(){return{checks:Array.from({length:9},function(){return Array(7).fill(false)}),priorities:Array(7).fill('')};}
 
 var hbData=mkDefault(),hbActiveDay=getTodayIdx(),hbView='day',hbDates=getWeekDates(),hbTodayIdx=getTodayIdx();
@@ -584,7 +650,7 @@ function renderHabits(){
       '<div class="habit-grid">'+
         HABITS.map(function(h){
           var done=hbData.checks[h.id][hbActiveDay],isPrio=h.id===8;
-          var dots=Array.from({length:7},function(_,d){ var _d=done;
+          var dots=Array.from({length:7},function(_,d){
             var cls='hb-dot'+(d===hbActiveDay?' today-ring':'')+(hbData.checks[h.id][d]?' filled':'');
             return '<div class="'+cls+'" style="--hc:'+h.color+';'+(hbData.checks[h.id][d]?'background:'+(done?'#0A0A0A':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(0,0,0,0.55)':h.color):'')+'"></div>';
           }).join('');
@@ -619,68 +685,103 @@ function renderHabits(){
   }
 }
 
-/* ═══════════════════ LIVE REFRESH ═══════════════════ */
-function waitForCowork(ms){
-  ms=ms||15000;
-  return new Promise(function(resolve,reject){
-    if(window.cowork&&typeof window.cowork.callMcpTool==='function')return resolve(window.cowork);
-    var elapsed=0,timer=setInterval(function(){
-      elapsed+=200;
-      if(window.cowork&&typeof window.cowork.callMcpTool==='function'){clearInterval(timer);resolve(window.cowork);}
-      else if(elapsed>=ms){clearInterval(timer);reject(new Error('timeout'));}
-    },200);
-  });
+/* ═══════════════════ MAILS SIN RESPONDER ═══════════════════ */
+
+/* Datos de ejemplo. Tienen la MISMA forma que va a devolver Gmail:
+   { remitente, asunto, descripcion, fecha (ISO), importante }
+   Las fechas se generan relativas a ahora para que se vean siempre frescas. */
+function horasAtras(h){ return new Date(Date.now()-h*3600000).toISOString(); }
+
+var MAILS_DEMO=[
+  {remitente:'lucia.fernandez@agencia.com', asunto:'Revisión de los casos de prueba del sprint',
+   descripcion:'Te dejé comentarios en el documento de QA. Necesito que confirmes los casos de regresión antes del viernes.',
+   fecha:horasAtras(3), importante:true},
+  {remitente:'no-reply@utdt.edu', asunto:'Recordatorio: entrega de TP2 — Tecnología Digital',
+   descripcion:'La entrega del segundo trabajo práctico vence el domingo a las 23:59. Todavía no registramos tu envío.',
+   fecha:horasAtras(9), importante:true},
+  {remitente:'martin.suarez@agencia.com', asunto:'¿Podés cubrir el testing del release del jueves?',
+   descripcion:'Se adelantó el deploy y necesitamos una pasada de smoke tests. Avisame si podés, así reorganizo.',
+   fecha:horasAtras(26), importante:true},
+  {remitente:'jobs-listings@linkedin.com', asunto:'12 vacantes nuevas de QA Automation en Buenos Aires',
+   descripcion:'Encontramos posiciones que coinciden con tu perfil: Cypress, Playwright y automatización de pruebas.',
+   fecha:horasAtras(31), importante:false},
+  {remitente:'soporte@mercadopago.com.ar', asunto:'Necesitamos validar tu identidad',
+   descripcion:'Detectamos un acceso desde un dispositivo nuevo. Confirmá que fuiste vos para no perder el acceso.',
+   fecha:horasAtras(50), importante:true},
+  {remitente:'newsletter@n8n.io', asunto:'Novedades de n8n: nodos de IA y ejecuciones paralelas',
+   descripcion:'Esta semana: cómo encadenar agentes de IA en un workflow y el nuevo nodo de ejecución en paralelo.',
+   fecha:horasAtras(64), importante:false}
+];
+
+/* ─────────────────────────────────────────────────────────────
+   ÚNICO punto a cambiar cuando conectemos Gmail de verdad.
+   Devuelve una promesa con la lista de mails sin responder.
+   Hoy: datos de ejemplo. Mañana: llamada a la API de Gmail.
+   ───────────────────────────────────────────────────────────── */
+function fetchMails(){
+  return Promise.resolve(MAILS_DEMO);
 }
-function parseTodayTasks(text){
-  var days=['Domingo','Lunes','Martes','Miércoles','Jueves','Viernes','Sábado'];
-  var today=days[new Date().getDay()];
-  var re=new RegExp('## '+today+'([\\s\\S]*?)(?=## [A-ZÁÉÍÓÚÑ]|$)');
-  var m=text.match(re);if(!m)return null;
-  var section=m[1],taskRe=/- \[ \] ([^{\n\r]+?)(?:\s*\{color="([^"]+)"\})?\s*(?:\n|$)/gm;
-  var tasks=[],t;
-  while((t=taskRe.exec(section))!==null){
-    var txt=t[1].trim();if(!txt||txt.length<2)continue;
-    var cr=t[2]||'',color=null;
-    if(cr.includes('pink'))color='pink';else if(cr.includes('green'))color='green';
-    else if(cr.includes('yellow'))color='yellow';else if(cr.includes('blue'))color='blue';
-    else if(cr.includes('red'))color='red';
-    tasks.push({text:txt,color:color});
+
+var MAILS_CACHE_KEY='mails_cache';
+
+function renderMails(mails,esCache){
+  document.getElementById('mails-count').textContent=mails.length;
+  document.getElementById('s-emails').textContent=mails.length;
+
+  var cont=document.getElementById('lista-mails');
+  if(!mails.length){
+    cont.innerHTML='<div class="empty-msg">No tenés mails sin responder. Bien ahí.</div>';
+  } else {
+    /* Los importantes primero */
+    var orden=mails.slice().sort(function(a,b){return(b.importante?1:0)-(a.importante?1:0);});
+    cont.innerHTML='<div class="mail-grid">'+orden.map(function(m){
+      return '<div class="em">'+
+        '<div class="em-subject">'+
+          (m.importante?'<span class="em-dot"></span>':'')+
+          '<span>'+esc(m.asunto)+'</span>'+
+        '</div>'+
+        '<div class="em-snippet">'+esc(m.descripcion)+'</div>'+
+        '<div class="em-top">'+
+          '<span class="em-sender">'+esc(senderDisplay(m.remitente))+'</span>'+
+          '<span class="em-date">'+esc(relDate(m.fecha))+'</span>'+
+        '</div>'+
+      '</div>';
+    }).join('')+'</div>';
   }
-  return tasks.length?tasks:null;
+
+  document.getElementById('mails-nota').textContent=
+    esCache ? 'Mostrando lo último guardado — sin conexión'
+            : 'Datos de ejemplo — Gmail sin conectar';
+}
+
+function actualizarMails(){
+  fetchMails().then(function(mails){
+    try{ localStorage.setItem(MAILS_CACHE_KEY,JSON.stringify(mails)); }catch(e){}
+    renderMails(mails,false);
+    document.getElementById('status-txt').textContent=
+      'Actualizado · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
+  }).catch(function(){
+    /* Si falla, muestro lo último que había guardado */
+    var cache=[];
+    try{ cache=JSON.parse(localStorage.getItem(MAILS_CACHE_KEY))||[]; }catch(e){}
+    renderMails(cache,true);
+    document.getElementById('status-txt').textContent='Sin conexión — datos guardados';
+  });
 }
 
 /* ═══════════════════ INIT ═══════════════════ */
 setupHeader();
-renderTasks(FB_TASKS);
-renderEvents(FB_EVENTS);
-renderEmails(FB_EMAILS);
-setupNarrative(FB_TASKS,FB_EVENTS,FB_EMAILS);
+renderFrase();
+loadTareas();
+renderTareas();
 loadHabits();
 renderHabits();
+actualizarMails();
 
-waitForCowork().then(function(cw){
-  var now=new Date();
-  var ymd=now.getFullYear()+'-'+String(now.getMonth()+1).padStart(2,'0')+'-'+String(now.getDate()).padStart(2,'0');
-  var in3=new Date(now);in3.setDate(now.getDate()+3);
-  Promise.all([
-    cw.callMcpTool('mcp__e2d010fc-4f62-4f83-b889-5927ddc729a1__notion-fetch',
-      {id:'6a785207-556f-4291-898f-db219c9e415b'}).catch(function(){return null;}),
-    cw.callMcpTool('mcp__c3bb296a-58c4-462c-a010-8d6bc7954771__list_events',
-      {startTime:ymd+'T00:00:00',endTime:in3.toISOString(),pageSize:30,orderBy:'startTime',
-       timeZone:'America/Argentina/Buenos_Aires'}).catch(function(){return null;}),
-    cw.callMcpTool('mcp__fab9b770-4250-42ed-ae09-d24645bb05f7__search_threads',
-      {query:'is:unread in:inbox',pageSize:15}).catch(function(){return null;})
-  ]).then(function(res){
-    var liveTasks=FB_TASKS,liveEvents=FB_EVENTS,liveEmails=FB_EMAILS;
-    if(res[0]&&res[0].text){var t=parseTodayTasks(res[0].text);if(t){renderTasks(t);liveTasks=t;}}
-    if(res[1]){renderEvents(res[1].events||[]);liveEvents=res[1].events||[];}
-    if(res[2]&&res[2].threads){renderEmails(res[2].threads);liveEmails=res[2].threads;}
-    setupNarrative(liveTasks,liveEvents,liveEmails);
-    document.getElementById('status-txt').textContent=
-      'Actualizado · '+new Date().toLocaleTimeString('es-AR',{hour:'2-digit',minute:'2-digit'});
-  });
-}).catch(function(){
-  document.getElementById('status-txt').textContent='Datos guardados · sin conexión en vivo';
+/* Refresco automático de los mails: cada 5 min y al volver a la pestaña */
+setInterval(actualizarMails,5*60*1000);
+document.addEventListener('visibilitychange',function(){
+  if(!document.hidden) actualizarMails();
 });
 </script>
 </body>

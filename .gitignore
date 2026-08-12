@@ -1,0 +1,3 @@
+# Archivos temporales de herramientas de testing
+.playwright-cli/
+*.png
