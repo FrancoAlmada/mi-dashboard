@@ -148,6 +148,42 @@
     .add-input:focus { border-bottom-color: var(--lime); }
     .empty-msg { font-size: 13px; color: var(--t4); font-weight: 500; padding: 14px 12px; }
 
+    /* ── Etiquetas ── */
+    /* El color de cada etiqueta llega por la variable inline --tc */
+    .tag-pill {
+      flex-shrink: 0; font-size: 9.5px; font-weight: 800; letter-spacing: 0.3px;
+      padding: 4px 9px; border-radius: 100px; cursor: pointer; border: none;
+      font-family: var(--ui); text-transform: uppercase; white-space: nowrap;
+      background: var(--tc); color: #0A0A0A; transition: opacity .16s;
+    }
+    .tag-pill:hover { opacity: 0.75; }
+    .tag-pill.vacia { background: transparent; border: 1px dashed var(--line2); color: var(--t4); }
+    .task-text.done + .tag-pill { opacity: 0.4; }
+
+    /* Chips para elegir con qué etiqueta se cargan las tareas nuevas */
+    .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px; margin-top: 14px; }
+    .tag-chip {
+      font-size: 9.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
+      padding: 6px 11px; border-radius: 100px; cursor: pointer; font-family: var(--ui);
+      background: transparent; border: 1px solid var(--line2); color: var(--t3);
+      transition: all .16s;
+    }
+    .tag-chip:hover { border-color: var(--tc); color: var(--tc); }
+    .tag-chip.activo { background: var(--tc); border-color: var(--tc); color: #0A0A0A; }
+
+    /* ── Barra de filtro ── */
+    .filtro-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 14px; }
+    .filtro-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--t4); margin-right: 4px; }
+    .filtro-pill {
+      font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 100px; cursor: pointer;
+      font-family: var(--ui); background: var(--surf); border: 1px solid var(--line); color: var(--t2);
+      transition: all .16s; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .filtro-pill:hover { border-color: var(--tc, var(--line2)); color: var(--t1); }
+    .filtro-pill.activo { background: var(--tc, var(--t1)); border-color: var(--tc, var(--t1)); color: #0A0A0A; }
+    .filtro-num { font-size: 10px; font-weight: 800; opacity: 0.62; font-variant-numeric: tabular-nums; }
+    .filtro-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 10px; padding: 0 12px; }
+
     /* ── Filas de la semana ── */
     .dia-row { border-radius: 18px; padding: 12px 12px 8px; margin-bottom: 6px; border: 1px solid transparent; transition: background .16s; }
     .dia-row.es-hoy { background: var(--surf2); border-color: var(--line2); }
@@ -176,13 +212,25 @@
       font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
       font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
     }
-    .pend-item { display: flex; align-items: center; gap: 11px; padding: 8px 4px; cursor: pointer; border-radius: 12px; transition: background .16s; }
+    .pend-item { display: flex; align-items: center; gap: 11px; padding: 8px 4px 8px 8px; border-radius: 12px; transition: background .16s; }
     .pend-item:hover { background: rgba(240,81,46,0.1); }
     .pend-day {
-      font-size: 10px; font-weight: 800; color: var(--coral); min-width: 34px; flex-shrink: 0;
-      background: rgba(240,81,46,0.16); padding: 4px 7px; border-radius: 100px; text-align: center;
+      font-size: 10px; font-weight: 800; color: var(--coral); flex-shrink: 0; white-space: nowrap;
+      background: rgba(240,81,46,0.16); padding: 4px 8px; border-radius: 100px; text-align: center;
     }
-    .pend-text { font-size: 13px; font-weight: 500; color: var(--t2); flex: 1; word-break: break-word; }
+    .pend-text { font-size: 13px; font-weight: 500; color: var(--t2); flex: 1; word-break: break-word; cursor: pointer; }
+    .pend-text:hover { color: var(--t1); }
+    /* → pasar a hoy · × descartar */
+    .pend-btn {
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: 100px; border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 14px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .pend-item:hover .pend-btn { opacity: 1; }
+    .pend-btn.mover:hover { background: var(--lime); color: #0A1A0C; }
+    .pend-btn.tirar:hover { background: var(--coral); color: #FFF0EC; }
+    .pend-mas { font-size: 11px; font-weight: 600; color: var(--t4); padding: 10px 8px 2px; font-style: italic; }
 
     /* ══════════ HABIT TRACKER ══════════ */
     .habit-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 30px 28px 28px; }
@@ -216,6 +264,29 @@
     .hb-dots { display: flex; gap: 5px; }
     .hb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); transition: all 0.15s; }
     .hb-check { width: 26px; height: 26px; border-radius: 100px; flex-shrink: 0; border: 2px solid var(--line2); background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.18s; font-size: 13px; font-weight: 800; color: #0A0A0A; }
+    /* Racha de días seguidos */
+    .hb-racha { font-size: 10px; font-weight: 800; color: var(--tang); margin-left: 7px; white-space: nowrap; }
+    .hb-name.done .hb-racha { color: rgba(0,0,0,0.6); }
+    /* Cronómetro de los hábitos con objetivo de minutos */
+    .hb-timer {
+      flex-shrink: 0; display: flex; align-items: center; gap: 7px;
+    }
+    .hb-timer-btn {
+      width: 28px; height: 28px; border-radius: 100px; border: 1px solid var(--line2); cursor: pointer;
+      background: transparent; color: var(--t2); font-size: 11px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center; transition: all .16s; flex-shrink: 0;
+    }
+    .hb-timer-btn:hover { border-color: var(--t1); color: var(--t1); }
+    .hb-timer-btn.on-color { border-color: rgba(0,0,0,0.4); color: #0A0A0A; }
+    .hb-timer-btn.on-color:hover { background: rgba(0,0,0,0.18); }
+    .hb-timer-count {
+      font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums;
+      letter-spacing: -0.4px; color: var(--tang); min-width: 48px; text-align: right;
+    }
+    .hb-timer-count.on-color { color: #0A0A0A; }
+    .hb-item.corriendo { border-color: var(--tang); box-shadow: 0 0 0 1px var(--tang); }
+    @keyframes hb-listo { 0%,100%{transform:scale(1)} 35%{transform:scale(1.035)} }
+    .hb-item.listo { animation: hb-listo 0.5s ease 2; }
     .hb-prio-wrap { padding: 0 16px 14px; }
     .hb-prio-input { width: 100%; background: var(--surf3); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 13px; color: var(--t1); font-size: 13px; font-weight: 600; outline: none; font-family: var(--ui); transition: border-color 0.18s; }
     .hb-prio-input:focus { border-color: rgba(0,0,0,0.55); }
@@ -273,7 +344,7 @@
   <p class="hero-sub" id="hero-sub">Buenos días, Franco — esto es lo que te espera hoy.</p>
   <div class="stats">
     <div class="stat"><div class="stat-num" id="s-tasks">0</div><div class="stat-label">Tareas hoy</div></div>
-    <div class="stat"><div class="stat-num" id="s-pendientes">0</div><div class="stat-label">Pendientes semana</div></div>
+    <div class="stat"><div class="stat-num" id="s-pendientes">0</div><div class="stat-label">Pendientes</div></div>
     <div class="stat"><div class="stat-num" id="s-emails">0</div><div class="stat-label">Sin responder</div></div>
     <div class="stat"><div class="stat-num" id="s-habits">0</div><div class="stat-label">Hábitos hoy</div></div>
   </div>
@@ -290,6 +361,9 @@
     <button class="frase-btn" onclick="renderFrase()" title="Otra frase">↻</button>
   </div>
 
+  <!-- Filtro por etiqueta: afecta las dos tarjetas y el bloque de pendientes -->
+  <div class="filtro-bar" id="filtro-bar"></div>
+
   <!-- Tareas: hoy | semana -->
   <div class="grid2">
 
@@ -303,10 +377,12 @@
         <div class="card-count" id="hoy-count">0 / 0</div>
       </div>
       <div id="lista-hoy"></div>
+      <div class="tag-chips" id="tag-chips"></div>
       <div class="add-wrap">
         <span class="add-plus">+</span>
         <input class="add-input" id="add-hoy" type="text" placeholder="Agregar tarea a hoy..." onkeydown="onAddKey(event,-1,this)">
       </div>
+      <div class="filtro-nota" id="filtro-nota"></div>
     </div>
 
     <!-- Tareas de la semana -->
@@ -442,8 +518,78 @@ function renderFrase(){
   document.getElementById('frase-bajada').textContent=FRASES[i].bajada;
 }
 
+/* ═══════════════════ ETIQUETAS ═══════════════════ */
+/* Los cuatro colores salen de la paleta que ya usa el dashboard */
+var TAGS=[
+  {id:'uni',       label:'UNI',       color:'#7FC4F5'},  /* sky   */
+  {id:'agencia',   label:'AGENCIA',   color:'#F0512E'},  /* coral */
+  {id:'personal',  label:'PERSONAL',  color:'#86E88F'},  /* lime  */
+  {id:'proyectos', label:'PROYECTOS', color:'#7B7BF0'}   /* peri  */
+];
+function tagById(id){ for(var i=0;i<TAGS.length;i++) if(TAGS[i].id===id) return TAGS[i]; return null; }
+
+var tagActiva='uni';   /* con qué etiqueta salen las tareas nuevas */
+var filtroTag=null;    /* null = mostrar todas */
+
+function loadPrefs(){
+  try{
+    /* Ojo: '' guardado significa "sin etiqueta", que es distinto de "nunca elegí" */
+    var t=localStorage.getItem('tag_activa'); if(t!==null) tagActiva = tagById(t) ? t : null;
+    var f=localStorage.getItem('filtro_tag'); if(f&&tagById(f)) filtroTag=f;
+  }catch(e){}
+}
+/* i es el índice en TAGS; -1 significa "sin etiqueta" */
+function setTagActiva(i){
+  tagActiva = i<0 ? null : TAGS[i].id;
+  try{ localStorage.setItem('tag_activa', tagActiva||''); }catch(e){}
+  renderTagChips();
+  var el=document.getElementById('add-hoy'); if(el) el.focus();
+}
+/* i es el índice en TAGS; -1 significa "todas" */
+function setFiltro(i){
+  filtroTag = i<0 ? null : TAGS[i].id;
+  try{ localStorage.setItem('filtro_tag', filtroTag||''); }catch(e){}
+  renderTareas();
+}
+/* Una tarea pasa el filtro si no hay filtro o si coincide su etiqueta */
+function pasaFiltro(t){ return !filtroTag || t.tag===filtroTag; }
+
+function renderTagChips(){
+  document.getElementById('tag-chips').innerHTML=
+    TAGS.map(function(tg,i){
+      return '<button class="tag-chip'+(tagActiva===tg.id?' activo':'')+'" style="--tc:'+tg.color+'" '+
+        'onclick="setTagActiva('+i+')">'+tg.label+'</button>';
+    }).join('')+
+    '<button class="tag-chip'+(tagActiva===null?' activo':'')+'" style="--tc:#767676" '+
+      'onclick="setTagActiva(-1)" title="Cargar sin etiqueta">—</button>';
+}
+
+function renderFiltro(){
+  /* El número de cada pill son las tareas SIN completar de esta semana */
+  var cuenta={}; var total=0;
+  tareasData.dias.forEach(function(dia){
+    dia.forEach(function(t){
+      if(t.hecha) return;
+      total++;
+      var k=t.tag||'_';
+      cuenta[k]=(cuenta[k]||0)+1;
+    });
+  });
+  document.getElementById('filtro-bar').innerHTML=
+    '<span class="filtro-lbl">Filtrar</span>'+
+    '<button class="filtro-pill'+(filtroTag===null?' activo':'')+'" onclick="setFiltro(-1)">'+
+      'Todas <span class="filtro-num">'+total+'</span></button>'+
+    TAGS.map(function(tg,i){
+      return '<button class="filtro-pill'+(filtroTag===tg.id?' activo':'')+'" style="--tc:'+tg.color+'" '+
+        'onclick="setFiltro('+i+')">'+tg.label+' <span class="filtro-num">'+(cuenta[tg.id]||0)+'</span></button>';
+    }).join('');
+
+  var nota=document.getElementById('filtro-nota');
+  nota.textContent = filtroTag ? 'Filtrando por '+tagById(filtroTag).label+' — hay más tareas ocultas' : '';
+}
+
 /* ═══════════════════ TAREAS (hoy + semana, misma fuente) ═══════════════════ */
-/* Estructura guardada: { dias: [ [ {id,texto,hecha} ], ... x7 ] }  0=Lunes */
+/* Estructura guardada: { dias: [ [ {id,texto,hecha,tag} ], ... x7 ] }  0=Lunes */
 function getTareasKey(){ return 'tareas_'+getWeekKey(); }
 function mkTareasDefault(){ return { dias: Array.from({length:7},function(){return [];}) }; }
 
@@ -467,11 +613,45 @@ function saveTareas(){
   try{ localStorage.setItem(getTareasKey(),JSON.stringify(tareasData)); }catch(e){}
 }
 
-function addTarea(diaIdx,texto){
+/* ── Acceso a semanas que ya pasaron ──────────────────────────────
+   Las claves son 'tareas_wk_AAAA_M_D', donde M es el mes 0-indexado
+   y D el día del lunes. Con eso se reconstruye la fecha de la semana. */
+function parseSemanaKey(key){
+  var m=/^tareas_wk_(\d+)_(\d+)_(\d+)$/.exec(key);
+  return m ? new Date(+m[1], +m[2], +m[3]) : null;
+}
+function leerSemanaKey(key){
+  try{
+    var d=JSON.parse(localStorage.getItem(key));
+    if(d&&Array.isArray(d.dias)) return d;
+  }catch(e){}
+  return null;
+}
+function guardarSemanaKey(key,data){
+  try{ localStorage.setItem(key,JSON.stringify(data)); }catch(e){}
+}
+/* Devuelve las semanas anteriores a la actual, de la más vieja a la más nueva */
+function listaSemanasViejas(){
+  var lunesHoy=getMonday(), out=[];
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      var fecha=parseSemanaKey(key);
+      if(!fecha || fecha.getTime()>=lunesHoy.getTime()) continue;
+      var data=leerSemanaKey(key);
+      if(data) out.push({key:key, lunes:fecha, data:data});
+    }
+  }catch(e){}
+  out.sort(function(a,b){ return a.lunes-b.lunes; });
+  return out;
+}
+
+function addTarea(diaIdx,texto,tag){
   tareasData.dias[diaIdx].push({
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     texto: texto,
-    hecha: false
+    hecha: false,
+    tag: tag===undefined ? tagActiva : tag
   });
   saveTareas(); renderTareas();
 }
@@ -483,6 +663,16 @@ function toggleTarea(diaIdx,i){
 function deleteTarea(diaIdx,i,ev){
   if(ev) ev.stopPropagation();      /* que el click no dispare también el toggle */
   tareasData.dias[diaIdx].splice(i,1);
+  saveTareas(); renderTareas();
+}
+/* Click en la pill: cicla uni → agencia → personal → proyectos → sin etiqueta */
+function cambiarTag(diaIdx,i,ev){
+  if(ev) ev.stopPropagation();
+  var t=tareasData.dias[diaIdx][i]; if(!t)return;
+  var actual=-1;
+  for(var k=0;k<TAGS.length;k++) if(TAGS[k].id===t.tag) actual=k;
+  var siguiente=actual+1;
+  t.tag = siguiente>=TAGS.length ? null : TAGS[siguiente].id;
   saveTareas(); renderTareas();
 }
 
@@ -497,10 +687,15 @@ function onAddKey(ev,diaIdx,el){
 }
 
 /* Dibuja una fila de tarea reutilizable */
-function tareaHTML(diaIdx,t,i,chica){
+function tareaHTML(diaIdx,t,i){
+  var tg=tagById(t.tag);
+  var pill = tg
+    ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Cambiar etiqueta">'+tg.label+'</button>'
+    : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
   return '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
     '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
     '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
+    pill+
     '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
   '</div>';
 }
@@ -510,33 +705,38 @@ function renderTareas(){
 
   /* ── Tarjeta de hoy ── */
   var hoy=tareasData.dias[hoyIdx];
-  var hechasHoy=hoy.filter(function(t){return t.hecha;}).length;
+  var visiblesHoy=hoy.filter(pasaFiltro);
+  var hechasHoy=visiblesHoy.filter(function(t){return t.hecha;}).length;
   document.getElementById('hoy-label').textContent='· Tareas del '+DF[hoyIdx].toLowerCase()+' ·';
   document.getElementById('hoy-titulo').textContent=DF[hoyIdx]+' '+fechas[hoyIdx].getDate();
-  document.getElementById('hoy-count').textContent=hechasHoy+' / '+hoy.length;
-  document.getElementById('lista-hoy').innerHTML = hoy.length
-    ? hoy.map(function(t,i){return tareaHTML(hoyIdx,t,i);}).join('')
-    : '<div class="empty-msg">Sin tareas para hoy. Agregá una abajo.</div>';
+  document.getElementById('hoy-count').textContent=hechasHoy+' / '+visiblesHoy.length;
+  document.getElementById('lista-hoy').innerHTML = visiblesHoy.length
+    /* Se recorre el array completo y se saltean las filtradas, así el índice sigue siendo el real */
+    ? hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i) : ''; }).join('')
+    : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
 
   /* ── Tarjeta de la semana ── */
   var totalSem=0, hechasSem=0;
-  tareasData.dias.forEach(function(d){ totalSem+=d.length; hechasSem+=d.filter(function(t){return t.hecha;}).length; });
+  tareasData.dias.forEach(function(d){
+    d.forEach(function(t){ if(!pasaFiltro(t))return; totalSem++; if(t.hecha) hechasSem++; });
+  });
   document.getElementById('semana-rango').textContent=
     fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
   document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
 
   document.getElementById('lista-semana').innerHTML=fechas.map(function(fecha,d){
     var tareas=tareasData.dias[d];
-    var hechas=tareas.filter(function(t){return t.hecha;}).length;
+    var visibles=tareas.filter(pasaFiltro);
+    var hechas=visibles.filter(function(t){return t.hecha;}).length;
     var cls='dia-row'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
     return '<div class="'+cls+'">'+
       '<div class="dia-hd">'+
         '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
         '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
         '<div class="dia-sep"></div>'+
-        (tareas.length?'<span class="dia-cant">'+hechas+'/'+tareas.length+'</span>':'')+
+        (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
       '</div>'+
-      tareas.map(function(t,i){return tareaHTML(d,t,i);}).join('')+
+      tareas.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(d,t,i) : ''; }).join('')+
       '<div class="add-wrap">'+
         '<span class="add-plus">+</span>'+
         '<input class="add-input" id="add-dia-'+d+'" type="text" placeholder="Agregar..." onkeydown="onAddKey(event,'+d+',this)">'+
@@ -551,32 +751,99 @@ function renderTareas(){
     _focusDia=null;
   }
 
+  renderTagChips();
+  renderFiltro();
   renderPendientes(hoyIdx);
-  document.getElementById('s-tasks').textContent=hoy.length;
+  document.getElementById('s-tasks').textContent=visiblesHoy.length;
 }
 
-/* Junta las tareas sin completar de los días YA PASADOS de esta semana */
+/* ═══════════════════ TAREAS NO COMPLETADAS ═══════════════════ */
+/* Junta lo que quedó sin tildar en días ya pasados de esta semana
+   Y en cualquier semana anterior guardada en el navegador.
+   Los handlers reciben el índice dentro de _pendCache, así no hay
+   que meter claves de texto adentro de un atributo onclick. */
+var _pendCache=[];
+var PEND_TOPE=8;
+
 function renderPendientes(hoyIdx){
-  var pend=[];
+  _pendCache=[];
+
+  /* Semanas anteriores, de la más vieja a la más nueva */
+  listaSemanasViejas().forEach(function(sem){
+    sem.data.dias.forEach(function(dia,d){
+      dia.forEach(function(t,i){
+        if(t.hecha || !pasaFiltro(t)) return;
+        var fecha=new Date(sem.lunes); fecha.setDate(sem.lunes.getDate()+d);
+        _pendCache.push({
+          key:sem.key, dia:d, idx:i, texto:t.texto, tag:t.tag,
+          etiqueta: DS3[d]+' · '+fecha.getDate()+' '+MN2[fecha.getMonth()]
+        });
+      });
+    });
+  });
+
+  /* Días ya pasados de la semana en curso */
   for(var d=0; d<hoyIdx; d++){
     tareasData.dias[d].forEach(function(t,i){
-      if(!t.hecha) pend.push({dia:d,idx:i,texto:t.texto});
+      if(t.hecha || !pasaFiltro(t)) return;
+      _pendCache.push({key:null, dia:d, idx:i, texto:t.texto, tag:t.tag, etiqueta:DS3[d]});
     });
   }
-  document.getElementById('s-pendientes').textContent=pend.length;
+
+  document.getElementById('s-pendientes').textContent=_pendCache.length;
 
   var cont=document.getElementById('lista-pendientes');
-  if(!pend.length){ cont.innerHTML=''; return; }   /* si no hay nada, el bloque no existe */
+  if(!_pendCache.length){ cont.innerHTML=''; return; }   /* si no hay nada, el bloque no existe */
+
+  var visibles=_pendCache.slice(0,PEND_TOPE);
+  var resto=_pendCache.length-visibles.length;
 
   cont.innerHTML='<div class="pend-box">'+
-    '<div class="pend-title">⚠ Tareas No Completadas</div>'+
-    pend.map(function(p){
-      return '<div class="pend-item" onclick="toggleTarea('+p.dia+','+p.idx+')">'+
-        '<span class="pend-day">'+DS3[p.dia]+'</span>'+
-        '<span class="pend-text">'+esc(p.texto)+'</span>'+
+    '<div class="pend-title">⚠ Tareas No Completadas <span style="margin-left:auto;opacity:.75">'+_pendCache.length+'</span></div>'+
+    visibles.map(function(p,i){
+      var tg=tagById(p.tag);
+      return '<div class="pend-item">'+
+        '<span class="pend-day">'+p.etiqueta+'</span>'+
+        '<span class="pend-text" onclick="togglePend('+i+')" title="Marcar como hecha">'+esc(p.texto)+'</span>'+
+        (tg?'<span class="tag-pill" style="--tc:'+tg.color+';cursor:default">'+tg.label+'</span>':'')+
+        '<button class="pend-btn mover" onclick="moverPendAHoy('+i+')" title="Pasar a hoy">→</button>'+
+        '<button class="pend-btn tirar" onclick="descartarPend('+i+')" title="Descartar">×</button>'+
       '</div>';
     }).join('')+
+    (resto>0?'<div class="pend-mas">y '+resto+' más</div>':'')+
   '</div>';
+}
+
+/* Saca la tarea de donde esté (semana vieja o día pasado) y la devuelve */
+function quitarDeOrigen(p){
+  if(p.key===null){
+    return tareasData.dias[p.dia].splice(p.idx,1)[0];
+  }
+  var data=leerSemanaKey(p.key); if(!data) return null;
+  var t=data.dias[p.dia].splice(p.idx,1)[0];
+  guardarSemanaKey(p.key,data);
+  return t;
+}
+function togglePend(i){
+  var p=_pendCache[i]; if(!p) return;
+  if(p.key===null){ toggleTarea(p.dia,p.idx); return; }
+  var data=leerSemanaKey(p.key); if(!data) return;
+  var t=data.dias[p.dia][p.idx]; if(!t) return;
+  t.hecha=true;
+  guardarSemanaKey(p.key,data);
+  renderTareas();
+}
+function moverPendAHoy(i){
+  var p=_pendCache[i]; if(!p) return;
+  var t=quitarDeOrigen(p); if(!t) return;
+  t.hecha=false;                          /* conserva su etiqueta */
+  tareasData.dias[getTodayIdx()].push(t);
+  saveTareas(); renderTareas();
+}
+function descartarPend(i){
+  var p=_pendCache[i]; if(!p) return;
+  quitarDeOrigen(p);
+  saveTareas(); renderTareas();
 }
 
 /* ═══════════════════ HABIT TRACKER ═══════════════════ */
@@ -587,8 +854,8 @@ var HABITS=[
   {id:3,name:'No FAP',            icon:'🚫',color:'#F0512E'},
   {id:4,name:'3hr de Celu',       icon:'📵',color:'#F2EE87'},
   {id:5,name:'Ejercicio',         icon:'🏋️',color:'#FF9E4A'},
-  {id:6,name:'UNI 90min',         icon:'📖',color:'#5AA9FF'},
-  {id:7,name:'30min Aprendizaje', icon:'✏️',color:'#5EE0C0'},
+  {id:6,name:'UNI 90min',         icon:'📖',color:'#5AA9FF', minutos:90},
+  {id:7,name:'30min Aprendizaje', icon:'✏️',color:'#5EE0C0', minutos:30},
   {id:8,name:'1 Prioridad del día',icon:'⭐',color:'#FFD166'}
 ];
 
@@ -608,6 +875,137 @@ function setHbView(v){
 }
 function selectHabitDay(i){hbActiveDay=i;renderHabits();}
 
+/* ═══════════ RACHAS ═══════════
+   Los hábitos se vienen guardando por semana bajo 'wk_AAAA_M_D'.
+   Todas las semanas anteriores ya están en el navegador; acá se leen
+   todas juntas para contar días seguidos. Las claves de tareas empiezan
+   con 'tareas_', así que el regex de abajo las deja afuera solo. */
+function claveDia(f){ return f.getFullYear()+'-'+f.getMonth()+'-'+f.getDate(); }
+
+var _rachasCache=null;   /* se calcula una vez por render */
+
+function calcularRachas(){
+  var mapa={};   /* 'AAAA-M-D' → [bool x9] */
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      var m=/^wk_(\d+)_(\d+)_(\d+)$/.exec(key);
+      if(!m) continue;
+      var data=null;
+      try{ data=JSON.parse(localStorage.getItem(key)); }catch(e){ continue; }
+      if(!data||!Array.isArray(data.checks)) continue;
+      var lunes=new Date(+m[1],+m[2],+m[3]);
+      for(var d=0; d<7; d++){
+        var f=new Date(lunes); f.setDate(lunes.getDate()+d);
+        var arr=[];
+        for(var hid=0; hid<9; hid++) arr[hid]=!!(data.checks[hid] && data.checks[hid][d]);
+        mapa[claveDia(f)]=arr;
+      }
+    }
+  }catch(e){}
+
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+  return HABITS.map(function(h){
+    var cursor=new Date(hoy), racha=0;
+    /* Si hoy todavía no lo tildaste, se cuenta desde ayer: un día en
+       curso sin marcar no debería romper la racha a la mañana. */
+    var hoyChecks=mapa[claveDia(cursor)];
+    if(!(hoyChecks && hoyChecks[h.id])) cursor.setDate(cursor.getDate()-1);
+    while(racha<400){
+      var c=mapa[claveDia(cursor)];
+      if(!(c && c[h.id])) break;
+      racha++;
+      cursor.setDate(cursor.getDate()-1);
+    }
+    return racha;
+  });
+}
+
+/* ═══════════ CRONÓMETRO ═══════════
+   Se guarda el MOMENTO DE ARRANQUE, no los segundos que faltan.
+   Por eso sobrevive a recargar o cerrar la pestaña: al volver se
+   recalcula cuánto pasó contra el reloj. */
+var TIMER_KEY='timer_activo';
+var timerActivo=null;   /* {habitId, inicio, objetivoMin} */
+var _tickId=null;
+
+function loadTimer(){
+  try{
+    var s=localStorage.getItem(TIMER_KEY);
+    if(!s) return;
+    var t=JSON.parse(s);
+    if(!t||typeof t.habitId!=='number') return;
+    /* Un timer arrancado otro día se descarta: no tiene sentido tildar hoy algo de ayer */
+    var dia=new Date(t.inicio); dia.setHours(0,0,0,0);
+    var hoy=new Date(); hoy.setHours(0,0,0,0);
+    if(dia.getTime()!==hoy.getTime()){ localStorage.removeItem(TIMER_KEY); return; }
+    timerActivo=t;
+  }catch(e){}
+}
+function saveTimer(){
+  try{
+    if(timerActivo) localStorage.setItem(TIMER_KEY,JSON.stringify(timerActivo));
+    else localStorage.removeItem(TIMER_KEY);
+  }catch(e){}
+}
+function segundosRestantes(){
+  if(!timerActivo) return 0;
+  var fin=timerActivo.inicio + timerActivo.objetivoMin*60000;
+  return Math.max(0, Math.round((fin-Date.now())/1000));
+}
+function fmtMMSS(seg){
+  return Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0');
+}
+function arrancarTimer(hId,ev){
+  if(ev) ev.stopPropagation();
+  var h=HABITS[hId]; if(!h||!h.minutos) return;
+  timerActivo={habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
+  saveTimer(); renderHabits(); arrancarTick();
+}
+function cancelarTimer(ev){
+  if(ev) ev.stopPropagation();
+  timerActivo=null; saveTimer(); pararTick(); renderHabits();
+}
+function completarTimer(){
+  if(!timerActivo) return;
+  var hId=timerActivo.habitId;
+  timerActivo=null; saveTimer(); pararTick();
+  /* toggleHabit ya guarda y vuelve a dibujar */
+  if(!hbData.checks[hId][hbTodayIdx]) toggleHabit(hId,hbTodayIdx);
+  else renderHabits();
+  beep();
+  var card=document.getElementById('hb-card-'+hId);
+  if(card) card.classList.add('listo');
+}
+function arrancarTick(){
+  pararTick();
+  if(!timerActivo) return;
+  _tickId=setInterval(function(){
+    var seg=segundosRestantes();
+    if(seg<=0){ completarTimer(); return; }
+    /* Se toca SOLO el texto del contador: un re-render completo le
+       sacaría el foco al input de "1 Prioridad del día" mientras escribís */
+    var el=document.getElementById('hb-count-'+timerActivo.habitId);
+    if(el) el.textContent=fmtMMSS(seg);
+  },1000);
+}
+function pararTick(){ if(_tickId){ clearInterval(_tickId); _tickId=null; } }
+
+/* Beep corto generado en el momento, sin archivos externos */
+function beep(){
+  try{
+    var Ctx=window.AudioContext||window.webkitAudioContext; if(!Ctx) return;
+    var ctx=new Ctx(), osc=ctx.createOscillator(), gain=ctx.createGain();
+    osc.connect(gain); gain.connect(ctx.destination);
+    osc.type='sine'; osc.frequency.value=880;
+    gain.gain.setValueAtTime(0.0001,ctx.currentTime);
+    gain.gain.exponentialRampToValueAtTime(0.22,ctx.currentTime+0.02);
+    gain.gain.exponentialRampToValueAtTime(0.0001,ctx.currentTime+0.55);
+    osc.start(); osc.stop(ctx.currentTime+0.55);
+    setTimeout(function(){ try{ctx.close();}catch(e){} },900);
+  }catch(e){}
+}
+
 function makeRingSVG(pct,color,size){
   size=size||34;var r=(size-5)/2,circ=2*Math.PI*r,dash=(pct/100)*circ;
   return '<svg width="'+size+'" height="'+size+'" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">'+
@@ -618,6 +1016,7 @@ function makeRingSVG(pct,color,size){
 }
 
 function renderHabits(){
+  _rachasCache=calcularRachas();   /* una sola pasada por localStorage por render */
   var dayTotals=Array.from({length:7},function(_,d){return hbData.checks.filter(function(r){return r[d];}).length;});
   var habTotals=hbData.checks.map(function(r){return r.filter(Boolean).length;});
   var total=hbData.checks.flat().filter(Boolean).length;
@@ -654,10 +1053,27 @@ function renderHabits(){
             var cls='hb-dot'+(d===hbActiveDay?' today-ring':'')+(hbData.checks[h.id][d]?' filled':'');
             return '<div class="'+cls+'" style="--hc:'+h.color+';'+(hbData.checks[h.id][d]?'background:'+(done?'#0A0A0A':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(0,0,0,0.55)':h.color):'')+'"></div>';
           }).join('');
-          return '<div class="hb-item" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
+          /* Racha: se muestra recién a partir de 2 días, con 1 no dice nada */
+          var racha=_rachasCache[h.id]||0;
+          var rachaHTML = racha>=2 ? '<span class="hb-racha">🔥 '+racha+'</span>' : '';
+          /* Cronómetro: solo en los hábitos con objetivo de minutos, solo hoy y solo si falta hacerlo */
+          var corriendo = timerActivo && timerActivo.habitId===h.id;
+          var timerHTML='';
+          if(h.minutos && hbActiveDay===hbTodayIdx && !done){
+            timerHTML = corriendo
+              ? '<div class="hb-timer">'+
+                  '<span class="hb-timer-count" id="hb-count-'+h.id+'">'+fmtMMSS(segundosRestantes())+'</span>'+
+                  '<button class="hb-timer-btn" onclick="cancelarTimer(event)" title="Cancelar">■</button>'+
+                '</div>'
+              : '<div class="hb-timer">'+
+                  '<button class="hb-timer-btn" onclick="arrancarTimer('+h.id+',event)" title="Arrancar '+h.minutos+' min">▶</button>'+
+                '</div>';
+          }
+          return '<div class="hb-item'+(corriendo?' corriendo':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
             '<div class="hb-body" onclick="toggleHabit('+h.id+','+hbActiveDay+')">'+
               '<span class="hb-icon">'+h.icon+'</span>'+
-              '<div class="hb-info"><div class="hb-name'+(done?' done':'')+'">'+esc(h.name)+'</div><div class="hb-dots">'+dots+'</div></div>'+
+              '<div class="hb-info"><div class="hb-name'+(done?' done':'')+'">'+esc(h.name)+rachaHTML+'</div><div class="hb-dots">'+dots+'</div></div>'+
+              timerHTML+
               '<div class="hb-check" style="'+(done?'background:#0A0A0A;border-color:#0A0A0A;color:'+h.color:'border-color:var(--line2)')+'">'+(done?'✓':'')+'</div>'+
             '</div>'+
             (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(hbData.priorities[hbActiveDay])+'" placeholder="Escribí tu prioridad de hoy..." oninput="setPriority('+hbActiveDay+',this.value)" onclick="event.stopPropagation()"/></div>':'')+
@@ -665,18 +1081,23 @@ function renderHabits(){
         }).join('')+
       '</div>';
   } else {
-    var thead='<tr><th></th>'+DS.map(function(d,i){return'<th class="'+(i===hbTodayIdx?'today-col':'')+'">'+d+'</th>';}).join('')+'<th style="padding-left:8px;text-align:center">sem</th></tr>';
+    var thead='<tr><th></th>'+DS.map(function(d,i){return'<th class="'+(i===hbTodayIdx?'today-col':'')+'">'+d+'</th>';}).join('')+'<th style="padding-left:8px;text-align:center">sem</th><th style="padding-left:8px;text-align:center">racha</th></tr>';
     var tbody=HABITS.map(function(h){
       var cells=Array.from({length:7},function(_,d){
         var done=hbData.checks[h.id][d],cls='hb-cell'+(d===hbTodayIdx?' today-ring':'')+( done?' filled':'');
         return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hbTodayIdx?'border-color:'+h.color:'')+';" onclick="toggleHabit('+h.id+','+d+')">'+(done?'✓':'')+'</div></td>';
       }).join('');
       var sc=habTotals[h.id]===7?'#86E88F':habTotals[h.id]>=5?'#7FC4F5':habTotals[h.id]>=3?'#F2EE87':'#525252';
-      return '<tr><td><span class="hb-row-label">'+h.icon+' '+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span></td>'+cells+'<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+sc+'">'+habTotals[h.id]+'/7</span></td></tr>';
+      var rc=_rachasCache[h.id]||0;
+      return '<tr><td><span class="hb-row-label">'+h.icon+' '+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span></td>'+cells+
+        '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+sc+'">'+habTotals[h.id]+'/7</span></td>'+
+        '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+(rc>=2?'#FF9E4A':'#525252')+'">'+(rc>=2?'🔥 '+rc:'—')+'</span></td></tr>';
     }).join('');
+    var mejorRacha=Math.max.apply(null,_rachasCache);
     var totalRow='<tr class="hb-total-row"><td style="color:var(--t3);padding-right:8px">Total</td>'+
       dayTotals.map(function(t,i){return'<td style="text-align:center"><span style="font-size:11px;font-weight:700;color:'+(i===hbTodayIdx?'#86E88F':'#525252')+'">'+t+'</span></td>';}).join('')+
-      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:#86E88F">'+total+'</span></td></tr>';
+      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:#86E88F">'+total+'</span></td>'+
+      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:'+(mejorRacha>=2?'#FF9E4A':'#525252')+'">'+(mejorRacha>=2?mejorRacha:'—')+'</span></td></tr>';
     var hasPrios=hbData.priorities.some(Boolean);
     var priosHtml='<div class="habit-prios-box"><div class="habit-prios-label">Prioridades de la semana</div>'+
       (hasPrios?hbData.priorities.map(function(p,i){return p?'<div class="hb-prio-line"><span class="hb-prio-day" style="color:'+(i===hbTodayIdx?'#86E88F':'#525252')+'">'+DS[i]+'</span><span style="font-size:12.5px;color:var(--t2)">'+esc(p)+'</span></div>':'';}).join(''):'<div style="font-size:12px;color:var(--t4)">Sin prioridades registradas aún.</div>')+
@@ -772,10 +1193,20 @@ function actualizarMails(){
 /* ═══════════════════ INIT ═══════════════════ */
 setupHeader();
 renderFrase();
+loadPrefs();
 loadTareas();
 renderTareas();
 loadHabits();
+loadTimer();
 renderHabits();
+
+/* Si el objetivo se cumplió mientras el dashboard estaba cerrado,
+   el hábito queda tildado al abrirlo. Si no, el timer sigue corriendo. */
+if(timerActivo){
+  if(segundosRestantes()<=0) completarTimer();
+  else arrancarTick();
+}
+
 actualizarMails();
 
 /* Refresco automático de los mails: cada 5 min y al volver a la pestaña */
