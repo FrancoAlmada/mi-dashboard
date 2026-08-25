@@ -271,14 +271,18 @@
     .hb-timer {
       flex-shrink: 0; display: flex; align-items: center; gap: 7px;
     }
+    /* Píldora con texto, para que no se confunda con el círculo de tildar */
     .hb-timer-btn {
-      width: 28px; height: 28px; border-radius: 100px; border: 1px solid var(--line2); cursor: pointer;
-      background: transparent; color: var(--t2); font-size: 11px; line-height: 1; font-family: var(--ui);
-      display: flex; align-items: center; justify-content: center; transition: all .16s; flex-shrink: 0;
+      flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
+      height: 28px; padding: 0 12px; border-radius: 100px; cursor: pointer;
+      border: 1px solid var(--tang); background: rgba(255,158,74,0.14); color: var(--tang);
+      font-size: 11px; font-weight: 800; line-height: 1; font-family: var(--ui);
+      white-space: nowrap; transition: all .16s;
     }
-    .hb-timer-btn:hover { border-color: var(--t1); color: var(--t1); }
-    .hb-timer-btn.on-color { border-color: rgba(0,0,0,0.4); color: #0A0A0A; }
-    .hb-timer-btn.on-color:hover { background: rgba(0,0,0,0.18); }
+    .hb-timer-btn:hover { background: var(--tang); color: #1A0E02; }
+    .hb-timer-btn.parar { padding: 0; width: 28px; justify-content: center; }
+    .hb-timer-btn.on-color { border-color: rgba(0,0,0,0.42); background: rgba(0,0,0,0.14); color: #0A0A0A; }
+    .hb-timer-btn.on-color:hover { background: rgba(0,0,0,0.32); color: #FFFFFF; }
     .hb-timer-count {
       font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums;
       letter-spacing: -0.4px; color: var(--tang); min-width: 48px; text-align: right;
@@ -1056,18 +1060,19 @@ function renderHabits(){
           /* Racha: se muestra recién a partir de 2 días, con 1 no dice nada */
           var racha=_rachasCache[h.id]||0;
           var rachaHTML = racha>=2 ? '<span class="hb-racha">🔥 '+racha+'</span>' : '';
-          /* Cronómetro: solo en los hábitos con objetivo de minutos, solo hoy y solo si falta hacerlo */
+          /* Cronómetro: en los hábitos con objetivo de minutos, solo sobre el día de hoy.
+             Se muestra aunque el hábito ya esté tildado, así podés arrancar otra sesión
+             y el botón no "desaparece" de golpe. */
           var corriendo = timerActivo && timerActivo.habitId===h.id;
           var timerHTML='';
-          if(h.minutos && hbActiveDay===hbTodayIdx && !done){
+          if(h.minutos && hbActiveDay===hbTodayIdx){
             timerHTML = corriendo
               ? '<div class="hb-timer">'+
-                  '<span class="hb-timer-count" id="hb-count-'+h.id+'">'+fmtMMSS(segundosRestantes())+'</span>'+
-                  '<button class="hb-timer-btn" onclick="cancelarTimer(event)" title="Cancelar">■</button>'+
+                  '<span class="hb-timer-count'+(done?' on-color':'')+'" id="hb-count-'+h.id+'">'+fmtMMSS(segundosRestantes())+'</span>'+
+                  '<button class="hb-timer-btn parar'+(done?' on-color':'')+'" onclick="cancelarTimer(event)" title="Cancelar cronómetro">■</button>'+
                 '</div>'
-              : '<div class="hb-timer">'+
-                  '<button class="hb-timer-btn" onclick="arrancarTimer('+h.id+',event)" title="Arrancar '+h.minutos+' min">▶</button>'+
-                '</div>';
+              : '<button class="hb-timer-btn'+(done?' on-color':'')+'" onclick="arrancarTimer('+h.id+',event)" '+
+                  'title="Arrancar cronómetro de '+h.minutos+' minutos">▶ '+h.minutos+'min</button>';
           }
           return '<div class="hb-item'+(corriendo?' corriendo':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
             '<div class="hb-body" onclick="toggleHabit('+h.id+','+hbActiveDay+')">'+
