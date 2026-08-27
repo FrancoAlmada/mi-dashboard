@@ -102,14 +102,8 @@
     }
     .frase-btn:hover { background: rgba(0,0,0,0.28); transform: rotate(180deg); }
 
-    /* ── 2-col grid ── */
-    .grid2 { display: grid; grid-template-columns: 1fr 1fr; gap: 14px; margin-bottom: 14px; align-items: start; }
-    @media (max-width: 1000px) { .grid2 { grid-template-columns: 1fr; } }
-    /* La tarjeta de hoy acompaña el scroll mientras recorrés la semana */
-    @media (min-width: 1001px) { #card-hoy { position: sticky; top: 14px; } }
-
     /* ── Cards ── */
-    .card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; }
+    .card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
     .card-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
     .card-label { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--lime); margin-bottom: 7px; font-weight: 800; }
     .card-title { font-size: 22px; font-weight: 700; letter-spacing: -0.8px; color: var(--t1); line-height: 1.15; }
@@ -117,6 +111,14 @@
       font-size: 12px; font-weight: 700; color: var(--t3); background: var(--surf3);
       padding: 8px 14px; border-radius: 100px; white-space: nowrap; flex-shrink: 0;
     }
+
+    /* ── Tareas de hoy: barra de progreso + columnas ── */
+    /* Mismos valores que la barra de hábitos, pero con su propia clase
+       para no acoplar dos secciones distintas al mismo selector */
+    .hoy-bar-wrap { background: var(--surf4); border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 20px; }
+    .hoy-bar-fill { height: 100%; border-radius: 99px; background: var(--lime); transition: width 0.4s ease; width: 0; }
+    /* auto-fill + minmax resuelve el responsive solo: cuantas columnas entren */
+    .hoy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 2px 10px; }
 
     /* ── Task items ── */
     .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; border: none; cursor: pointer; transition: background .16s; }
@@ -184,30 +186,55 @@
     .filtro-num { font-size: 10px; font-weight: 800; opacity: 0.62; font-variant-numeric: tabular-nums; }
     .filtro-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 10px; padding: 0 12px; }
 
-    /* ── Filas de la semana ── */
-    .dia-row { border-radius: 18px; padding: 12px 12px 8px; margin-bottom: 6px; border: 1px solid transparent; transition: background .16s; }
-    .dia-row.es-hoy { background: var(--surf2); border-color: var(--line2); }
-    .dia-row.pasado { opacity: 0.62; }
-    .dia-hd { display: flex; align-items: center; gap: 9px; margin-bottom: 4px; padding: 0 12px; }
+    /* ── La semana: una tarjeta por día ── */
+    /* align-items:start hace que cada tarjeta mida lo que ocupa su contenido.
+       Con stretch, un dia con 1 tarea quedaba tan alto como uno con 6 y sobraba
+       un hueco enorme; asi el bloque queda compacto. */
+    /* 250px para que las tareas entren sin partirse en muchas lineas.
+       align-items:start = cada tarjeta mide lo que ocupa su contenido. */
+    .semana-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 12px; align-items: start; }
+    @media (max-width: 560px) { .semana-grid { grid-template-columns: 1fr; } }
+    .dia-card {
+      display: flex; flex-direction: column; min-height: 132px;
+      background: var(--surf2); border: 1px solid var(--line); border-radius: 20px;
+      padding: 14px 10px 10px; transition: border-color .16s;
+    }
+    .dia-card.es-hoy { background: var(--surf3); border-color: var(--line2); }
+    .dia-card.pasado { opacity: 0.62; }
+    .dia-card.pasado:hover { opacity: 1; }
+    .dia-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 0 6px; }
     .dia-chip {
       font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
-      padding: 5px 11px; border-radius: 100px; white-space: nowrap;
+      padding: 5px 10px; border-radius: 100px; white-space: nowrap;
       background: var(--surf4); color: var(--t2);
     }
-    .dia-row.es-hoy .dia-chip { background: var(--lime); color: #0A0A0A; }
-    .dia-num { font-size: 11px; font-weight: 600; color: var(--t3); }
-    .dia-sep { flex: 1; height: 1px; background: var(--line); }
-    .dia-cant { font-size: 11px; font-weight: 700; color: var(--t4); }
-    .dia-row .task { padding: 8px 12px; }
-    .dia-row .task-text { font-size: 13px; }
-    .dia-row .add-wrap { margin-top: 2px; }
-    .dia-row .add-input { font-size: 13px; padding: 8px 0; border-bottom: none; }
+    .dia-card.es-hoy .dia-chip { background: var(--lime); color: #0A0A0A; }
+    .dia-num { font-size: 11px; font-weight: 600; color: var(--t3); white-space: nowrap; }
+    .dia-cant { font-size: 11px; font-weight: 700; color: var(--t4); margin-left: auto; }
+    .dia-vacio { font-size: 12px; font-weight: 500; color: var(--t4); padding: 6px 8px; }
+    .dia-tareas { display: flex; flex-direction: column; }
+    .dia-card .task { padding: 7px 8px; gap: 9px; }
+    .dia-card .task-text { font-size: 13px; }
+    .dia-card .task-box { width: 18px; height: 18px; border-radius: 6px; }
+    /* El input de alta queda pegado al fondo de la tarjeta */
+    .dia-card .add-wrap { margin-top: auto; padding: 6px 8px 0 8px; gap: 8px; }
+    .dia-card .add-input { font-size: 13px; padding: 6px 0; border-bottom: none; }
+    /* En las tarjetas angostas la etiqueta se reduce a un punto de color:
+       el texto de la tarea gana todo el ancho y deja de partirse en 3 lineas.
+       Sigue siendo clickeable para ciclar de etiqueta. */
+    .dia-card .tag-pill {
+      width: 9px; height: 9px; padding: 0; border-radius: 50%;
+      font-size: 0; line-height: 0; overflow: hidden;
+    }
+    .dia-card .tag-pill.vacia { border-style: dashed; }
 
     /* ── Tareas No Completadas ── */
     .pend-box {
-      margin-top: 18px; border: 1px solid rgba(240,81,46,0.42); background: rgba(240,81,46,0.08);
-      border-radius: 20px; padding: 18px 20px 14px;
+      margin-bottom: 14px; border: 1px solid rgba(240,81,46,0.42); background: rgba(240,81,46,0.08);
+      border-radius: 20px; padding: 20px 22px 16px;
     }
+    /* A todo el ancho la lista quedaria estirada, asi que tambien va en columnas */
+    .pend-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap: 2px 12px; }
     .pend-title {
       font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
       font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
@@ -368,40 +395,38 @@
   <!-- Filtro por etiqueta: afecta las dos tarjetas y el bloque de pendientes -->
   <div class="filtro-bar" id="filtro-bar"></div>
 
-  <!-- Tareas: hoy | semana -->
-  <div class="grid2">
-
-    <!-- Tareas de hoy -->
-    <div class="card" id="card-hoy">
-      <div class="card-hd">
-        <div>
-          <div class="card-label" id="hoy-label">· Tareas de hoy ·</div>
-          <div class="card-title" id="hoy-titulo">Hoy</div>
-        </div>
-        <div class="card-count" id="hoy-count">0 / 0</div>
+  <!-- Tareas de hoy, a todo el ancho -->
+  <div class="card" id="card-hoy">
+    <div class="card-hd">
+      <div>
+        <div class="card-label" id="hoy-label">· Tareas de hoy ·</div>
+        <div class="card-title" id="hoy-titulo">Hoy</div>
       </div>
-      <div id="lista-hoy"></div>
-      <div class="tag-chips" id="tag-chips"></div>
-      <div class="add-wrap">
-        <span class="add-plus">+</span>
-        <input class="add-input" id="add-hoy" type="text" placeholder="Agregar tarea a hoy..." onkeydown="onAddKey(event,-1,this)">
-      </div>
-      <div class="filtro-nota" id="filtro-nota"></div>
+      <div class="card-count" id="hoy-count">0 / 0</div>
     </div>
-
-    <!-- Tareas de la semana -->
-    <div class="card" id="card-semana">
-      <div class="card-hd">
-        <div>
-          <div class="card-label">· Toda la semana ·</div>
-          <div class="card-title" id="semana-rango">Semana</div>
-        </div>
-        <div class="card-count" id="semana-count">0 / 0</div>
-      </div>
-      <div id="lista-semana"></div>
-      <div id="lista-pendientes"></div>
+    <div class="hoy-bar-wrap"><div class="hoy-bar-fill" id="hoy-bar"></div></div>
+    <div id="lista-hoy"></div>
+    <div class="tag-chips" id="tag-chips"></div>
+    <div class="add-wrap">
+      <span class="add-plus">+</span>
+      <input class="add-input" id="add-hoy" type="text" placeholder="Agregar tarea a hoy..." onkeydown="onAddKey(event,-1,this)">
     </div>
+    <div class="filtro-nota" id="filtro-nota"></div>
+  </div>
 
+  <!-- Tareas No Completadas: franja propia, oculta cuando no hay nada -->
+  <div id="lista-pendientes"></div>
+
+  <!-- Toda la semana, a todo el ancho -->
+  <div class="card" id="card-semana">
+    <div class="card-hd">
+      <div>
+        <div class="card-label">· Toda la semana ·</div>
+        <div class="card-title" id="semana-rango">Semana</div>
+      </div>
+      <div class="card-count" id="semana-count">0 / 0</div>
+    </div>
+    <div id="lista-semana"></div>
   </div>
 
   <!-- Habit Tracker -->
@@ -694,7 +719,7 @@ function onAddKey(ev,diaIdx,el){
 function tareaHTML(diaIdx,t,i){
   var tg=tagById(t.tag);
   var pill = tg
-    ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Cambiar etiqueta">'+tg.label+'</button>'
+    ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' — click para cambiar">'+tg.label+'</button>'
     : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
   return '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
     '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
@@ -706,20 +731,35 @@ function tareaHTML(diaIdx,t,i){
 
 function renderTareas(){
   var hoyIdx=getTodayIdx(), fechas=getWeekDates();
+  renderHoy(hoyIdx,fechas);
+  renderSemana(hoyIdx,fechas);
+  renderTagChips();
+  renderFiltro();
+  renderPendientes(hoyIdx);
+}
 
-  /* ── Tarjeta de hoy ── */
+/* ── Tarjeta de hoy: progreso arriba, tareas en columnas ── */
+function renderHoy(hoyIdx,fechas){
   var hoy=tareasData.dias[hoyIdx];
-  var visiblesHoy=hoy.filter(pasaFiltro);
-  var hechasHoy=visiblesHoy.filter(function(t){return t.hecha;}).length;
+  var visibles=hoy.filter(pasaFiltro);
+  var hechas=visibles.filter(function(t){return t.hecha;}).length;
+  var pct = visibles.length ? Math.round((hechas/visibles.length)*100) : 0;
+
   document.getElementById('hoy-label').textContent='· Tareas del '+DF[hoyIdx].toLowerCase()+' ·';
   document.getElementById('hoy-titulo').textContent=DF[hoyIdx]+' '+fechas[hoyIdx].getDate();
-  document.getElementById('hoy-count').textContent=hechasHoy+' / '+visiblesHoy.length;
-  document.getElementById('lista-hoy').innerHTML = visiblesHoy.length
-    /* Se recorre el array completo y se saltean las filtradas, así el índice sigue siendo el real */
-    ? hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i) : ''; }).join('')
-    : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
+  document.getElementById('hoy-count').textContent=hechas+' / '+visibles.length;
+  document.getElementById('hoy-bar').style.width=pct+'%';
+  document.getElementById('s-tasks').textContent=visibles.length;
 
-  /* ── Tarjeta de la semana ── */
+  document.getElementById('lista-hoy').innerHTML = visibles.length
+    /* Se recorre el array completo y se saltean las filtradas, así el índice sigue siendo el real.
+       El orden es el de carga: una tarea tildada se queda donde está, no salta de lugar. */
+    ? '<div class="hoy-grid">'+hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i) : ''; }).join('')+'</div>'
+    : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
+}
+
+/* ── La semana: una tarjeta por día dentro de un grid adaptable ── */
+function renderSemana(hoyIdx,fechas){
   var totalSem=0, hechasSem=0;
   tareasData.dias.forEach(function(d){
     d.forEach(function(t){ if(!pasaFiltro(t))return; totalSem++; if(t.hecha) hechasSem++; });
@@ -728,25 +768,26 @@ function renderTareas(){
     fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
   document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
 
-  document.getElementById('lista-semana').innerHTML=fechas.map(function(fecha,d){
+  document.getElementById('lista-semana').innerHTML='<div class="semana-grid">'+fechas.map(function(fecha,d){
     var tareas=tareasData.dias[d];
     var visibles=tareas.filter(pasaFiltro);
     var hechas=visibles.filter(function(t){return t.hecha;}).length;
-    var cls='dia-row'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
+    var cls='dia-card'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
     return '<div class="'+cls+'">'+
       '<div class="dia-hd">'+
         '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
         '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
-        '<div class="dia-sep"></div>'+
         (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
       '</div>'+
-      tareas.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(d,t,i) : ''; }).join('')+
+      (visibles.length
+        ? '<div class="dia-tareas">'+tareas.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(d,t,i) : ''; }).join('')+'</div>'
+        : '<div class="dia-vacio">Sin tareas</div>')+
       '<div class="add-wrap">'+
         '<span class="add-plus">+</span>'+
         '<input class="add-input" id="add-dia-'+d+'" type="text" placeholder="Agregar..." onkeydown="onAddKey(event,'+d+',this)">'+
       '</div>'+
     '</div>';
-  }).join('');
+  }).join('')+'</div>';
 
   /* Devolver el foco al input donde estaba escribiendo */
   if(_focusDia!==null){
@@ -754,11 +795,6 @@ function renderTareas(){
     if(el) el.focus();
     _focusDia=null;
   }
-
-  renderTagChips();
-  renderFiltro();
-  renderPendientes(hoyIdx);
-  document.getElementById('s-tasks').textContent=visiblesHoy.length;
 }
 
 /* ═══════════════════ TAREAS NO COMPLETADAS ═══════════════════ */
@@ -804,6 +840,7 @@ function renderPendientes(hoyIdx){
 
   cont.innerHTML='<div class="pend-box">'+
     '<div class="pend-title">⚠ Tareas No Completadas <span style="margin-left:auto;opacity:.75">'+_pendCache.length+'</span></div>'+
+    '<div class="pend-lista">'+
     visibles.map(function(p,i){
       var tg=tagById(p.tag);
       return '<div class="pend-item">'+
@@ -814,6 +851,7 @@ function renderPendientes(hoyIdx){
         '<button class="pend-btn tirar" onclick="descartarPend('+i+')" title="Descartar">×</button>'+
       '</div>';
     }).join('')+
+    '</div>'+
     (resto>0?'<div class="pend-mas">y '+resto+' más</div>':'')+
   '</div>';
 }
