@@ -128,6 +128,38 @@
     .task-box.checked::after { content: '✓'; color: #0A1A0C; font-size: 12px; font-weight: 800; }
     .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; word-break: break-word; }
     .task-text.done { text-decoration: line-through; color: var(--t4); }
+    /* Tareas recurrentes */
+    .task-rep {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 13px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .task:hover .task-rep { opacity: 1; }
+    .task-rep:hover { background: var(--peri); color: #F2F2FF; }
+    .task-rep.activa { opacity: 1; color: var(--peri); }
+    .task-rep.activa:hover { background: var(--peri); color: #F2F2FF; }
+    /* Selector de dias que se abre debajo de la tarea */
+    .rep-picker {
+      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
+      padding: 10px 12px; margin: 2px 0 6px; border-radius: 14px;
+      background: var(--surf3); border: 1px solid var(--peri);
+    }
+    .rep-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--peri); margin-right: 4px; }
+    .rep-dia {
+      width: 27px; height: 27px; border-radius: 100px; cursor: pointer; font-family: var(--ui);
+      border: 1px solid var(--line2); background: transparent; color: var(--t3);
+      font-size: 11px; font-weight: 800; transition: all .14s;
+    }
+    .rep-dia:hover { border-color: var(--peri); color: var(--t1); }
+    .rep-dia.on { background: var(--peri); border-color: var(--peri); color: #F2F2FF; }
+    .rep-acc {
+      border: none; cursor: pointer; border-radius: 100px; padding: 6px 13px; font-family: var(--ui);
+      font-size: 11px; font-weight: 800; background: var(--t1); color: #0A0A0A; margin-left: auto;
+    }
+    .rep-acc.quitar { background: transparent; color: var(--t3); border: 1px solid var(--line2); margin-left: 4px; }
+    .rep-acc.quitar:hover { border-color: var(--coral); color: var(--coral); }
+
     /* Cronómetro por tarea */
     .task-play {
       flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
@@ -669,6 +701,81 @@ function renderFiltro(){
   nota.textContent = filtroTag ? 'Filtrando por '+tagById(filtroTag).label+' — hay más tareas ocultas' : '';
 }
 
+/* ═══════════════════ TAREAS RECURRENTES ═══════════════════ */
+/* Una clave global: [ {id, texto, tag, dias:[0,2,4]} ]  0=Lunes … 6=Domingo
+   Se generan solas la primera vez que se abre una semana nueva. */
+var REC_KEY='recurrentes';
+var recurrentes=[];
+var _repAbierto=null;   /* id de la tarea con el selector de días abierto */
+
+function loadRecurrentes(){
+  try{
+    var r=JSON.parse(localStorage.getItem(REC_KEY));
+    if(Array.isArray(r)) recurrentes=r;
+  }catch(e){}
+}
+function saveRecurrentes(){
+  try{ localStorage.setItem(REC_KEY,JSON.stringify(recurrentes)); }catch(e){}
+}
+function recDeTexto(texto){
+  for(var i=0;i<recurrentes.length;i++) if(recurrentes[i].texto===texto) return recurrentes[i];
+  return null;
+}
+
+/* Abre / cierra el selector de días debajo de la tarea */
+function toggleRepPicker(diaIdx,i,ev){
+  if(ev) ev.stopPropagation();
+  var t=tareasData.dias[diaIdx][i]; if(!t) return;
+  _repAbierto = (_repAbierto===t.id) ? null : t.id;
+  /* Si es nueva, el día donde está la tarea viene pre-marcado */
+  if(_repAbierto && !recDeTexto(t.texto)) _repBorrador=[diaIdx];
+  else if(_repAbierto){ _repBorrador=recDeTexto(t.texto).dias.slice(); }
+  renderTareas();
+}
+var _repBorrador=[];
+
+function toggleRepDia(d,ev){
+  if(ev) ev.stopPropagation();
+  var k=_repBorrador.indexOf(d);
+  if(k>=0) _repBorrador.splice(k,1); else _repBorrador.push(d);
+  _repBorrador.sort();
+  renderTareas();
+}
+function guardarRep(diaIdx,i,ev){
+  if(ev) ev.stopPropagation();
+  var t=tareasData.dias[diaIdx][i]; if(!t) return;
+  if(!_repBorrador.length){ quitarRep(diaIdx,i,ev); return; }
+  var r=recDeTexto(t.texto);
+  if(r){ r.dias=_repBorrador.slice(); r.tag=t.tag; }
+  else recurrentes.push({id:'r'+Date.now().toString(36), texto:t.texto, tag:t.tag, dias:_repBorrador.slice()});
+  saveRecurrentes();
+  _repAbierto=null; renderTareas();
+}
+function quitarRep(diaIdx,i,ev){
+  if(ev) ev.stopPropagation();
+  var t=tareasData.dias[diaIdx][i]; if(!t) return;
+  recurrentes=recurrentes.filter(function(r){ return r.texto!==t.texto; });
+  saveRecurrentes();
+  _repAbierto=null; renderTareas();
+}
+
+/* Inserta las recurrentes en una semana recién estrenada */
+function generarRecurrentes(){
+  var creadas=0;
+  recurrentes.forEach(function(r){
+    r.dias.forEach(function(d){
+      if(d<0||d>6) return;
+      tareasData.dias[d].push({
+        id: 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
+        texto: r.texto, hecha: false, segundos: 0, tag: r.tag
+      });
+      creadas++;
+    });
+  });
+  if(creadas) saveTareas();
+  return creadas;
+}
+
 /* ═══════════════════ TAREAS (hoy + semana, misma fuente) ═══════════════════ */
 /* Estructura guardada: { dias: [ [ {id,texto,hecha,tag} ], ... x7 ] }  0=Lunes */
 function getTareasKey(){ return 'tareas_'+getWeekKey(); }
@@ -678,9 +785,11 @@ var tareasData=mkTareasDefault();
 var _focusDia=null;   /* qué input de la semana tenía el foco, para devolvérselo tras re-render */
 
 function loadTareas(){
+  var habia=false;
   try{
     var s=localStorage.getItem(getTareasKey());
     if(s){
+      habia=true;
       var d=JSON.parse(s);
       if(d&&Array.isArray(d.dias)){
         tareasData=d;
@@ -689,6 +798,9 @@ function loadTareas(){
       }
     }
   }catch(e){}
+  /* Semana estrenada: se siembran las recurrentes una sola vez.
+     Si después borrás una instancia, no vuelve hasta la semana que viene. */
+  if(!habia) generarRecurrentes();
 }
 function saveTareas(){
   try{ localStorage.setItem(getTareasKey(),JSON.stringify(tareasData)); }catch(e){}
@@ -790,13 +902,35 @@ function tareaHTML(diaIdx,t,i,conTimer){
     }
   }
 
-  return '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
-    '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
-    '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
-    tiempoHTML+
-    pill+
-    cronoHTML+
-    '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
+  /* Botón de recurrencia: solo en la tarjeta de hoy, donde hay lugar */
+  var repHTML='', pickerHTML='';
+  if(conTimer){
+    var rec=recDeTexto(t.texto);
+    var titulo = rec ? 'Se repite '+rec.dias.map(function(d){return DS3[d];}).join(' ') : 'Repetir todas las semanas';
+    repHTML='<button class="task-rep'+(rec?' activa':'')+'" onclick="toggleRepPicker('+diaIdx+','+i+',event)" title="'+titulo+'">↻</button>';
+    if(_repAbierto===t.id){
+      pickerHTML='<div class="rep-picker" onclick="event.stopPropagation()">'+
+        '<span class="rep-lbl">Repetir los</span>'+
+        DS.map(function(letra,d){
+          return '<button class="rep-dia'+(_repBorrador.indexOf(d)>=0?' on':'')+'" onclick="toggleRepDia('+d+',event)">'+letra+'</button>';
+        }).join('')+
+        '<button class="rep-acc" onclick="guardarRep('+diaIdx+','+i+',event)">Guardar</button>'+
+        (rec?'<button class="rep-acc quitar" onclick="quitarRep('+diaIdx+','+i+',event)">Quitar</button>':'')+
+      '</div>';
+    }
+  }
+
+  return '<div>'+
+    '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
+      '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
+      '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
+      tiempoHTML+
+      pill+
+      cronoHTML+
+      repHTML+
+      '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
+    '</div>'+
+    pickerHTML+
   '</div>';
 }
 
@@ -1464,6 +1598,7 @@ function actualizarMails(){
 setupHeader();
 renderFrase();
 loadPrefs();
+loadRecurrentes();      /* antes de loadTareas: si la semana es nueva, las siembra */
 loadTareas();
 loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
