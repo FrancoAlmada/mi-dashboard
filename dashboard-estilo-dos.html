@@ -128,6 +128,24 @@
     .task-box.checked::after { content: '✓'; color: #0A1A0C; font-size: 12px; font-weight: 800; }
     .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; word-break: break-word; }
     .task-text.done { text-decoration: line-through; color: var(--t4); }
+    /* Cronómetro por tarea */
+    .task-play {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 10px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .task:hover .task-play { opacity: 1; }
+    .task-play:hover { background: var(--tang); color: #1A0E02; }
+    .task-play.corriendo { opacity: 1; background: var(--tang); color: #1A0E02; }
+    .task-crono {
+      flex-shrink: 0; font-size: 12px; font-weight: 800; color: var(--tang);
+      font-variant-numeric: tabular-nums; min-width: 44px; text-align: right;
+    }
+    .task-tiempo {
+      flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--t4);
+      font-variant-numeric: tabular-nums;
+    }
     .task-del {
       flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
       background: transparent; color: var(--t4); font-size: 16px; line-height: 1; font-family: var(--ui);
@@ -714,6 +732,7 @@ function addTarea(diaIdx,texto,tag){
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     texto: texto,
     hecha: false,
+    segundos: 0,
     tag: tag===undefined ? tagActiva : tag
   });
   saveTareas(); renderTareas();
@@ -751,16 +770,32 @@ function onAddKey(ev,diaIdx,el){
   addTarea(idx,txt);
 }
 
-/* Dibuja una fila de tarea reutilizable */
-function tareaHTML(diaIdx,t,i){
+/* Dibuja una fila de tarea reutilizable.
+   conTimer solo va en la tarjeta de hoy: en las tarjetas de día angostas no hay lugar. */
+function tareaHTML(diaIdx,t,i,conTimer){
   var tg=tagById(t.tag);
   var pill = tg
-    ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' — click para cambiar">'+tg.label+'</button>'
+    ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
     : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
+
+  var cronoHTML='', tiempoHTML='';
+  if(conTimer){
+    var corriendo = timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===t.id;
+    if(corriendo){
+      cronoHTML='<span class="task-crono" id="tarea-count-'+t.id+'">'+fmtCrono(segundosTranscurridos())+'</span>'+
+        '<button class="task-play corriendo" onclick="pararTimerTarea(event)" title="Parar y sumar el tiempo">■</button>';
+    } else {
+      if(t.segundos>0) tiempoHTML='<span class="task-tiempo">'+fmtDuracion(t.segundos)+'</span>';
+      cronoHTML='<button class="task-play" onclick="arrancarTimerTarea('+diaIdx+',\''+t.id+'\',event)" title="Medir el tiempo de esta tarea">▶</button>';
+    }
+  }
+
   return '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
     '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
     '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
+    tiempoHTML+
     pill+
+    cronoHTML+
     '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
   '</div>';
 }
@@ -790,7 +825,7 @@ function renderHoy(hoyIdx,fechas){
   document.getElementById('lista-hoy').innerHTML = visibles.length
     /* Se recorre el array completo y se saltean las filtradas, así el índice sigue siendo el real.
        El orden es el de carga: una tarea tildada se queda donde está, no salta de lugar. */
-    ? '<div class="hoy-grid">'+hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i) : ''; }).join('')+'</div>'
+    ? '<div class="hoy-grid">'+hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i,true) : ''; }).join('')+'</div>'
     : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
 }
 
@@ -1087,7 +1122,10 @@ function calcularRachas(){
    Por eso sobrevive a recargar o cerrar la pestaña: al volver se
    recalcula cuánto pasó contra el reloj. */
 var TIMER_KEY='timer_activo';
-var timerActivo=null;   /* {habitId, inicio, objetivoMin} */
+/* Un solo cronómetro a la vez. Dos formas:
+   habito: { tipo:'habito', habitId, inicio, objetivoMin }  cuenta hacia ABAJO y auto-tilda
+   tarea:  { tipo:'tarea', diaIdx, tareaId, inicio }        cuenta hacia ARRIBA, libre */
+var timerActivo=null;
 var _tickId=null;
 
 function loadTimer(){
@@ -1095,8 +1133,12 @@ function loadTimer(){
     var s=localStorage.getItem(TIMER_KEY);
     if(!s) return;
     var t=JSON.parse(s);
-    if(!t||typeof t.habitId!=='number') return;
-    /* Un timer arrancado otro día se descarta: no tiene sentido tildar hoy algo de ayer */
+    if(!t) return;
+    if(!t.tipo) t.tipo='habito';           /* compatibilidad con timers guardados antes */
+    if(t.tipo==='habito' && typeof t.habitId!=='number') return;
+    if(t.tipo==='tarea'  && !t.tareaId) return;
+    /* Un cronómetro arrancado otro día se descarta: sumarle las horas que
+       pasaron mientras la máquina estaba apagada seria mentira */
     var dia=new Date(t.inicio); dia.setHours(0,0,0,0);
     var hoy=new Date(); hoy.setHours(0,0,0,0);
     if(dia.getTime()!==hoy.getTime()){ localStorage.removeItem(TIMER_KEY); return; }
@@ -1117,11 +1159,71 @@ function segundosRestantes(){
 function fmtMMSS(seg){
   return Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0');
 }
+/* Segundos desde que arrancó (para tareas, que cuentan hacia arriba) */
+function segundosTranscurridos(){
+  if(!timerActivo) return 0;
+  return Math.max(0, Math.floor((Date.now()-timerActivo.inicio)/1000));
+}
+/* Cronómetro vivo: M:SS, y H:MM:SS si pasó la hora */
+function fmtCrono(seg){
+  var h=Math.floor(seg/3600), m=Math.floor((seg%3600)/60), s=seg%60;
+  if(h>0) return h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
+  return m+':'+String(s).padStart(2,'0');
+}
+/* Tiempo ya acumulado, en lenguaje corto: 45m · 1h 12m · 2h */
+function fmtDuracion(seg){
+  if(!seg || seg<60) return '';
+  var h=Math.floor(seg/3600), m=Math.round((seg%3600)/60);
+  if(h===0) return m+'m';
+  return m>0 ? h+'h '+m+'m' : h+'h';
+}
+/* Busca una tarea por id dentro de un día (los índices se mueven, el id no) */
+function buscarTarea(diaIdx,id){
+  var dia=tareasData.dias[diaIdx]; if(!dia) return null;
+  for(var i=0;i<dia.length;i++) if(dia[i].id===id) return dia[i];
+  return null;
+}
+/* Si hay otro cronómetro corriendo, pregunta antes de pisarlo.
+   Devuelve true si se puede arrancar el nuevo. */
+function liberarTimer(){
+  if(!timerActivo) return true;
+  var queEs;
+  if(timerActivo.tipo==='tarea'){
+    var t=buscarTarea(timerActivo.diaIdx,timerActivo.tareaId);
+    queEs='la tarea "'+(t?t.texto:'?')+'"';
+  } else {
+    queEs='el hábito "'+HABITS[timerActivo.habitId].name+'"';
+  }
+  if(!confirm('Ya tenés el cronómetro corriendo en '+queEs+'.\n\nSolo puede haber uno a la vez. ¿Lo paro y arranco este?')) return false;
+  /* Si era de tarea, el tiempo medido no se tira: se suma antes de soltarlo */
+  if(timerActivo.tipo==='tarea') guardarTiempoTarea();
+  timerActivo=null; saveTimer(); pararTick();
+  return true;
+}
+/* Suma al acumulado de la tarea lo que corrió el cronómetro */
+function guardarTiempoTarea(){
+  if(!timerActivo || timerActivo.tipo!=='tarea') return;
+  var t=buscarTarea(timerActivo.diaIdx,timerActivo.tareaId);
+  if(t){ t.segundos=(t.segundos||0)+segundosTranscurridos(); saveTareas(); }
+}
+
 function arrancarTimer(hId,ev){
   if(ev) ev.stopPropagation();
   var h=HABITS[hId]; if(!h||!h.minutos) return;
-  timerActivo={habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
-  saveTimer(); renderHabits(); arrancarTick();
+  if(!liberarTimer()) return;
+  timerActivo={tipo:'habito', habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
+  saveTimer(); renderHabits(); renderTareas(); arrancarTick();
+}
+function arrancarTimerTarea(diaIdx,id,ev){
+  if(ev) ev.stopPropagation();
+  if(!liberarTimer()) return;
+  timerActivo={tipo:'tarea', diaIdx:diaIdx, tareaId:id, inicio:Date.now()};
+  saveTimer(); renderTareas(); renderHabits(); arrancarTick();
+}
+function pararTimerTarea(ev){
+  if(ev) ev.stopPropagation();
+  guardarTiempoTarea();
+  timerActivo=null; saveTimer(); pararTick(); renderTareas();
 }
 function cancelarTimer(ev){
   if(ev) ev.stopPropagation();
@@ -1142,10 +1244,16 @@ function arrancarTick(){
   pararTick();
   if(!timerActivo) return;
   _tickId=setInterval(function(){
+    if(!timerActivo){ pararTick(); return; }
+    /* Se toca SOLO el texto del contador: un re-render completo le
+       sacaría el foco a los inputs mientras escribís */
+    if(timerActivo.tipo==='tarea'){
+      var et=document.getElementById('tarea-count-'+timerActivo.tareaId);
+      if(et) et.textContent=fmtCrono(segundosTranscurridos());
+      return;                                  /* la cuenta libre no termina sola */
+    }
     var seg=segundosRestantes();
     if(seg<=0){ completarTimer(); return; }
-    /* Se toca SOLO el texto del contador: un re-render completo le
-       sacaría el foco al input de "1 Prioridad del día" mientras escribís */
     var el=document.getElementById('hb-count-'+timerActivo.habitId);
     if(el) el.textContent=fmtMMSS(seg);
   },1000);
@@ -1357,15 +1465,16 @@ setupHeader();
 renderFrase();
 loadPrefs();
 loadTareas();
-renderTareas();
 loadHabits();
-loadTimer();
+loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
+renderTareas();
 renderHabits();
 
-/* Si el objetivo se cumplió mientras el dashboard estaba cerrado,
-   el hábito queda tildado al abrirlo. Si no, el timer sigue corriendo. */
+/* Si el objetivo de un hábito se cumplió mientras el dashboard estaba
+   cerrado, queda tildado al abrirlo. Los de tarea cuentan libre, así que
+   simplemente siguen. */
 if(timerActivo){
-  if(segundosRestantes()<=0) completarTimer();
+  if(timerActivo.tipo==='habito' && segundosRestantes()<=0) completarTimer();
   else arrancarTick();
 }
 
