@@ -408,6 +408,38 @@
     .em-date { font-size: 11px; font-weight: 600; color: var(--t4); flex-shrink: 0; margin-left: auto; }
     .mail-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 16px; text-align: center; }
 
+    /* ══════════ PANEL DE PROGRESO ══════════ */
+    .prog-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
+    .prog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 26px; }
+    .prog-h { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 800; color: var(--t3); margin-bottom: 14px; }
+    /* Heatmap: una columna por semana, 7 filas (lun a dom) */
+    .heat-wrap { display: flex; gap: 8px; align-items: flex-start; overflow-x: auto; padding-bottom: 6px; scrollbar-width: thin; }
+    .heat-dias { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; flex-shrink: 0; }
+    .heat-dia-lbl { font-size: 9px; font-weight: 700; color: var(--t4); line-height: 13px; }
+    .heat-cols { display: flex; gap: 3px; }
+    .heat-col { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; }
+    .heat-c { width: 13px; height: 13px; border-radius: 3px; background: var(--surf3); transition: transform .12s; }
+    .heat-c:hover { transform: scale(1.35); }
+    .heat-c.n1 { background: #1F4A28; } .heat-c.n2 { background: #2F7A3D; }
+    .heat-c.n3 { background: #4FB25C; } .heat-c.n4 { background: #86E88F; }
+    .heat-c.futuro { background: transparent; }
+    .heat-leyenda { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 10px; font-weight: 600; color: var(--t4); }
+    .heat-leyenda .heat-c { width: 11px; height: 11px; }
+    /* Barritas de tareas por semana */
+    .barras { display: flex; align-items: flex-end; gap: 7px; height: 120px; }
+    .barra-col { flex: 1; display: flex; flex-direction: column; align-items: center; gap: 6px; min-width: 0; }
+    .barra { width: 100%; background: var(--peri); border-radius: 5px 5px 2px 2px; min-height: 3px; transition: height .3s; }
+    .barra.cero { background: var(--surf4); }
+    .barra-num { font-size: 11px; font-weight: 800; color: var(--t2); font-variant-numeric: tabular-nums; }
+    .barra-lbl { font-size: 9px; font-weight: 700; color: var(--t4); white-space: nowrap; }
+    /* Reparto por etiqueta */
+    .reparto-fila { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
+    .reparto-lbl { font-size: 11px; font-weight: 800; width: 78px; flex-shrink: 0; color: var(--tc); }
+    .reparto-track { flex: 1; height: 9px; border-radius: 99px; background: var(--surf3); overflow: hidden; }
+    .reparto-fill { height: 100%; border-radius: 99px; background: var(--tc); transition: width .35s; }
+    .reparto-num { font-size: 11px; font-weight: 700; color: var(--t3); white-space: nowrap; flex-shrink: 0; min-width: 84px; text-align: right; }
+    .prog-vacio { font-size: 13px; font-weight: 500; color: var(--t4); }
+
     /* ══════════ MODAL DEL DOMINGO ══════════ */
     .modal-fondo {
       position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,0.72);
@@ -618,6 +650,17 @@
     </div>
     <textarea class="diario-txt" id="diario-txt" placeholder="¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar..." oninput="onDiarioInput(this)"></textarea>
     <div class="diario-historial" id="diario-historial"></div>
+  </div>
+
+  <!-- Panel de progreso -->
+  <div class="prog-card">
+    <div class="card-hd">
+      <div>
+        <div class="card-label" style="color:var(--peri)">· Tu progreso ·</div>
+        <div class="card-title">Los últimos 3 meses</div>
+      </div>
+    </div>
+    <div class="prog-grid" id="prog-grid"></div>
   </div>
 
   <!-- Mails sin responder -->
@@ -1682,6 +1725,130 @@ function renderDiarioHistorial(){
   }).join('');
 }
 
+/* ═══════════════════ PANEL DE PROGRESO ═══════════════════ */
+/* Arma de una sola pasada el historial que ya esta guardado:
+   habitos por dia (claves wk_*) y tareas por semana (claves tareas_wk_*) */
+function armarHistorial(){
+  var habitosPorDia={};   /* 'AAAA-M-D' -> cuantos habitos cumplidos */
+  var semanas={};         /* 'wk_...'   -> {lunes, hechas, total, porTag:{}, segPorTag:{}} */
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var key=localStorage.key(i);
+      var mh=/^wk_(\d+)_(\d+)_(\d+)$/.exec(key);
+      if(mh){
+        var dh=null;
+        try{ dh=JSON.parse(localStorage.getItem(key)); }catch(e){ continue; }
+        if(!dh||!Array.isArray(dh.checks)) continue;
+        var lunH=new Date(+mh[1],+mh[2],+mh[3]);
+        for(var d=0; d<7; d++){
+          var f=new Date(lunH); f.setDate(lunH.getDate()+d);
+          var n=0;
+          for(var h=0; h<9; h++) if(dh.checks[h] && dh.checks[h][d]) n++;
+          habitosPorDia[claveDia(f)]=n;
+        }
+        continue;
+      }
+      var mt=/^tareas_wk_(\d+)_(\d+)_(\d+)$/.exec(key);
+      if(mt){
+        var dt=null;
+        try{ dt=JSON.parse(localStorage.getItem(key)); }catch(e){ continue; }
+        if(!dt||!Array.isArray(dt.dias)) continue;
+        var reg={lunes:new Date(+mt[1],+mt[2],+mt[3]), hechas:0, total:0, porTag:{}, segPorTag:{}};
+        dt.dias.forEach(function(dia){
+          (dia||[]).forEach(function(t){
+            reg.total++;
+            if(t.hecha){
+              reg.hechas++;
+              var k=t.tag||'_'; reg.porTag[k]=(reg.porTag[k]||0)+1;
+            }
+            if(t.segundos>0){ var kt=t.tag||'_'; reg.segPorTag[kt]=(reg.segPorTag[kt]||0)+t.segundos; }
+          });
+        });
+        semanas['wk_'+mt[1]+'_'+mt[2]+'_'+mt[3]]=reg;
+      }
+    }
+  }catch(e){}
+  return {habitosPorDia:habitosPorDia, semanas:semanas};
+}
+
+function nivelHeat(n){
+  if(!n) return '';
+  if(n<=2) return ' n1';
+  if(n<=4) return ' n2';
+  if(n<=6) return ' n3';
+  return ' n4';
+}
+
+function renderProgreso(){
+  var hist=armarHistorial();
+  var hoy=new Date(); hoy.setHours(0,0,0,0);
+
+  /* ── Heatmap: 13 semanas hacia atras, una columna por semana ── */
+  var lunActual=getMonday();
+  var cols=[];
+  for(var w=12; w>=0; w--){
+    var lun=new Date(lunActual); lun.setDate(lunActual.getDate()-w*7);
+    var celdas=[];
+    for(var d=0; d<7; d++){
+      var f=new Date(lun); f.setDate(lun.getDate()+d);
+      var futuro = f.getTime()>hoy.getTime();
+      var n = futuro ? -1 : (hist.habitosPorDia[claveDia(f)]||0);
+      celdas.push('<div class="heat-c'+(futuro?' futuro':nivelHeat(n))+'"'+
+        (futuro?'':' title="'+f.getDate()+' '+MN2[f.getMonth()]+' \u00b7 '+n+' de 9"')+'></div>');
+    }
+    cols.push('<div class="heat-col">'+celdas.join('')+'</div>');
+  }
+  var heat='<div class="heat-wrap">'+
+    '<div class="heat-dias">'+DS.map(function(l){return '<span class="heat-dia-lbl">'+l+'</span>';}).join('')+'</div>'+
+    '<div class="heat-cols">'+cols.join('')+'</div>'+
+  '</div>'+
+  '<div class="heat-leyenda">menos'+
+    '<div class="heat-c"></div><div class="heat-c n1"></div><div class="heat-c n2"></div>'+
+    '<div class="heat-c n3"></div><div class="heat-c n4"></div>m\u00e1s</div>';
+
+  /* ── Tareas cerradas en las ultimas 8 semanas ── */
+  var barras=[], maxB=1;
+  for(var b=7; b>=0; b--){
+    var lb=new Date(lunActual); lb.setDate(lunActual.getDate()-b*7);
+    var k='wk_'+lb.getFullYear()+'_'+lb.getMonth()+'_'+lb.getDate();
+    var reg=hist.semanas[k];
+    var n2=reg?reg.hechas:0;
+    if(n2>maxB) maxB=n2;
+    barras.push({n:n2, lbl:lb.getDate()+' '+MN2[lb.getMonth()]});
+  }
+  var barrasHTML='<div class="barras">'+barras.map(function(x){
+    return '<div class="barra-col">'+
+      '<span class="barra-num">'+x.n+'</span>'+
+      '<div class="barra'+(x.n?'':' cero')+'" style="height:'+Math.max(3,Math.round((x.n/maxB)*88))+'px"></div>'+
+      '<span class="barra-lbl">'+x.lbl+'</span>'+
+    '</div>';
+  }).join('')+'</div>';
+
+  /* ── Reparto por etiqueta, sumando todas las semanas ── */
+  var totTag={}, totSeg={}, granTotal=0;
+  Object.keys(hist.semanas).forEach(function(k){
+    var r=hist.semanas[k];
+    Object.keys(r.porTag).forEach(function(t){ totTag[t]=(totTag[t]||0)+r.porTag[t]; granTotal+=r.porTag[t]; });
+    Object.keys(r.segPorTag).forEach(function(t){ totSeg[t]=(totSeg[t]||0)+r.segPorTag[t]; });
+  });
+  var reparto = granTotal
+    ? TAGS.map(function(tg){
+        var n3=totTag[tg.id]||0, seg=totSeg[tg.id]||0;
+        var pctT=Math.round((n3/granTotal)*100);
+        return '<div class="reparto-fila" style="--tc:'+tg.color+'">'+
+          '<span class="reparto-lbl">'+tg.label+'</span>'+
+          '<div class="reparto-track"><div class="reparto-fill" style="width:'+pctT+'%"></div></div>'+
+          '<span class="reparto-num">'+n3+' tarea'+(n3===1?'':'s')+(seg>=60?' \u00b7 '+fmtDuracion(seg):'')+'</span>'+
+        '</div>';
+      }).join('')
+    : '<div class="prog-vacio">Todav\u00eda no cerraste tareas etiquetadas.</div>';
+
+  document.getElementById('prog-grid').innerHTML=
+    '<div><div class="prog-h">H\u00e1bitos d\u00eda a d\u00eda</div>'+heat+'</div>'+
+    '<div><div class="prog-h">Tareas cerradas por semana</div>'+barrasHTML+'</div>'+
+    '<div><div class="prog-h">Reparto por contexto</div>'+reparto+'</div>';
+}
+
 /* ═══════════════════ RESUMEN DE LA SEMANA (domingo) ═══════════════════ */
 function armarResumen(){
   var f=getWeekDates();
@@ -1872,6 +2039,7 @@ renderTareas();
 renderHabits();
 loadDiario();
 renderDiario();
+renderProgreso();
 
 /* Si el objetivo de un hábito se cumplió mientras el dashboard estaba
    cerrado, queda tildado al abrirlo. Los de tarea cuentan libre, así que
