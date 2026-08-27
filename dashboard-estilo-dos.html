@@ -408,6 +408,86 @@
     .em-date { font-size: 11px; font-weight: 600; color: var(--t4); flex-shrink: 0; margin-left: auto; }
     .mail-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 16px; text-align: center; }
 
+    /* ══════════ MODAL DEL DOMINGO ══════════ */
+    .modal-fondo {
+      position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,0.72);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .22s ease;
+      overflow-y: auto;
+    }
+    .modal-fondo.visible { opacity: 1; pointer-events: auto; }
+    .modal {
+      background: var(--butter); color: #16150A; border-radius: var(--r);
+      padding: 34px 36px 30px; width: min(720px, 100%); max-height: 88vh; overflow-y: auto;
+      position: relative; transform: translateY(16px); transition: transform .22s ease;
+      box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+    }
+    .modal-fondo.visible .modal { transform: translateY(0); }
+    .modal-label {
+      display: inline-block; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase;
+      font-weight: 800; background: rgba(0,0,0,0.13); padding: 7px 13px; border-radius: 100px; margin-bottom: 16px;
+    }
+    .modal-titulo { font-size: 34px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 6px; }
+    .modal-sub { font-size: 14px; font-weight: 600; color: rgba(22,21,10,0.68); margin-bottom: 22px; }
+    .modal-cerrar {
+      position: absolute; top: 26px; right: 26px; width: 34px; height: 34px; border-radius: 100px;
+      border: none; cursor: pointer; background: rgba(0,0,0,0.13); color: #16150A;
+      font-size: 17px; font-weight: 700; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center; transition: background .16s;
+    }
+    .modal-cerrar:hover { background: rgba(0,0,0,0.28); }
+    .modal-bar-wrap { background: rgba(0,0,0,0.14); border-radius: 99px; height: 9px; overflow: hidden; margin-bottom: 24px; }
+    .modal-bar-fill { height: 100%; border-radius: 99px; background: #16150A; }
+    .modal-seccion { margin-bottom: 22px; }
+    .modal-h { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 800; color: rgba(22,21,10,0.6); margin-bottom: 10px; }
+    .modal-chips { display: flex; flex-wrap: wrap; gap: 7px; }
+    .modal-chip {
+      font-size: 11px; font-weight: 800; padding: 7px 13px; border-radius: 100px;
+      background: rgba(0,0,0,0.1); color: #16150A; display: inline-flex; align-items: center; gap: 7px;
+    }
+    .modal-chip b { font-size: 13px; }
+    .modal-dia { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 9px; }
+    .modal-dia-chip {
+      font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 100px; flex-shrink: 0;
+      background: rgba(0,0,0,0.14); min-width: 42px; text-align: center;
+    }
+    .modal-dia-lista { font-size: 13.5px; font-weight: 600; line-height: 1.55; }
+    .modal-vacio { font-size: 13px; font-weight: 600; color: rgba(22,21,10,0.55); }
+    .modal-acciones { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
+    .modal-btn {
+      border: none; cursor: pointer; border-radius: 100px; padding: 12px 20px; font-family: var(--ui);
+      font-size: 13px; font-weight: 800; background: #16150A; color: var(--butter); transition: opacity .16s;
+    }
+    .modal-btn:hover { opacity: 0.85; }
+    .modal-btn.suave { background: rgba(0,0,0,0.12); color: #16150A; }
+
+    /* ══════════ DIARIO DE LA SEMANA ══════════ */
+    .diario-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
+    .diario-txt {
+      width: 100%; min-height: 132px; resize: vertical;
+      background: var(--surf2); border: 1px solid var(--line); border-radius: 18px;
+      padding: 16px 18px; color: var(--t1); font-size: 14px; font-weight: 500; line-height: 1.65;
+      outline: none; font-family: var(--ui); transition: border-color .18s;
+    }
+    .diario-txt:focus { border-color: var(--butter); }
+    .diario-txt::placeholder { color: var(--t4); }
+    .diario-guardado { font-size: 11px; font-weight: 700; color: var(--lime); opacity: 0; transition: opacity .2s; }
+    .diario-guardado.visible { opacity: 1; }
+    .diario-historial { margin-top: 18px; }
+    .diario-vieja { border-top: 1px solid var(--line); }
+    .diario-vieja-hd {
+      display: flex; align-items: center; gap: 11px; padding: 13px 4px; cursor: pointer;
+      transition: background .16s; border-radius: 10px;
+    }
+    .diario-vieja-hd:hover { background: var(--surf2); }
+    .diario-flecha { font-size: 10px; color: var(--t4); transition: transform .18s; flex-shrink: 0; width: 12px; }
+    .diario-vieja.abierta .diario-flecha { transform: rotate(90deg); }
+    .diario-fecha { font-size: 12px; font-weight: 800; color: var(--butter); flex-shrink: 0; white-space: nowrap; }
+    .diario-preview { font-size: 12.5px; color: var(--t4); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+    .diario-vieja.abierta .diario-preview { display: none; }
+    .diario-cuerpo { display: none; font-size: 13.5px; line-height: 1.7; color: var(--t2); padding: 2px 4px 16px 27px; white-space: pre-wrap; }
+    .diario-vieja.abierta .diario-cuerpo { display: block; }
+
     /* ── Respaldo y aviso de deshacer ── */
     .status-acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .status-btn {
@@ -527,6 +607,19 @@
     <div id="hb-content"></div>
   </div>
 
+  <!-- Diario de la semana -->
+  <div class="diario-card" id="diario">
+    <div class="card-hd">
+      <div>
+        <div class="card-label" style="color:var(--butter)">· Diario de la semana ·</div>
+        <div class="card-title" id="diario-rango">Semana</div>
+      </div>
+      <div class="diario-guardado" id="diario-guardado">Guardado</div>
+    </div>
+    <textarea class="diario-txt" id="diario-txt" placeholder="¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar..." oninput="onDiarioInput(this)"></textarea>
+    <div class="diario-historial" id="diario-historial"></div>
+  </div>
+
   <!-- Mails sin responder -->
   <div class="mail-card">
     <div class="card-hd">
@@ -544,6 +637,7 @@
     <span class="live-dot"></span>
     <span id="status-txt">Cargando...</span>
     <div class="status-acciones">
+      <button class="status-btn" onclick="abrirResumen()">✦ Resumen de la semana</button>
       <button class="status-btn" onclick="exportarDatos()">⬇ Exportar respaldo</button>
       <button class="status-btn" onclick="pedirImportar()">⬆ Importar respaldo</button>
       <input type="file" id="file-import" accept="application/json,.json" style="display:none" onchange="importarDatos(this)">
@@ -552,6 +646,11 @@
 </div>
 
 <div class="toast" id="toast"></div>
+
+<!-- Resumen del domingo -->
+<div class="modal-fondo" id="modal-fondo" onclick="if(event.target===this) cerrarResumen()">
+  <div class="modal" id="modal-resumen"></div>
+</div>
 
 <script>
 /* ═══════════════════ HELPERS ═══════════════════ */
@@ -1510,6 +1609,173 @@ function renderHabits(){
   }
 }
 
+/* ═══════════════════ DIARIO DE LA SEMANA ═══════════════════ */
+/* Una sola clave con todas las semanas: { "wk_2026_7_24": "texto..." }
+   Asi el historial se recorre de una sin buscar clave por clave. */
+var DIARIO_KEY='journal';
+var diario={};
+var _diarioTimer=null;
+var _diarioAbiertas={};
+
+function loadDiario(){
+  try{
+    var d=JSON.parse(localStorage.getItem(DIARIO_KEY));
+    if(d && typeof d==='object') diario=d;
+  }catch(e){}
+}
+function saveDiario(){
+  try{ localStorage.setItem(DIARIO_KEY,JSON.stringify(diario)); }catch(e){}
+}
+/* Guarda con un respiro, para no escribir en localStorage en cada tecla */
+function onDiarioInput(el){
+  diario[getWeekKey()]=el.value;
+  clearTimeout(_diarioTimer);
+  _diarioTimer=setTimeout(function(){
+    saveDiario();
+    var av=document.getElementById('diario-guardado');
+    if(av){ av.classList.add('visible'); setTimeout(function(){ av.classList.remove('visible'); },1600); }
+    renderDiarioHistorial();
+  },600);
+}
+function toggleDiarioVieja(i){
+  _diarioAbiertas[i]=!_diarioAbiertas[i];
+  renderDiarioHistorial();
+}
+/* Reconstruye el rango de fechas a partir de una clave wk_AAAA_M_D */
+function rangoDeWeekKey(key){
+  var m=/^wk_(\d+)_(\d+)_(\d+)$/.exec(key);
+  if(!m) return key;
+  var lun=new Date(+m[1],+m[2],+m[3]);
+  var dom=new Date(lun); dom.setDate(lun.getDate()+6);
+  return lun.getDate()+' '+MN2[lun.getMonth()]+' \u2014 '+dom.getDate()+' '+MN2[dom.getMonth()];
+}
+function renderDiario(){
+  var f=getWeekDates();
+  document.getElementById('diario-rango').textContent=
+    f[0].getDate()+' '+MN2[f[0].getMonth()]+' \u2014 '+f[6].getDate()+' '+MN2[f[6].getMonth()];
+  var el=document.getElementById('diario-txt');
+  if(el && el!==document.activeElement) el.value=diario[getWeekKey()]||'';
+  renderDiarioHistorial();
+}
+function renderDiarioHistorial(){
+  var actual=getWeekKey();
+  /* Solo semanas anteriores con algo escrito, de la mas nueva a la mas vieja */
+  var claves=Object.keys(diario).filter(function(k){
+    return k!==actual && /^wk_\d+_\d+_\d+$/.test(k) && (diario[k]||'').trim();
+  }).sort(function(a,b){
+    var ma=/^wk_(\d+)_(\d+)_(\d+)$/.exec(a), mb=/^wk_(\d+)_(\d+)_(\d+)$/.exec(b);
+    return new Date(+mb[1],+mb[2],+mb[3]) - new Date(+ma[1],+ma[2],+ma[3]);
+  });
+  var cont=document.getElementById('diario-historial');
+  if(!claves.length){ cont.innerHTML=''; return; }
+  cont.innerHTML=claves.map(function(k,i){
+    var txt=diario[k];
+    var preview=txt.replace(/\s+/g,' ').slice(0,90)+(txt.length>90?'\u2026':'');
+    return '<div class="diario-vieja'+(_diarioAbiertas[i]?' abierta':'')+'">'+
+      '<div class="diario-vieja-hd" onclick="toggleDiarioVieja('+i+')">'+
+        '<span class="diario-flecha">\u25b8</span>'+
+        '<span class="diario-fecha">'+rangoDeWeekKey(k)+'</span>'+
+        '<span class="diario-preview">'+esc(preview)+'</span>'+
+      '</div>'+
+      '<div class="diario-cuerpo">'+esc(txt)+'</div>'+
+    '</div>';
+  }).join('');
+}
+
+/* ═══════════════════ RESUMEN DE LA SEMANA (domingo) ═══════════════════ */
+function armarResumen(){
+  var f=getWeekDates();
+  var hechas=0, total=0, porTag={}, porDia=[], segPorTag={};
+  tareasData.dias.forEach(function(dia,d){
+    var lista=[];
+    dia.forEach(function(t){
+      total++;
+      if(t.hecha){
+        hechas++;
+        lista.push(t.texto);
+        var k=t.tag||'_';
+        porTag[k]=(porTag[k]||0)+1;
+      }
+      if(t.segundos>0){ var kt=t.tag||'_'; segPorTag[kt]=(segPorTag[kt]||0)+t.segundos; }
+    });
+    if(lista.length) porDia.push({d:d, lista:lista});
+  });
+  var pct = total ? Math.round((hechas/total)*100) : 0;
+  var hbTotal=hbData.checks.flat().filter(Boolean).length;
+  var hbPct=Math.round((hbTotal/63)*100);
+  var rachas=calcularRachas();
+  var vivas=HABITS.map(function(h,i){ return {name:h.name, icon:h.icon, r:rachas[i]}; })
+                  .filter(function(x){ return x.r>=2; })
+                  .sort(function(a,b){ return b.r-a.r; });
+  return {f:f, hechas:hechas, total:total, pct:pct, porTag:porTag, porDia:porDia,
+          segPorTag:segPorTag, hbPct:hbPct, hbTotal:hbTotal, vivas:vivas};
+}
+
+function abrirResumen(){
+  var r=armarResumen();
+  var rango=r.f[0].getDate()+' '+MN2[r.f[0].getMonth()]+' \u2014 '+r.f[6].getDate()+' '+MN2[r.f[6].getMonth()];
+
+  var chipsTag=TAGS.map(function(tg){
+    var n=r.porTag[tg.id]||0; if(!n) return '';
+    return '<span class="modal-chip">'+tg.label+' <b>'+n+'</b></span>';
+  }).join('');
+
+  var chipsTiempo=TAGS.map(function(tg){
+    var seg=r.segPorTag[tg.id]||0; if(seg<60) return '';
+    return '<span class="modal-chip">'+tg.label+' <b>'+fmtDuracion(seg)+'</b></span>';
+  }).join('');
+
+  var dias=r.porDia.map(function(x){
+    return '<div class="modal-dia">'+
+      '<span class="modal-dia-chip">'+DS3[x.d]+'</span>'+
+      '<span class="modal-dia-lista">'+x.lista.map(esc).join(' \u00b7 ')+'</span>'+
+    '</div>';
+  }).join('');
+
+  var rachasHTML=r.vivas.length
+    ? r.vivas.slice(0,5).map(function(v){ return '<span class="modal-chip">'+v.icon+' '+esc(v.name)+' <b>\ud83d\udd25'+v.r+'</b></span>'; }).join('')
+    : '<span class="modal-vacio">Todav\u00eda no hay rachas de 2 d\u00edas o m\u00e1s.</span>';
+
+  document.getElementById('modal-resumen').innerHTML=
+    '<button class="modal-cerrar" onclick="cerrarResumen()" title="Cerrar">\u00d7</button>'+
+    '<div class="modal-label">\u00b7 Tu semana \u00b7</div>'+
+    '<div class="modal-titulo">Cerraste '+r.hechas+' de '+r.total+' tareas</div>'+
+    '<div class="modal-sub">'+rango+'</div>'+
+    '<div class="modal-bar-wrap"><div class="modal-bar-fill" style="width:'+r.pct+'%"></div></div>'+
+    (dias
+      ? '<div class="modal-seccion"><div class="modal-h">Lo que hiciste</div>'+dias+'</div>'
+      : '<div class="modal-seccion"><div class="modal-vacio">No tildaste ninguna tarea esta semana.</div></div>')+
+    (chipsTag ? '<div class="modal-seccion"><div class="modal-h">Por contexto</div><div class="modal-chips">'+chipsTag+'</div></div>' : '')+
+    (chipsTiempo ? '<div class="modal-seccion"><div class="modal-h">Tiempo medido</div><div class="modal-chips">'+chipsTiempo+'</div></div>' : '')+
+    '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de 63)</div>'+
+      '<div class="modal-chips">'+rachasHTML+'</div></div>'+
+    '<div class="modal-acciones">'+
+      '<button class="modal-btn" onclick="irAlDiario()">Escribir mi semana \u2193</button>'+
+      '<button class="modal-btn suave" onclick="cerrarResumen()">Cerrar</button>'+
+    '</div>';
+
+  document.getElementById('modal-fondo').classList.add('visible');
+}
+function cerrarResumen(){
+  document.getElementById('modal-fondo').classList.remove('visible');
+  try{ localStorage.setItem('resumen_visto_'+getWeekKey(),'1'); }catch(e){}
+}
+function irAlDiario(){
+  cerrarResumen();
+  var d=document.getElementById('diario');
+  if(d) d.scrollIntoView({behavior:'smooth', block:'center'});
+  setTimeout(function(){ var t=document.getElementById('diario-txt'); if(t) t.focus(); },600);
+}
+/* Domingo y todavia no lo viste esta semana */
+function quizasAbrirResumen(){
+  if(new Date().getDay()!==0) return;
+  try{ if(localStorage.getItem('resumen_visto_'+getWeekKey())) return; }catch(e){}
+  abrirResumen();
+}
+document.addEventListener('keydown',function(e){
+  if(e.key==='Escape' && document.getElementById('modal-fondo').classList.contains('visible')) cerrarResumen();
+});
+
 /* ═══════════════════ MAILS SIN RESPONDER ═══════════════════ */
 
 /* Datos de ejemplo. Tienen la MISMA forma que va a devolver Gmail:
@@ -1604,6 +1870,8 @@ loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
 renderTareas();
 renderHabits();
+loadDiario();
+renderDiario();
 
 /* Si el objetivo de un hábito se cumplió mientras el dashboard estaba
    cerrado, queda tildado al abrirlo. Los de tarea cuentan libre, así que
@@ -1614,6 +1882,7 @@ if(timerActivo){
 }
 
 actualizarMails();
+quizasAbrirResumen();   /* solo los domingos, y una vez por domingo */
 
 /* Refresco automático de los mails: cada 5 min y al volver a la pestaña */
 setInterval(actualizarMails,5*60*1000);
