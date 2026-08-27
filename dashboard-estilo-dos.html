@@ -358,6 +358,33 @@
     .em-date { font-size: 11px; font-weight: 600; color: var(--t4); flex-shrink: 0; margin-left: auto; }
     .mail-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 16px; text-align: center; }
 
+    /* ── Respaldo y aviso de deshacer ── */
+    .status-acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
+    .status-btn {
+      border: 1px solid var(--line); background: var(--surf); color: var(--t3);
+      border-radius: 100px; padding: 8px 16px; font-size: 11px; font-weight: 700;
+      font-family: var(--ui); cursor: pointer; transition: all .16s;
+    }
+    .status-btn:hover { border-color: var(--line2); color: var(--t1); }
+    /* Aviso flotante con el boton de deshacer */
+    .toast {
+      position: fixed; left: 24px; bottom: 24px; z-index: 60;
+      display: flex; align-items: center; gap: 14px;
+      background: var(--surf3); border: 1px solid var(--line2); border-radius: 100px;
+      padding: 11px 12px 11px 20px; font-size: 13px; font-weight: 600; color: var(--t1);
+      box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+      opacity: 0; transform: translateY(14px); pointer-events: none;
+      transition: opacity .2s ease, transform .2s ease;
+    }
+    .toast.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .toast-btn {
+      border: none; cursor: pointer; border-radius: 100px; padding: 7px 15px;
+      background: var(--lime); color: #0A1A0C; font-size: 12px; font-weight: 800; font-family: var(--ui);
+      transition: background .16s;
+    }
+    .toast-btn:hover { background: #A2F0A9; }
+    @media (max-width: 560px) { .toast { left: 14px; right: 14px; bottom: 14px; } }
+
     /* Status */
     .status-bar { text-align: center; padding-top: 32px; font-size: 11px; font-weight: 600; color: var(--t4); }
     .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); margin-right: 8px; vertical-align: middle; animation: blink 2.5s ease-in-out infinite; }
@@ -466,8 +493,15 @@
   <div class="status-bar">
     <span class="live-dot"></span>
     <span id="status-txt">Cargando...</span>
+    <div class="status-acciones">
+      <button class="status-btn" onclick="exportarDatos()">⬇ Exportar respaldo</button>
+      <button class="status-btn" onclick="pedirImportar()">⬆ Importar respaldo</button>
+      <input type="file" id="file-import" accept="application/json,.json" style="display:none" onchange="importarDatos(this)">
+    </div>
   </div>
 </div>
+
+<div class="toast" id="toast"></div>
 
 <script>
 /* ═══════════════════ HELPERS ═══════════════════ */
@@ -691,7 +725,9 @@ function toggleTarea(diaIdx,i){
 }
 function deleteTarea(diaIdx,i,ev){
   if(ev) ev.stopPropagation();      /* que el click no dispare también el toggle */
-  tareasData.dias[diaIdx].splice(i,1);
+  var t=tareasData.dias[diaIdx].splice(i,1)[0];
+  _undo={key:null, dia:diaIdx, idx:i, tarea:t};   /* guardamos DE DÓNDE salió, para devolverla ahí */
+  mostrarUndo('Tarea borrada');
   saveTareas(); renderTareas();
 }
 /* Click en la pill: cicla uni → agencia → personal → proyectos → sin etiqueta */
@@ -884,8 +920,91 @@ function moverPendAHoy(i){
 }
 function descartarPend(i){
   var p=_pendCache[i]; if(!p) return;
-  quitarDeOrigen(p);
+  var t=quitarDeOrigen(p);
+  if(t){ _undo={key:p.key, dia:p.dia, idx:p.idx, tarea:t}; mostrarUndo('Tarea descartada'); }
   saveTareas(); renderTareas();
+}
+
+/* ═══════════════════ DESHACER ═══════════════════ */
+/* Un solo nivel: la última acción. Es lo que se usa en la práctica. */
+var _undo=null, _undoTimer=null;
+
+function mostrarUndo(texto){
+  clearTimeout(_undoTimer);
+  var el=document.getElementById('toast'); if(!el) return;
+  el.innerHTML='<span>'+esc(texto)+'</span><button class="toast-btn" onclick="deshacer()">Deshacer</button>';
+  el.classList.add('visible');
+  _undoTimer=setTimeout(function(){ ocultarUndo(); _undo=null; },6000);
+}
+function ocultarUndo(){
+  var el=document.getElementById('toast'); if(el) el.classList.remove('visible');
+}
+function deshacer(){
+  if(!_undo) return;
+  var u=_undo; _undo=null;
+  clearTimeout(_undoTimer); ocultarUndo();
+  if(u.key===null){
+    /* splice con 0 borrados la reinserta en su posición original, no al final */
+    tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
+    saveTareas();
+  } else {
+    var data=leerSemanaKey(u.key);
+    if(data){ data.dias[u.dia].splice(u.idx,0,u.tarea); guardarSemanaKey(u.key,data); }
+  }
+  renderTareas();
+}
+
+/* ═══════════════════ RESPALDO ═══════════════════ */
+/* Marca para reconocer que un .json es realmente un backup de este dashboard */
+var BACKUP_MARCA='mi-dashboard';
+
+function exportarDatos(){
+  var salida={_app:BACKUP_MARCA, _version:1, _fecha:new Date().toISOString(), datos:{}};
+  try{
+    for(var i=0;i<localStorage.length;i++){
+      var k=localStorage.key(i);
+      salida.datos[k]=localStorage.getItem(k);
+    }
+  }catch(e){}
+  var blob=new Blob([JSON.stringify(salida,null,2)],{type:'application/json'});
+  var url=URL.createObjectURL(blob);
+  var d=new Date();
+  var a=document.createElement('a');
+  a.href=url;
+  a.download='dashboard-'+d.getFullYear()+'-'+String(d.getMonth()+1).padStart(2,'0')+'-'+String(d.getDate()).padStart(2,'0')+'.json';
+  document.body.appendChild(a); a.click(); document.body.removeChild(a);
+  setTimeout(function(){ URL.revokeObjectURL(url); },1000);
+  document.getElementById('status-txt').textContent='Respaldo descargado · '+Object.keys(salida.datos).length+' claves';
+}
+
+function pedirImportar(){ document.getElementById('file-import').click(); }
+
+function importarDatos(input){
+  var f=input.files && input.files[0]; if(!f) return;
+  var lector=new FileReader();
+  lector.onload=function(){
+    var obj=null;
+    try{ obj=JSON.parse(lector.result); }catch(e){}
+    if(!obj || obj._app!==BACKUP_MARCA || !obj.datos){
+      alert('Ese archivo no es un respaldo de este dashboard.');
+      input.value=''; return;
+    }
+    var claves=Object.keys(obj.datos);
+    var semTareas=claves.filter(function(k){ return /^tareas_wk_/.test(k); }).length;
+    var semHabitos=claves.filter(function(k){ return /^wk_\d+_\d+_\d+$/.test(k); }).length;
+    var msg='Respaldo del '+(obj._fecha?obj._fecha.slice(0,10):'?')+'\n\n'+
+      semTareas+' semanas de tareas\n'+semHabitos+' semanas de hábitos\n\n'+
+      'Esto REEMPLAZA todo lo que tenés guardado ahora. ¿Seguir?';
+    if(!confirm(msg)){ input.value=''; return; }
+    try{
+      localStorage.clear();
+      claves.forEach(function(k){ localStorage.setItem(k,obj.datos[k]); });
+    }catch(e){
+      alert('No se pudo guardar el respaldo.'); input.value=''; return;
+    }
+    location.reload();
+  };
+  lector.readAsText(f);
 }
 
 /* ═══════════════════ HABIT TRACKER ═══════════════════ */
