@@ -18,7 +18,8 @@ mensaje de commit no alcanza a contar.
 | 2026-08-24 | [Etiquetas, arrastre entre semanas y rachas](2026-08-24-etiquetas-arrastre-rachas.md) | `4538b7b` `8469bf0` |
 | 2026-08-27 | [Layout: hoy y semana a todo el ancho](2026-08-27-layout-hoy-y-semana.md) | `da901c9` |
 | 2026-08-27 | [Respaldo, tiempo medido y cierre de semana](2026-08-27-respaldo-tiempo-y-cierre-de-semana.md) | `1b733ca` → `12f097c` |
-| 2026-08-28 | [Tarjetas de la semana parejas](2026-08-28-tarjetas-parejas.md) | (este) |
+| 2026-08-28 | [Tarjetas de la semana parejas](2026-08-28-tarjetas-parejas.md) | `a8b3d16` `428e93f` `2bdc64b` |
+| 2026-08-28 | [Mover tareas entre días arrastrando](2026-08-28-mover-tareas-arrastrando.md) | (este) |
 
 ## Aviso sobre los cuatro primeros
 

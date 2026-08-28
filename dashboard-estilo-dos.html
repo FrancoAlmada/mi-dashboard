@@ -289,6 +289,18 @@
     .dia-tareas::-webkit-scrollbar { width: 5px; }
     .dia-tareas::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
     .dia-tareas::-webkit-scrollbar-track { background: transparent; }
+    /* Arrastrar tareas entre dias */
+    .dia-card .task[draggable="true"] { cursor: grab; }
+    .dia-card .task[draggable="true"]:active { cursor: grabbing; }
+    .task.arrastrando { opacity: 0.35; }
+    /* El destino es la tarjeta ENTERA: las tarjetas cargadas tienen la lista
+       llena y con scroll, asi que si solo fuera la lista no habria donde soltar */
+    .dia-card.destino {
+      border-color: var(--lime);
+      background: rgba(134,232,143,0.10);
+    }
+    .dia-card.destino .dia-chip { background: var(--lime); color: #0A0A0A; }
+
     /* Aviso de que quedan tareas abajo.
        Cuando el dia desborda, el aviso ocupa su lugar SIEMPRE y solo se
        desvanece con opacity: si se ocultara con display, la tarjeta cambiaria
@@ -1069,7 +1081,7 @@ function onAddKey(ev,diaIdx,el){
 
 /* Dibuja una fila de tarea reutilizable.
    conTimer solo va en la tarjeta de hoy: en las tarjetas de día angostas no hay lugar. */
-function tareaHTML(diaIdx,t,i,conTimer){
+function tareaHTML(diaIdx,t,i,conTimer,arrastrable){
   var tg=tagById(t.tag);
   var pill = tg
     ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
@@ -1105,8 +1117,17 @@ function tareaHTML(diaIdx,t,i,conTimer){
     }
   }
 
+  /* El arrastre va SOLO en el grid de la semana. Se identifica la tarea por id
+     y no por indice: al soltar, el array de origen se reordena y el indice
+     dejaria de apuntar a la misma tarea. */
+  var dragAttrs = arrastrable
+    ? ' draggable="true"'+
+      ' ondragstart="onDragStart(event,'+diaIdx+',\''+t.id+'\')"'+
+      ' ondragend="onDragEnd(event)"'
+    : '';
+
   return '<div>'+
-    '<div class="task" onclick="toggleTarea('+diaIdx+','+i+')">'+
+    '<div class="task"'+dragAttrs+' onclick="toggleTarea('+diaIdx+','+i+')">'+
       '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
       '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
       tiempoHTML+
@@ -1172,14 +1193,15 @@ function renderSemana(hoyIdx,fechas){
     var visibles=tareas.filter(pasaFiltro);
     var hechas=visibles.filter(function(t){return t.hecha;}).length;
     var cls='dia-card'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
-    return '<div class="'+cls+'">'+
+    return '<div class="'+cls+'" data-dia-card="'+d+'"'+
+      ' ondragover="onDragOver(event,'+d+')" ondragleave="onDragLeave(event,'+d+')" ondrop="onDrop(event,'+d+')">'+
       '<div class="dia-hd">'+
         '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
         '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
         (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
       '</div>'+
       (visibles.length
-        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i); }).join('')+'</div>'+
+        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i,false,true); }).join('')+'</div>'+
           '<div class="dia-mas" id="dia-mas-'+d+'" style="display:none"></div>'
         : '<div class="dia-vacio">Sin tareas</div>')+
       '<div class="add-wrap">'+
@@ -1233,6 +1255,79 @@ function actualizarAvisosMas(){
       c.onscroll=function(){ refrescarAviso(c); };
     })(conts[i]);
   }
+}
+
+/* ═══════════════════ ARRASTRAR TAREAS ENTRE DÍAS ═══════════════════ */
+/* Solo en el grid de "Toda la semana". Se guarda de dónde salió y qué tarea
+   es (por id, no por índice: el array se reordena al soltar). */
+var _dragDia=null, _dragId=null;
+
+function onDragStart(ev,diaIdx,id){
+  _dragDia=diaIdx; _dragId=id;
+  try{
+    ev.dataTransfer.effectAllowed='move';
+    /* Firefox no arranca el arrastre si no se setea algo acá */
+    ev.dataTransfer.setData('text/plain',id);
+  }catch(e){}
+  var fila=ev.currentTarget;
+  setTimeout(function(){ fila.classList.add('arrastrando'); },0);
+}
+function onDragEnd(ev){
+  _dragDia=null; _dragId=null;
+  limpiarDestinos();
+  var f=document.querySelector('.task.arrastrando');
+  if(f) f.classList.remove('arrastrando');
+}
+function limpiarDestinos(){
+  var c=document.querySelectorAll('.dia-card.destino');
+  for(var i=0;i<c.length;i++) c[i].classList.remove('destino');
+}
+function onDragOver(ev,diaIdx){
+  if(_dragId===null) return;              /* algo arrastrado de afuera */
+  ev.preventDefault();                    /* sin esto el navegador no deja soltar */
+  try{ ev.dataTransfer.dropEffect='move'; }catch(e){}
+  if(diaIdx===_dragDia) return;           /* su propio día no se resalta */
+  ev.currentTarget.classList.add('destino');
+}
+function onDragLeave(ev,diaIdx){
+  /* dragleave también salta al pasar sobre los hijos: se ignora si el puntero
+     sigue dentro de la tarjeta */
+  if(ev.currentTarget.contains(ev.relatedTarget)) return;
+  ev.currentTarget.classList.remove('destino');
+}
+function onDrop(ev,diaDestino){
+  ev.preventDefault();
+  limpiarDestinos();
+  if(_dragId===null || _dragDia===null) return;
+  moverTareaADia(_dragDia,_dragId,diaDestino);
+  _dragDia=null; _dragId=null;
+}
+
+/* Mueve la tarea y deja al día lo que depende del día */
+function moverTareaADia(diaOrigen,tareaId,diaDestino){
+  if(diaOrigen===diaDestino) return;                    /* soltar en su propio día no hace nada */
+  var origen=tareasData.dias[diaOrigen]; if(!origen) return;
+  var pos=-1;
+  for(var i=0;i<origen.length;i++) if(origen[i].id===tareaId){ pos=i; break; }
+  if(pos<0) return;
+
+  /* La tarea viaja entera: texto, etiqueta, tildado y segundos medidos */
+  var t=origen.splice(pos,1)[0];
+  tareasData.dias[diaDestino].push(t);
+
+  /* El cronómetro guarda el día de la tarea que mide. Si no se actualiza,
+     buscarTarea() falla y al pararlo el tiempo se pierde sin avisar. */
+  if(timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===tareaId){
+    timerActivo.diaIdx=diaDestino;
+    saveTimer();
+  }
+  /* El selector de recurrencia quedaría colgado sobre una fila que ya no está */
+  if(_repAbierto===tareaId) _repAbierto=null;
+
+  _undo={tipo:'mover', key:null, dia:diaOrigen, idx:pos, tarea:t, destino:diaDestino};
+  mostrarUndo('Tarea movida al '+DF[diaDestino].toLowerCase());
+
+  saveTareas(); renderTareas();
 }
 
 /* ═══════════════════ TAREAS NO COMPLETADAS ═══════════════════ */
@@ -1345,6 +1440,17 @@ function deshacer(){
   if(!_undo) return;
   var u=_undo; _undo=null;
   clearTimeout(_undoTimer); ocultarUndo();
+  /* Un movimiento se deshace sacándola del destino y devolviéndola a su lugar */
+  if(u.tipo==='mover'){
+    var dest=tareasData.dias[u.destino];
+    for(var k=0;k<dest.length;k++) if(dest[k].id===u.tarea.id){ dest.splice(k,1); break; }
+    tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
+    if(timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===u.tarea.id){
+      timerActivo.diaIdx=u.dia; saveTimer();
+    }
+    saveTareas(); renderTareas();
+    return;
+  }
   if(u.key===null){
     /* splice con 0 borrados la reinserta en su posición original, no al final */
     tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
