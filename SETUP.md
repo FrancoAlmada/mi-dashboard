@@ -60,7 +60,15 @@ De acá en más, cada `git push` actualiza la app en los tres dispositivos.
 
 ### B2. Crear la tabla
 
-En el menú de la izquierda: **SQL Editor** → **New query**. Pegá esto y dale **Run**:
+En el menú de la izquierda: **SQL Editor** → **New query**.
+
+Abrí el archivo **`supabase.sql`** de este proyecto, copiá todo su contenido y
+pegalo ahí. Dale **Run**.
+
+> Si preferís copiarlo de acá abajo, copiá **solo lo que está adentro del
+> recuadro**. Las triples comillas de arriba y de abajo son formato de este
+> documento, no son parte del código: si las pegás, Supabase da un error de
+> sintaxis en la primera línea.
 
 ```sql
 -- Una fila por cada cosa que el dashboard guarda.
