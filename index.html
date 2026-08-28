@@ -824,7 +824,9 @@ var META_KEY='sync_meta';          /* {clave: cuándo cambió acá} */
 var _pendientes={};                /* claves esperando subir */
 var _subirTimer=null;
 
-function seSincroniza(clave){ return NO_SINCRONIZAR.indexOf(clave)<0; }
+function seSincroniza(clave){ return NO_SINCRONIZAR.indexOf(clave)<0 && !esClaveDeSesion(clave); }
+/* Supabase guarda tu sesión en localStorage con claves que arrancan con 'sb-' */
+function esClaveDeSesion(clave){ return /^sb-/.test(clave||''); }
 
 function leerMeta(){
   try{ return JSON.parse(localStorage.getItem(META_KEY))||{}; }catch(e){ return {}; }
@@ -1696,6 +1698,9 @@ function exportarDatos(){
   try{
     for(var i=0;i<localStorage.length;i++){
       var k=localStorage.key(i);
+      /* Fuera la sesión de Supabase (es un token, no un dato tuyo) y las
+         marcas de tiempo de la sincronización, que se regeneran al importar */
+      if(esClaveDeSesion(k) || k===META_KEY) continue;
       salida.datos[k]=localStorage.getItem(k);
     }
   }catch(e){}
@@ -1730,8 +1735,23 @@ function importarDatos(input){
       'Esto REEMPLAZA todo lo que tenés guardado ahora. ¿Seguir?';
     if(!confirm(msg)){ input.value=''; return; }
     try{
+      /* Se guarda la sesión aparte: el clear() de abajo la borraría y te
+         dejaría deslogueado justo después de importar */
+      var sesion={};
+      for(var j=0;j<localStorage.length;j++){
+        var ks=localStorage.key(j);
+        if(esClaveDeSesion(ks)) sesion[ks]=localStorage.getItem(ks);
+      }
       localStorage.clear();
+      Object.keys(sesion).forEach(function(k){ localStorage.setItem(k,sesion[k]); });
       claves.forEach(function(k){ localStorage.setItem(k,obj.datos[k]); });
+
+      /* Todo lo importado cuenta como recién cambiado. Sin esto, la capa de
+         sincronización no tendría forma de saber que hay que subirlo y los
+         datos quedarían solo en este dispositivo. */
+      var meta={}, ahora=Date.now();
+      claves.forEach(function(k){ if(seSincroniza(k)) meta[k]=ahora; });
+      localStorage.setItem(META_KEY,JSON.stringify(meta));
     }catch(e){
       alert('No se pudo guardar el respaldo.'); input.value=''; return;
     }
