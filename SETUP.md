@@ -150,3 +150,52 @@ vuelve la conexión. Abajo de todo, al lado de la hora, dice en qué estado est�
 
 **El respaldo sigue existiendo.** Los botones de Exportar e Importar del pie
 siguen andando y son tu red de seguridad, ahora además de la nube.
+
+---
+
+## Instalar la app en cada dispositivo
+
+Hay que hacerlo **una vez por dispositivo**, y en cada uno entrar con tu mail
+y contraseña (después queda recordado).
+
+**Windows (Chrome o Edge)**
+1. Abrí la URL del dashboard
+2. En el extremo derecho de la barra de direcciones hay un ícono de pantalla
+   con una flecha → clic → **Instalar**
+3. Si no aparece: menú **⋮** → *Guardar y compartir* → *Instalar página como aplicación*
+4. Botón derecho sobre el ícono → **Anclar a la barra de tareas**
+
+**Android**: Chrome → menú **⋮** → *Agregar a pantalla de inicio*
+
+**iPhone**: tiene que ser **Safari** → botón compartir → *Agregar a inicio*
+(en iPhone, Chrome no puede instalar apps)
+
+---
+
+## Cómo hacer cambios al dashboard
+
+Guardar el archivo **no alcanza**: el cambio vive en tu notebook hasta que lo subís.
+
+```
+Editás index.html  →  git push  →  GitHub Pages (~1 min)  →  se ve en los 3 dispositivos
+```
+
+```bash
+git add -A
+git commit -m "Lo que cambiaste"
+git push
+```
+
+**Para probar antes de subir**, no abras el archivo con doble click: desde un
+archivo local Supabase no puede conectarse y no vas a ver tus datos. Levantá
+un servidor:
+
+```bash
+python -m http.server 5599
+```
+
+y entrá a `http://localhost:5599`. Ahí funciona igual que el sitio real,
+sincronización incluida.
+
+**Si la app instalada no muestra el cambio**: cerrala y volvé a abrirla, o
+hacé `Ctrl + F5` dentro de su ventana.
