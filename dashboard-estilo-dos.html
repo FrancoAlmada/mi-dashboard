@@ -237,12 +237,11 @@
     .filtro-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 10px; padding: 0 12px; }
 
     /* ── La semana: una tarjeta por día ── */
-    /* align-items:start hace que cada tarjeta mida lo que ocupa su contenido.
-       Con stretch, un dia con 1 tarea quedaba tan alto como uno con 6 y sobraba
-       un hueco enorme; asi el bloque queda compacto. */
     /* 250px para que las tareas entren sin partirse en muchas lineas.
-       align-items:start = cada tarjeta mide lo que ocupa su contenido. */
-    .semana-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 12px; align-items: start; }
+       Sin align-items queda el stretch por defecto del grid: todas las tarjetas
+       de UNA MISMA FILA miden lo mismo, y cada fila se calcula por separado
+       (la fila incompleta del domingo conserva su tamaño chico). */
+    .semana-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px,1fr)); gap: 12px; }
     @media (max-width: 560px) { .semana-grid { grid-template-columns: 1fr; } }
     .dia-card {
       display: flex; flex-direction: column; min-height: 132px;
@@ -261,8 +260,32 @@
     .dia-card.es-hoy .dia-chip { background: var(--lime); color: #0A0A0A; }
     .dia-num { font-size: 11px; font-weight: 600; color: var(--t3); white-space: nowrap; }
     .dia-cant { font-size: 11px; font-weight: 700; color: var(--t4); margin-left: auto; }
-    .dia-vacio { font-size: 12px; font-weight: 500; color: var(--t4); padding: 6px 8px; }
-    .dia-tareas { display: flex; flex-direction: column; }
+    /* Centrado en el hueco: con las tarjetas estiradas, el texto pegado arriba
+       dejaba un vacio raro debajo */
+    .dia-vacio { font-size: 12px; font-weight: 500; color: var(--t4); padding: 6px 8px; flex: 1; display: flex; align-items: center; }
+    /* Techo de altura: sin esto un dia muy cargado estira toda su fila del grid.
+       Las tareas de mas quedan detras del scroll en vez de empujar la altura. */
+    .dia-tareas {
+      display: flex; flex-direction: column; position: relative;
+      max-height: 230px; overflow-y: auto;   /* 6 tareas de una linea (38px c/u), menos si el texto es largo */
+      scrollbar-width: thin; scrollbar-color: var(--line2) transparent;
+    }
+    .dia-tareas::-webkit-scrollbar { width: 5px; }
+    .dia-tareas::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
+    .dia-tareas::-webkit-scrollbar-track { background: transparent; }
+    /* Aviso de que quedan tareas abajo */
+    .dia-mas {
+      font-size: 10.5px; font-weight: 800; color: var(--t3); padding: 7px 8px 2px;
+      display: flex; align-items: center; gap: 5px;
+    }
+    .dia-mas::before {
+      content: ''; display: block; height: 1px; flex: 1;
+      background: linear-gradient(90deg, transparent, var(--line2));
+    }
+    .dia-mas::after {
+      content: ''; display: block; height: 1px; flex: 1;
+      background: linear-gradient(90deg, var(--line2), transparent);
+    }
     .dia-card .task { padding: 7px 8px; gap: 9px; }
     .dia-card .task-text { font-size: 13px; }
     .dia-card .task-box { width: 18px; height: 18px; border-radius: 6px; }
@@ -1076,6 +1099,17 @@ function tareaHTML(diaIdx,t,i,conTimer){
   '</div>';
 }
 
+/* Ordena para dibujar: pendientes arriba, completadas al fondo.
+   Devuelve pares {t, i} donde i es el INDICE REAL en el array; los handlers
+   siguen recibiendo ese indice, no la posicion en el orden nuevo. */
+function itemsOrdenados(tareas){
+  var items=[];
+  tareas.forEach(function(t,i){ if(pasaFiltro(t)) items.push({t:t, i:i}); });
+  /* sort es estable, asi que dentro de cada grupo se conserva el orden de carga */
+  items.sort(function(a,b){ return (a.t.hecha?1:0)-(b.t.hecha?1:0); });
+  return items;
+}
+
 function renderTareas(){
   var hoyIdx=getTodayIdx(), fechas=getWeekDates();
   renderHoy(hoyIdx,fechas);
@@ -1099,9 +1133,7 @@ function renderHoy(hoyIdx,fechas){
   document.getElementById('s-tasks').textContent=visibles.length;
 
   document.getElementById('lista-hoy').innerHTML = visibles.length
-    /* Se recorre el array completo y se saltean las filtradas, así el índice sigue siendo el real.
-       El orden es el de carga: una tarea tildada se queda donde está, no salta de lugar. */
-    ? '<div class="hoy-grid">'+hoy.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(hoyIdx,t,i,true) : ''; }).join('')+'</div>'
+    ? '<div class="hoy-grid">'+itemsOrdenados(hoy).map(function(x){ return tareaHTML(hoyIdx,x.t,x.i,true); }).join('')+'</div>'
     : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
 }
 
@@ -1127,7 +1159,8 @@ function renderSemana(hoyIdx,fechas){
         (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
       '</div>'+
       (visibles.length
-        ? '<div class="dia-tareas">'+tareas.map(function(t,i){ return pasaFiltro(t) ? tareaHTML(d,t,i) : ''; }).join('')+'</div>'
+        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i); }).join('')+'</div>'+
+          '<div class="dia-mas" id="dia-mas-'+d+'" style="display:none"></div>'
         : '<div class="dia-vacio">Sin tareas</div>')+
       '<div class="add-wrap">'+
         '<span class="add-plus">+</span>'+
@@ -1141,6 +1174,39 @@ function renderSemana(hoyIdx,fechas){
     var el=document.getElementById('add-dia-'+_focusDia);
     if(el) el.focus();
     _focusDia=null;
+  }
+
+  actualizarAvisosMas();
+}
+
+/* Cuenta cuantas tareas quedan por debajo del corte y lo avisa.
+   Se MIDE en vez de suponer: una tarea de dos lineas ocupa el doble
+   que una de una, asi que "total menos 6" daria un numero falso. */
+function contarOcultas(cont){
+  if(cont.scrollHeight<=cont.clientHeight+1) return 0;
+  var limite=cont.scrollTop+cont.clientHeight;
+  var n=0;
+  var filas=cont.children;
+  for(var i=0;i<filas.length;i++){
+    if(filas[i].offsetTop+filas[i].offsetHeight > limite+1) n++;
+  }
+  return n;
+}
+function refrescarAviso(cont){
+  var d=cont.getAttribute('data-dia');
+  var av=document.getElementById('dia-mas-'+d);
+  if(!av) return;
+  var n=contarOcultas(cont);
+  if(n>0){ av.textContent='▾ '+n+' más'; av.style.display='flex'; }
+  else av.style.display='none';
+}
+function actualizarAvisosMas(){
+  var conts=document.querySelectorAll('#lista-semana .dia-tareas');
+  for(var i=0;i<conts.length;i++){
+    (function(c){
+      refrescarAviso(c);
+      c.onscroll=function(){ refrescarAviso(c); };
+    })(conts[i]);
   }
 }
 
