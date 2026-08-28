@@ -4,6 +4,14 @@
   <meta charset="UTF-8">
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Dashboard — Franco</title>
+  <!-- App instalable (PWA) -->
+  <link rel="manifest" href="manifest.json">
+  <meta name="theme-color" content="#050505">
+  <link rel="icon" href="favicon.svg" type="image/svg+xml">
+  <link rel="apple-touch-icon" href="icono-192.png">
+  <meta name="apple-mobile-web-app-capable" content="yes">
+  <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+  <meta name="apple-mobile-web-app-title" content="Dashboard">
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -2248,6 +2256,15 @@ if(timerActivo){
 
 actualizarMails();
 quizasAbrirResumen();   /* solo los domingos, y una vez por domingo */
+
+/* ═══════════════════ APP INSTALABLE ═══════════════════ */
+/* El service worker solo anda servido por http/https. Abriendo el archivo
+   con doble click (file://) esto no corre, y el dashboard funciona igual. */
+if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
+  window.addEventListener('load',function(){
+    navigator.serviceWorker.register('sw.js').catch(function(){});
+  });
+}
 
 /* Refresco automático de los mails: cada 5 min y al volver a la pestaña */
 setInterval(actualizarMails,5*60*1000);

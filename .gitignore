@@ -1,3 +1,7 @@
 # Archivos temporales de herramientas de testing
 .playwright-cli/
-*.png
+
+# Los iconos de la app SI van al repo (icono-*.png, favicon.svg):
+# solo se ignoran capturas sueltas de verificacion
+verif-*.png
+zoom-*.png
