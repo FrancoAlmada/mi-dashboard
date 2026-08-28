@@ -12,6 +12,9 @@
   <meta name="apple-mobile-web-app-capable" content="yes">
   <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
   <meta name="apple-mobile-web-app-title" content="Dashboard">
+  <!-- Sincronización entre dispositivos (opcional: si config.js está vacío, no se usa) -->
+  <script src="config.js"></script>
+  <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
   <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
@@ -583,6 +586,36 @@
     .diario-cuerpo { display: none; font-size: 13.5px; line-height: 1.7; color: var(--t2); padding: 2px 4px 16px 27px; white-space: pre-wrap; }
     .diario-vieja.abierta .diario-cuerpo { display: block; }
 
+    /* ══════════ LOGIN ══════════ */
+    .login-fondo {
+      position: fixed; inset: 0; z-index: 90; background: var(--ink);
+      display: flex; align-items: center; justify-content: center; padding: 24px;
+      opacity: 0; pointer-events: none; transition: opacity .2s ease;
+    }
+    .login-fondo.visible { opacity: 1; pointer-events: auto; }
+    .login-caja {
+      background: var(--surf); border: 1px solid var(--line); border-radius: var(--r);
+      padding: 34px 32px 28px; width: min(400px, 100%);
+    }
+    .login-logo { display: flex; gap: 5px; flex-wrap: wrap; width: 46px; margin-bottom: 20px; }
+    .login-logo i { width: 20px; height: 20px; border-radius: 6px; display: block; }
+    .login-titulo { font-size: 26px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .login-sub { font-size: 13px; font-weight: 500; color: var(--t3); margin-bottom: 22px; line-height: 1.5; }
+    .login-input {
+      width: 100%; background: var(--surf2); border: 1px solid var(--line2); border-radius: 14px;
+      padding: 13px 15px; color: var(--t1); font-size: 14px; font-weight: 500;
+      outline: none; font-family: var(--ui); margin-bottom: 10px; transition: border-color .18s;
+    }
+    .login-input:focus { border-color: var(--lime); }
+    .login-input::placeholder { color: var(--t4); }
+    .login-btn {
+      width: 100%; border: none; cursor: pointer; border-radius: 100px; padding: 14px;
+      background: var(--lime); color: #0A1A0C; font-size: 14px; font-weight: 800;
+      font-family: var(--ui); margin-top: 6px; transition: background .16s;
+    }
+    .login-btn:hover { background: #A2F0A9; }
+    .login-msg { font-size: 12px; font-weight: 600; color: var(--tang); margin-top: 14px; min-height: 16px; text-align: center; }
+
     /* ── Respaldo y aviso de deshacer ── */
     .status-acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .status-btn {
@@ -742,8 +775,11 @@
   <div class="status-bar">
     <span class="live-dot"></span>
     <span id="status-txt">Cargando...</span>
+    <span style="margin:0 8px;opacity:.4">·</span>
+    <span id="sync-estado">Solo en este dispositivo</span>
     <div class="status-acciones">
       <button class="status-btn" onclick="abrirResumen()">✦ Resumen de la semana</button>
+      <button class="status-btn" id="btn-salir" onclick="salirDeLaCuenta()" style="display:none">Cerrar sesión</button>
       <button class="status-btn" onclick="exportarDatos()">⬇ Exportar respaldo</button>
       <button class="status-btn" onclick="pedirImportar()">⬆ Importar respaldo</button>
       <input type="file" id="file-import" accept="application/json,.json" style="display:none" onchange="importarDatos(this)">
@@ -753,12 +789,193 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Login: solo aparece si config.js tiene los datos de Supabase -->
+<div class="login-fondo" id="login-fondo">
+  <div class="login-caja">
+    <div class="login-logo">
+      <i style="background:#7FC4F5"></i><i style="background:#F0512E"></i>
+      <i style="background:#86E88F"></i><i style="background:#7B7BF0"></i>
+    </div>
+    <div class="login-titulo">Mi Dashboard</div>
+    <div class="login-sub">Entrá una vez y este dispositivo queda recordado.</div>
+    <form onsubmit="event.preventDefault(); entrar();">
+      <input class="login-input" id="login-mail" type="email" placeholder="Tu mail" autocomplete="username">
+      <input class="login-input" id="login-pass" type="password" placeholder="Tu contraseña" autocomplete="current-password">
+      <button class="login-btn" type="submit">Entrar</button>
+    </form>
+    <div class="login-msg" id="login-msg"></div>
+  </div>
+</div>
+
 <!-- Resumen del domingo -->
 <div class="modal-fondo" id="modal-fondo" onclick="if(event.target===this) cerrarResumen()">
   <div class="modal" id="modal-resumen"></div>
 </div>
 
 <script>
+/* ═══════════════════ GUARDADO Y SINCRONIZACIÓN ═══════════════════ */
+/* Todo el dashboard sigue leyendo de localStorage, que es rápido y anda sin
+   internet. Encima se agrega una capa que sube y baja de Supabase.
+   Este es el ÚNICO punto por el que pasan las escrituras. */
+
+/* Estas claves NO viajan: son de este dispositivo o descartables */
+var NO_SINCRONIZAR = ['timer_activo','mails_cache','ultima_frase','sync_meta'];
+var META_KEY='sync_meta';          /* {clave: cuándo cambió acá} */
+var _pendientes={};                /* claves esperando subir */
+var _subirTimer=null;
+
+function seSincroniza(clave){ return NO_SINCRONIZAR.indexOf(clave)<0; }
+
+function leerMeta(){
+  try{ return JSON.parse(localStorage.getItem(META_KEY))||{}; }catch(e){ return {}; }
+}
+function escribirMeta(m){
+  try{ localStorage.setItem(META_KEY,JSON.stringify(m)); }catch(e){}
+}
+
+/* Guarda en el dispositivo, anota cuándo, y encola la subida */
+function lsSet(clave,valor){
+  try{ localStorage.setItem(clave,valor); }catch(e){ return; }
+  if(!seSincroniza(clave)) return;
+  var m=leerMeta(); m[clave]=Date.now(); escribirMeta(m);
+  _pendientes[clave]=true;
+  encolarSubida();
+}
+function lsDel(clave){
+  try{ localStorage.removeItem(clave); }catch(e){}
+}
+
+/* Se agrupan las subidas: escribir en el diario no manda un pedido por tecla */
+function encolarSubida(){
+  if(!syncActivo()) return;
+  clearTimeout(_subirTimer);
+  _subirTimer=setTimeout(subirPendientes,1500);
+}
+
+/* ── Supabase ── */
+var sb=null, sbUser=null;
+
+function syncConfigurado(){
+  return !!(window.CONFIG && window.CONFIG.SUPABASE_URL && window.CONFIG.SUPABASE_ANON_KEY);
+}
+function syncActivo(){ return !!(sb && sbUser); }
+
+function estadoSync(txt){
+  var el=document.getElementById('sync-estado');
+  if(el) el.textContent=txt;
+}
+
+function initSupabase(){
+  if(!syncConfigurado()) return false;
+  if(typeof supabase==='undefined' || !supabase.createClient) return false;
+  try{
+    sb=supabase.createClient(window.CONFIG.SUPABASE_URL, window.CONFIG.SUPABASE_ANON_KEY);
+    return true;
+  }catch(e){ return false; }
+}
+
+/* Baja todo y se queda con lo más nuevo, clave por clave */
+function bajarTodo(){
+  if(!syncActivo()) return Promise.resolve();
+  estadoSync('Sincronizando...');
+  return sb.from('datos').select('clave,valor,actualizado').then(function(res){
+    if(res.error){ estadoSync('Error al sincronizar'); return; }
+    var m=leerMeta(), cambio=false;
+    (res.data||[]).forEach(function(fila){
+      var remoto=new Date(fila.actualizado).getTime();
+      var local=m[fila.clave]||0;
+      /* Gana el último que guardó */
+      if(remoto>local){
+        try{
+          localStorage.setItem(fila.clave, typeof fila.valor==='string'?fila.valor:JSON.stringify(fila.valor));
+          m[fila.clave]=remoto; cambio=true;
+        }catch(e){}
+      } else if(local>remoto){
+        _pendientes[fila.clave]=true;      /* lo de acá es más nuevo: hay que subirlo */
+      }
+    });
+    escribirMeta(m);
+    /* Lo que existe acá y no está en la nube todavía */
+    Object.keys(m).forEach(function(k){
+      var estaAllá=(res.data||[]).some(function(f){ return f.clave===k; });
+      if(!estaAllá && localStorage.getItem(k)!==null) _pendientes[k]=true;
+    });
+    if(cambio) recargarDesdeStorage();
+    estadoSync('Sincronizado');
+    if(Object.keys(_pendientes).length) encolarSubida();
+  }).catch(function(){ estadoSync('Sin conexión'); });
+}
+
+function subirPendientes(){
+  if(!syncActivo()) return;
+  var claves=Object.keys(_pendientes);
+  if(!claves.length) return;
+  var m=leerMeta();
+  var filas=claves.map(function(k){
+    var v=localStorage.getItem(k);
+    return { user_id:sbUser.id, clave:k, valor:(v===null?'':v),
+             actualizado:new Date(m[k]||Date.now()).toISOString() };
+  });
+  estadoSync('Guardando...');
+  sb.from('datos').upsert(filas,{onConflict:'user_id,clave'}).then(function(res){
+    if(res.error){ estadoSync('Error al guardar'); return; }
+    claves.forEach(function(k){ delete _pendientes[k]; });
+    estadoSync('Sincronizado');
+  }).catch(function(){ estadoSync('Sin conexión'); });
+}
+
+/* Después de bajar datos nuevos hay que volver a dibujar todo */
+function recargarDesdeStorage(){
+  loadPrefs(); loadRecurrentes(); loadTareas(); loadHabits(); loadDiario();
+  hbDates=getWeekDates(); hbTodayIdx=getTodayIdx();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso();
+}
+
+/* ── Login ── */
+function mostrarLogin(mensaje){
+  var el=document.getElementById('login-fondo');
+  if(!el) return;
+  document.getElementById('login-msg').textContent=mensaje||'';
+  el.classList.add('visible');
+}
+function ocultarLogin(){
+  var el=document.getElementById('login-fondo');
+  if(el) el.classList.remove('visible');
+}
+function entrar(){
+  var mail=document.getElementById('login-mail').value.trim();
+  var pass=document.getElementById('login-pass').value;
+  if(!mail||!pass){ document.getElementById('login-msg').textContent='Poné tu mail y tu contraseña.'; return; }
+  document.getElementById('login-msg').textContent='Entrando...';
+  sb.auth.signInWithPassword({email:mail,password:pass}).then(function(res){
+    if(res.error){ document.getElementById('login-msg').textContent='No pude entrar: '+res.error.message; return; }
+    sbUser=res.data.user;
+    ocultarLogin();
+    bajarTodo();
+  });
+}
+function salirDeLaCuenta(){
+  if(!sb) return;
+  sb.auth.signOut().then(function(){ location.reload(); });
+}
+
+/* Arranque de la sincronización. Si no hay config, no pasa nada y el
+   dashboard queda como siempre: local y sin login. */
+function initSync(){
+  if(!syncConfigurado()){ estadoSync('Solo en este dispositivo'); return; }
+  if(!initSupabase()){ estadoSync('No pude cargar Supabase'); return; }
+  document.getElementById('btn-salir').style.display='';
+  sb.auth.getSession().then(function(res){
+    var ses=res.data && res.data.session;
+    if(ses && ses.user){          /* la sesión quedó guardada: entra solo */
+      sbUser=ses.user;
+      bajarTodo();
+    } else {
+      mostrarLogin();
+    }
+  }).catch(function(){ estadoSync('Sin conexión'); });
+}
+
 /* ═══════════════════ HELPERS ═══════════════════ */
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
 
@@ -831,7 +1048,7 @@ function renderFrase(){
   var i;
   /* Elige una al azar, evitando repetir la anterior */
   do { i=Math.floor(Math.random()*FRASES.length); } while(FRASES.length>1 && i===ultima);
-  try{ localStorage.setItem('ultima_frase',String(i)); }catch(e){}
+  lsSet('ultima_frase',String(i));
   document.getElementById('frase-txt').textContent=FRASES[i].frase;
   document.getElementById('frase-bajada').textContent=FRASES[i].bajada;
 }
@@ -859,14 +1076,14 @@ function loadPrefs(){
 /* i es el índice en TAGS; -1 significa "sin etiqueta" */
 function setTagActiva(i){
   tagActiva = i<0 ? null : TAGS[i].id;
-  try{ localStorage.setItem('tag_activa', tagActiva||''); }catch(e){}
+  lsSet('tag_activa', tagActiva||'');
   renderTagChips();
   var el=document.getElementById('add-hoy'); if(el) el.focus();
 }
 /* i es el índice en TAGS; -1 significa "todas" */
 function setFiltro(i){
   filtroTag = i<0 ? null : TAGS[i].id;
-  try{ localStorage.setItem('filtro_tag', filtroTag||''); }catch(e){}
+  lsSet('filtro_tag', filtroTag||'');
   renderTareas();
 }
 /* Una tarea pasa el filtro si no hay filtro o si coincide su etiqueta */
@@ -920,7 +1137,7 @@ function loadRecurrentes(){
   }catch(e){}
 }
 function saveRecurrentes(){
-  try{ localStorage.setItem(REC_KEY,JSON.stringify(recurrentes)); }catch(e){}
+  lsSet(REC_KEY,JSON.stringify(recurrentes));
 }
 function recDeTexto(texto){
   for(var i=0;i<recurrentes.length;i++) if(recurrentes[i].texto===texto) return recurrentes[i];
@@ -1008,7 +1225,7 @@ function loadTareas(){
   if(!habia) generarRecurrentes();
 }
 function saveTareas(){
-  try{ localStorage.setItem(getTareasKey(),JSON.stringify(tareasData)); }catch(e){}
+  lsSet(getTareasKey(),JSON.stringify(tareasData));
 }
 
 /* ── Acceso a semanas que ya pasaron ──────────────────────────────
@@ -1026,7 +1243,7 @@ function leerSemanaKey(key){
   return null;
 }
 function guardarSemanaKey(key,data){
-  try{ localStorage.setItem(key,JSON.stringify(data)); }catch(e){}
+  lsSet(key,JSON.stringify(data));
 }
 /* Devuelve las semanas anteriores a la actual, de la más vieja a la más nueva */
 function listaSemanasViejas(){
@@ -1541,7 +1758,7 @@ function mkDefault(){return{checks:Array.from({length:9},function(){return Array
 var hbData=mkDefault(),hbActiveDay=getTodayIdx(),hbView='day',hbDates=getWeekDates(),hbTodayIdx=getTodayIdx();
 
 function loadHabits(){try{var s=localStorage.getItem(getWeekKey());if(s){hbData=JSON.parse(s);while(hbData.checks.length<9)hbData.checks.push(Array(7).fill(false));}}catch(e){}}
-function saveHabits(){try{localStorage.setItem(getWeekKey(),JSON.stringify(hbData));}catch(e){}}
+function saveHabits(){ lsSet(getWeekKey(),JSON.stringify(hbData)); }
 function toggleHabit(hId,dIdx){hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];saveHabits();renderHabits();}
 function setPriority(dIdx,txt){hbData.priorities[dIdx]=txt;saveHabits();}
 function setHbView(v){
@@ -1628,6 +1845,7 @@ function loadTimer(){
 }
 function saveTimer(){
   try{
+    /* El cronómetro NO se sincroniza: es de este dispositivo */
     if(timerActivo) localStorage.setItem(TIMER_KEY,JSON.stringify(timerActivo));
     else localStorage.removeItem(TIMER_KEY);
   }catch(e){}
@@ -1872,7 +2090,7 @@ function loadDiario(){
   }catch(e){}
 }
 function saveDiario(){
-  try{ localStorage.setItem(DIARIO_KEY,JSON.stringify(diario)); }catch(e){}
+  lsSet(DIARIO_KEY,JSON.stringify(diario));
 }
 /* Guarda con un respiro, para no escribir en localStorage en cada tecla */
 function onDiarioInput(el){
@@ -2130,7 +2348,7 @@ function abrirResumen(){
 }
 function cerrarResumen(){
   document.getElementById('modal-fondo').classList.remove('visible');
-  try{ localStorage.setItem('resumen_visto_'+getWeekKey(),'1'); }catch(e){}
+  lsSet('resumen_visto_'+getWeekKey(),'1');
 }
 function irAlDiario(){
   cerrarResumen();
@@ -2256,6 +2474,10 @@ if(timerActivo){
 
 actualizarMails();
 quizasAbrirResumen();   /* solo los domingos, y una vez por domingo */
+
+/* Sincronización: si config.js está vacío, no hace nada y el dashboard
+   sigue siendo local. El SDK carga con defer, así que se espera al load. */
+window.addEventListener('load',function(){ initSync(); });
 
 /* ═══════════════════ APP INSTALABLE ═══════════════════ */
 /* El service worker solo anda servido por http/https. Abriendo el archivo
