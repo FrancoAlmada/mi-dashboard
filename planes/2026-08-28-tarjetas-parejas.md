@@ -163,3 +163,12 @@ depender de la tipografía. Se aplicó a `.task-del`, `.pend-btn.tirar` y
 `.modal-cerrar`.
 
 Los otros íconos (`▶ ■ ↻ → ▾`) se revisaron con la misma sonda y estaban bien.
+
+**Corrección de la corrección.** El primer intento escondía el carácter `×` con
+`font-size: 0`, pero `.task-del` redefine `font-size: 16px` **más abajo** en la
+hoja de estilos, así que ganaba por orden y el carácter se seguía dibujando
+encima de las barras: se veían **dos equis superpuestas**.
+
+Arreglado sacando el carácter del HTML: los tres botones se generan vacíos
+(con `aria-label` para que sigan siendo accesibles) y la × la dibuja
+exclusivamente el CSS. Así no depende de qué regla de `font-size` gane.

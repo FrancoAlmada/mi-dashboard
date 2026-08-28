@@ -163,7 +163,7 @@
     /* La × de la fuente se dibuja por debajo del centro óptico del botón:
        en un círculo de 24px se nota descentrada. Se reemplaza por dos barras
        rotadas, que quedan clavadas en el centro sin depender de la tipografía. */
-    .task-del, .pend-btn.tirar, .modal-cerrar { font-size: 0; position: relative; }
+    .task-del, .pend-btn.tirar, .modal-cerrar { position: relative; }
     .task-del::before, .task-del::after,
     .pend-btn.tirar::before, .pend-btn.tirar::after,
     .modal-cerrar::before, .modal-cerrar::after {
@@ -1113,7 +1113,7 @@ function tareaHTML(diaIdx,t,i,conTimer){
       pill+
       cronoHTML+
       repHTML+
-      '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar">×</button>'+
+      '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar" aria-label="Borrar"></button>'+
     '</div>'+
     pickerHTML+
   '</div>';
@@ -1286,7 +1286,7 @@ function renderPendientes(hoyIdx){
         '<span class="pend-text" onclick="togglePend('+i+')" title="Marcar como hecha">'+esc(p.texto)+'</span>'+
         (tg?'<span class="tag-pill" style="--tc:'+tg.color+';cursor:default">'+tg.label+'</span>':'')+
         '<button class="pend-btn mover" onclick="moverPendAHoy('+i+')" title="Pasar a hoy">→</button>'+
-        '<button class="pend-btn tirar" onclick="descartarPend('+i+')" title="Descartar">×</button>'+
+        '<button class="pend-btn tirar" onclick="descartarPend('+i+')" title="Descartar" aria-label="Descartar"></button>'+
       '</div>';
     }).join('')+
     '</div>'+
@@ -1995,7 +1995,7 @@ function abrirResumen(){
     : '<span class="modal-vacio">Todav\u00eda no hay rachas de 2 d\u00edas o m\u00e1s.</span>';
 
   document.getElementById('modal-resumen').innerHTML=
-    '<button class="modal-cerrar" onclick="cerrarResumen()" title="Cerrar">\u00d7</button>'+
+    '<button class="modal-cerrar" onclick="cerrarResumen()" title="Cerrar" aria-label="Cerrar"></button>'+
     '<div class="modal-label">\u00b7 Tu semana \u00b7</div>'+
     '<div class="modal-titulo">Cerraste '+r.hechas+' de '+r.total+' tareas</div>'+
     '<div class="modal-sub">'+rango+'</div>'+
