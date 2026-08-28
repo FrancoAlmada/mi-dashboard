@@ -160,6 +160,22 @@
     .rep-acc.quitar { background: transparent; color: var(--t3); border: 1px solid var(--line2); margin-left: 4px; }
     .rep-acc.quitar:hover { border-color: var(--coral); color: var(--coral); }
 
+    /* La × de la fuente se dibuja por debajo del centro óptico del botón:
+       en un círculo de 24px se nota descentrada. Se reemplaza por dos barras
+       rotadas, que quedan clavadas en el centro sin depender de la tipografía. */
+    .task-del, .pend-btn.tirar, .modal-cerrar { font-size: 0; position: relative; }
+    .task-del::before, .task-del::after,
+    .pend-btn.tirar::before, .pend-btn.tirar::after,
+    .modal-cerrar::before, .modal-cerrar::after {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      height: 1.4px; border-radius: 1px; background: currentColor;
+    }
+    .task-del::before, .pend-btn.tirar::before, .modal-cerrar::before { transform: translate(-50%,-50%) rotate(45deg); }
+    .task-del::after,  .pend-btn.tirar::after,  .modal-cerrar::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+    .task-del::before, .task-del::after { width: 10px; }
+    .pend-btn.tirar::before, .pend-btn.tirar::after { width: 11px; height: 1.5px; }
+    .modal-cerrar::before, .modal-cerrar::after { width: 14px; height: 1.8px; }
+
     /* Cronómetro por tarea */
     .task-play {
       flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
@@ -273,10 +289,14 @@
     .dia-tareas::-webkit-scrollbar { width: 5px; }
     .dia-tareas::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
     .dia-tareas::-webkit-scrollbar-track { background: transparent; }
-    /* Aviso de que quedan tareas abajo */
+    /* Aviso de que quedan tareas abajo.
+       Cuando el dia desborda, el aviso ocupa su lugar SIEMPRE y solo se
+       desvanece con opacity: si se ocultara con display, la tarjeta cambiaria
+       de alto al scrollear y, con el grid en stretch, saltaria toda la fila. */
     .dia-mas {
       font-size: 10.5px; font-weight: 800; color: var(--t3); padding: 7px 8px 2px;
       display: flex; align-items: center; gap: 5px;
+      transition: opacity .18s ease; pointer-events: none;
     }
     .dia-mas::before {
       content: ''; display: block; height: 1px; flex: 1;
@@ -1196,9 +1216,14 @@ function refrescarAviso(cont){
   var d=cont.getAttribute('data-dia');
   var av=document.getElementById('dia-mas-'+d);
   if(!av) return;
+  /* Si el día entra completo, el aviso no existe y no ocupa lugar */
+  if(cont.scrollHeight<=cont.clientHeight+1){ av.style.display='none'; return; }
+  /* Si desborda, reserva su espacio siempre y solo cambia la opacidad,
+     para que scrollear no altere la altura de la tarjeta ni de su fila */
+  av.style.display='flex';
   var n=contarOcultas(cont);
-  if(n>0){ av.textContent='▾ '+n+' más'; av.style.display='flex'; }
-  else av.style.display='none';
+  if(n>0) av.textContent='▾ '+n+' más';
+  av.style.opacity = n>0 ? '1' : '0';
 }
 function actualizarAvisosMas(){
   var conts=document.querySelectorAll('#lista-semana .dia-tareas');

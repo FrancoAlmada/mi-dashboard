@@ -130,3 +130,36 @@ Server local temporal (`python -m http.server 5599`) + playwright-cli.
 **Que no se haya roto nada**: agregar desde hoy y desde un día, foco en el input, filtro por etiqueta, bloque de pendientes con → y ×, deshacer, cronómetro por tarea, recurrentes, hábitos, diario, panel de progreso, modal del domingo. Consola sin errores y sin scroll horizontal a 1500 / 1100 / 700 / 420px.
 
 Al terminar: borrar temporales, matar el server y commitear.
+
+---
+
+## Correcciones posteriores (mismo día)
+
+Dos detalles que aparecieron al usarlo:
+
+**1. Al scrollear una tarjeta cargada saltaban todas las de abajo.**
+El aviso `▾ N más` se ocultaba con `display:none` al llegar al fondo del
+scroll. Eso cambiaba la altura de la tarjeta (343px → 320px) y, como el grid
+está en `stretch`, recalculaba **toda la fila** y empujaba lo de abajo.
+
+Solución: cuando el día desborda, el aviso reserva su espacio **siempre** y
+solo cambia la opacidad. `display` únicamente decide si el día desborda o no,
+y ese estado no cambia al scrollear. Verificado: la altura se mantiene en 343px
+arriba, a la mitad y al fondo del scroll.
+
+**2. La × de borrar no estaba centrada en su círculo.**
+El carácter `×` (U+00D7) es un operador matemático: la fuente lo dibuja
+entero por encima de la baseline y el navegador centra la *caja de línea*, no
+el glifo. Resultado: ~1.75px por debajo del centro, que en un círculo de 24px
+se nota.
+
+Medirlo con `Range.getBoundingClientRect()` daba solo -0.5px porque mide la
+caja de línea; se detectó recién con una sonda visual ampliada y una cruz
+marcando el centro real.
+
+Solución: la × pasa a dibujarse con dos pseudo-elementos rotados 45°, centrados
+con `top/left:50%` + `translate(-50%,-50%)`. Queda clavada en el centro sin
+depender de la tipografía. Se aplicó a `.task-del`, `.pend-btn.tirar` y
+`.modal-cerrar`.
+
+Los otros íconos (`▶ ■ ↻ → ▾`) se revisaron con la misma sonda y estaban bien.
