@@ -937,6 +937,7 @@ function recargarDesdeStorage(){
 function mostrarLogin(mensaje){
   var el=document.getElementById('login-fondo');
   if(!el) return;
+  estadoSync('Entrá para sincronizar');
   document.getElementById('login-msg').textContent=mensaje||'';
   el.classList.add('visible');
 }
@@ -966,6 +967,7 @@ function salirDeLaCuenta(){
 function initSync(){
   if(!syncConfigurado()){ estadoSync('Solo en este dispositivo'); return; }
   if(!initSupabase()){ estadoSync('No pude cargar Supabase'); return; }
+  estadoSync('Conectando...');
   document.getElementById('btn-salir').style.display='';
   sb.auth.getSession().then(function(res){
     var ses=res.data && res.data.session;
