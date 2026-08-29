@@ -20,7 +20,8 @@ mensaje de commit no alcanza a contar.
 | 2026-08-27 | [Respaldo, tiempo medido y cierre de semana](2026-08-27-respaldo-tiempo-y-cierre-de-semana.md) | `1b733ca` → `12f097c` |
 | 2026-08-28 | [Tarjetas de la semana parejas](2026-08-28-tarjetas-parejas.md) | `a8b3d16` `428e93f` `2bdc64b` |
 | 2026-08-28 | [Mover tareas entre días arrastrando](2026-08-28-mover-tareas-arrastrando.md) | `86cb0f9` |
-| 2026-08-28 | [App instalable y datos sincronizados](2026-08-28-app-instalable-y-sincronizada.md) | (este) |
+| 2026-08-28 | [App instalable y datos sincronizados](2026-08-28-app-instalable-y-sincronizada.md) | `1a21043` → `d6e37ed` |
+| 2026-08-29 | [Arreglos de pantalla en celular y escritorio](2026-08-29-arreglos-de-pantalla.md) | (este) |
 
 ## Aviso sobre los cuatro primeros
 

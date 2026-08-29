@@ -129,7 +129,12 @@
     .hoy-bar-wrap { background: var(--surf4); border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 20px; }
     .hoy-bar-fill { height: 100%; border-radius: 99px; background: var(--lime); transition: width 0.4s ease; width: 0; }
     /* auto-fill + minmax resuelve el responsive solo: cuantas columnas entren */
-    .hoy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(320px,1fr)); gap: 2px 10px; }
+    /* 360px de minimo hace que nunca entren 4 columnas: el contenido de la
+       tarjeta no pasa de ~1432px y cuatro columnas necesitarian 1470px.
+       Asi el tope de 3 sale solo, sin reglas por tamano de pantalla. */
+    /* El min() evita que en pantallas angostas la columna pida 360px y se
+       desborde de la tarjeta: ahi el minimo pasa a ser el ancho disponible */
+    .hoy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(360px,100%),1fr)); gap: 2px 10px; }
 
     /* ── Task items ── */
     .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; border: none; cursor: pointer; transition: background .16s; }
@@ -448,6 +453,7 @@
     .hb-cell { width: 30px; height: 30px; border-radius: 10px; margin: 0 auto; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--surf3); transition: all 0.15s; font-size: 13px; font-weight: 800; color: #0A0A0A; }
     .hb-cell:hover { border-color: var(--line2); }
     .hb-row-label { font-size: 12.5px; font-weight: 600; color: var(--t2); white-space: nowrap; padding-right: 12px; }
+    .hb-nombre { margin-left: 6px; }
     .hb-sem { font-size: 12px; font-weight: 800; padding-left: 8px; }
     .habit-table tr td { padding-bottom: 5px; }
     .hb-total-row td { padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
@@ -585,6 +591,42 @@
     .diario-vieja.abierta .diario-preview { display: none; }
     .diario-cuerpo { display: none; font-size: 13.5px; line-height: 1.7; color: var(--t2); padding: 2px 4px 16px 27px; white-space: pre-wrap; }
     .diario-vieja.abierta .diario-cuerpo { display: block; }
+
+    /* ══════════ PANTALLAS SIN MOUSE (celular) ══════════ */
+    /* El problema no es el tamaño: es que NO HAY MOUSE. Los botones de la
+       tarea estan hechos para aparecer al pasar el cursor, asi que en el
+       celular no se ven nunca... pero igual reservan 72px de ancho, y al
+       texto le quedaban 114px de 326. La segunda condicion cubre el caso
+       de achicar la ventana en la compu. */
+    @media (hover: none), (max-width: 720px) {
+      .hoy-grid .task { flex-wrap: wrap; row-gap: 8px; padding-bottom: 12px; }
+      /* El texto llena la primera linea y empuja todo lo demas a la segunda */
+      .hoy-grid .task .task-text { flex: 1 1 calc(100% - 32px); }
+      /* Visibles y tocables: hasta ahora no se podia ni borrar desde el celular */
+      .hoy-grid .task .task-play,
+      .hoy-grid .task .task-rep,
+      .hoy-grid .task .task-del { opacity: 1; width: 28px; height: 28px; }
+      /* Alinea el primero de la segunda linea con el texto de arriba.
+         Puede ser el tiempo acumulado o la etiqueta, segun el caso. */
+      .hoy-grid .task .task-tiempo,
+      .hoy-grid .task .tag-pill { margin-left: 32px; }
+      .hoy-grid .task .task-tiempo ~ .tag-pill { margin-left: 0; }
+    }
+
+    /* ══════════ TABLA DE HÁBITOS EN EL CELULAR ══════════ */
+    /* Los 420px de la tabla no entran en los 318 disponibles. Se recupera
+       el ancho escondiendo el nombre (queda el icono) y achicando las
+       celdas, y ese ahorro se gasta en darles separacion: el border-spacing
+       horizontal era 0, por eso los cuadraditos se veian pegados. */
+    @media (max-width: 560px) {
+      .hb-nombre { display: none; }
+      .hb-row-label { padding-right: 4px; }
+      .hb-ico { font-size: 16px; }
+      .habit-table { border-spacing: 4px 5px; }
+      .habit-table th { font-size: 10px; }
+      .hb-cell { width: 24px; height: 24px; border-radius: 8px; font-size: 11px; }
+      .hb-sem { font-size: 11px; padding-left: 2px; }
+    }
 
     /* ══════════ LOGIN ══════════ */
     .login-fondo {
@@ -2080,7 +2122,11 @@ function renderHabits(){
       }).join('');
       var sc=habTotals[h.id]===7?'#86E88F':habTotals[h.id]>=5?'#7FC4F5':habTotals[h.id]>=3?'#F2EE87':'#525252';
       var rc=_rachasCache[h.id]||0;
-      return '<tr><td><span class="hb-row-label">'+h.icon+' '+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span></td>'+cells+
+      /* Icono y nombre van separados para poder esconder el nombre en el celular */
+      return '<tr><td><span class="hb-row-label" title="'+esc(h.name)+'">'+
+          '<span class="hb-ico">'+h.icon+'</span>'+
+          '<span class="hb-nombre">'+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span>'+
+        '</span></td>'+cells+
         '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+sc+'">'+habTotals[h.id]+'/7</span></td>'+
         '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+(rc>=2?'#FF9E4A':'#525252')+'">'+(rc>=2?'🔥 '+rc:'—')+'</span></td></tr>';
     }).join('');
