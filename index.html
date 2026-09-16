@@ -181,6 +181,35 @@
       padding: 8px 14px; border-radius: var(--r-pill); white-space: nowrap; flex-shrink: 0;
     }
 
+    /* ── Navegación entre semanas (Toda la semana / Hábitos / Diario) ── */
+    .card-hd-der { display: flex; align-items: center; gap: 10px; flex-shrink: 0; }
+    .sem-nav { display: inline-flex; align-items: center; gap: 2px; background: var(--surf3); padding: 4px; border-radius: var(--r-pill); }
+    .sem-nav-btn {
+      width: 28px; height: 28px; border: none; border-radius: var(--r-pill); background: transparent; color: var(--t2);
+      cursor: pointer; font-family: var(--ui); font-size: 13px; font-weight: 800; line-height: 1;
+      display: flex; align-items: center; justify-content: center; transition: background .16s, color .16s;
+    }
+    .sem-nav-btn:hover { background: var(--surf4); color: var(--t1); }
+    .sem-nav-btn:disabled { opacity: .3; cursor: default; background: transparent; }
+    .sem-nav-hoy { display: none; width: auto; padding: 0 11px; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; background: var(--t1); color: var(--on-accent); }
+    .sem-nav-hoy:hover { background: var(--t1); color: var(--on-accent); opacity: .85; }
+    .sem-nav.historial .sem-nav-hoy { display: flex; }
+    /* Banner "solo lectura": pegajoso dentro de la zona de las tres tarjetas */
+    .zona-vista { position: relative; }
+    .vista-banner {
+      display: none; align-items: center; gap: 12px; flex-wrap: wrap;
+      position: sticky; top: 10px; z-index: 5; margin-bottom: 14px; padding: 11px 18px;
+      background: var(--surf2); border: 1px dashed var(--butter); border-radius: var(--r-md);
+      font-size: 12.5px; font-weight: 600; color: var(--t2); box-shadow: var(--shadow-toast);
+    }
+    .vista-banner.visible { display: flex; }
+    .vista-banner-ico { color: var(--butter); font-size: 15px; }
+    .vista-banner-txt b { color: var(--t1); font-weight: 800; }
+    .vista-banner-btn { margin-left: auto; border-color: var(--butter); color: var(--t1); }
+    /* Las tarjetas en historial se marcan con el mismo trazo del banner */
+    .card.historial, .habit-card.historial, .diario-card.historial { border-color: var(--butter); border-style: dashed; }
+    @media (max-width: 700px) { .vista-banner { position: static; } }
+
     /* ── Tareas de hoy: barra de progreso + columnas ── */
     /* Mismos valores que la barra de hábitos, pero con su propia clase
        para no acoplar dos secciones distintas al mismo selector */
@@ -324,6 +353,12 @@
       background: rgba(var(--lime-rgb),0.10);
     }
     .dia-card.destino .dia-chip { background: var(--lime); color: var(--on-accent); }
+    /* Historial: solo lectura, todos los días parejos (sin .pasado ni .es-hoy) */
+    .dia-card.historial { padding-bottom: 14px; }
+    .task.ro { cursor: default; }
+    .task.ro:hover { background: transparent; }
+    .tag-pill.ro { cursor: default; }
+    .tag-pill.ro:hover { opacity: 1; }
 
     /* Aviso de que quedan tareas abajo.
        Cuando el dia desborda, el aviso ocupa su lugar SIEMPRE y solo se
@@ -651,6 +686,8 @@
     .diario-txt::placeholder { color: var(--t4); }
     .diario-guardado { font-size: 11px; font-weight: 700; color: var(--lime); opacity: 0; transition: opacity .2s; }
     .diario-guardado.visible { opacity: 1; }
+    .diario-txt[readonly] { border-style: dashed; color: var(--t2); cursor: default; }
+    .diario-txt[readonly]:focus { border-color: var(--line2); }
     .diario-historial { margin-top: 18px; }
     .diario-vieja { border-top: 1px solid var(--line); }
     .diario-vieja-hd {
@@ -924,6 +961,15 @@
   <!-- Tareas No Completadas: franja propia, oculta cuando no hay nada -->
   <div id="lista-pendientes"></div>
 
+  <!-- Las tres tarjetas semanales comparten una misma vista (_semanaVista).
+       El banner es sticky dentro de esta zona: te sigue mientras las recorrés y desaparece al salir -->
+  <div class="zona-vista" id="zona-vista">
+  <div class="vista-banner" id="vista-banner">
+    <span class="vista-banner-ico">◷</span>
+    <span class="vista-banner-txt" id="vista-banner-txt"></span>
+    <button class="status-btn vista-banner-btn" onclick="volverAHoy()">Volver a hoy →</button>
+  </div>
+
   <!-- Toda la semana, a todo el ancho -->
   <div class="card" id="card-semana">
     <div class="card-hd">
@@ -931,21 +977,35 @@
         <div class="card-label">· Toda la semana ·</div>
         <div class="card-title" id="semana-rango">Semana</div>
       </div>
-      <div class="card-count" id="semana-count">0 / 0</div>
+      <div class="card-hd-der">
+        <div class="sem-nav" role="group" aria-label="Cambiar semana">
+          <button class="sem-nav-btn" onclick="irSemana(-1)" title="Semana anterior" aria-label="Semana anterior">←</button>
+          <button class="sem-nav-btn sem-nav-hoy" onclick="volverAHoy()" title="Volver a la semana actual">Hoy</button>
+          <button class="sem-nav-btn sem-nav-sig" onclick="irSemana(1)" title="Semana siguiente" aria-label="Semana siguiente" disabled>→</button>
+        </div>
+        <div class="card-count" id="semana-count">0 / 0</div>
+      </div>
     </div>
     <div id="lista-semana"></div>
   </div>
 
   <!-- Habit Tracker -->
-  <div class="habit-card">
+  <div class="habit-card" id="card-habitos">
     <div class="habit-header">
       <div>
         <div class="card-label">· Tracker de Hábitos ·</div>
         <div class="card-title" id="hb-week-range">Semana</div>
       </div>
-      <div style="text-align:right">
-        <div class="habit-pct-num" id="hb-pct">0%</div>
-        <div class="habit-pct-lbl">completado</div>
+      <div class="card-hd-der">
+        <div class="sem-nav" role="group" aria-label="Cambiar semana">
+          <button class="sem-nav-btn" onclick="irSemana(-1)" title="Semana anterior" aria-label="Semana anterior">←</button>
+          <button class="sem-nav-btn sem-nav-hoy" onclick="volverAHoy()" title="Volver a la semana actual">Hoy</button>
+          <button class="sem-nav-btn sem-nav-sig" onclick="irSemana(1)" title="Semana siguiente" aria-label="Semana siguiente" disabled>→</button>
+        </div>
+        <div style="text-align:right">
+          <div class="habit-pct-num" id="hb-pct">0%</div>
+          <div class="habit-pct-lbl">completado</div>
+        </div>
       </div>
     </div>
     <div class="habit-bar-wrap"><div class="habit-bar-fill" id="hb-bar" style="width:0%"></div></div>
@@ -967,11 +1027,19 @@
         <div class="card-label" style="color:var(--butter)">· Diario de la semana ·</div>
         <div class="card-title" id="diario-rango">Semana</div>
       </div>
-      <div class="diario-guardado" id="diario-guardado">Guardado</div>
+      <div class="card-hd-der">
+        <div class="diario-guardado" id="diario-guardado">Guardado</div>
+        <div class="sem-nav" role="group" aria-label="Cambiar semana">
+          <button class="sem-nav-btn" onclick="irSemana(-1)" title="Semana anterior" aria-label="Semana anterior">←</button>
+          <button class="sem-nav-btn sem-nav-hoy" onclick="volverAHoy()" title="Volver a la semana actual">Hoy</button>
+          <button class="sem-nav-btn sem-nav-sig" onclick="irSemana(1)" title="Semana siguiente" aria-label="Semana siguiente" disabled>→</button>
+        </div>
+      </div>
     </div>
     <textarea class="diario-txt" id="diario-txt" placeholder="¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar..." oninput="onDiarioInput(this)"></textarea>
     <div class="diario-historial" id="diario-historial"></div>
   </div>
+  </div><!-- /zona-vista -->
 
   <!-- Panel de progreso -->
   <div class="prog-card">
@@ -1316,6 +1384,24 @@ function renderVista(){
   renderDiario();
   renderNavSemana();
 }
+/* Estado visual compartido de las tres tarjetas: flechas, botón Hoy, banner y borde */
+function renderNavSemana(){
+  var ro=enHistorial(), i;
+  var navs=document.querySelectorAll('.sem-nav');
+  for(i=0;i<navs.length;i++) navs[i].classList.toggle('historial',ro);
+  var sig=document.querySelectorAll('.sem-nav-sig');
+  for(i=0;i<sig.length;i++) sig[i].disabled=!ro;
+  ['card-semana','card-habitos','diario'].forEach(function(id){ var el=document.getElementById(id); if(el) el.classList.toggle('historial',ro); });
+  var b=document.getElementById('vista-banner');
+  if(!b) return;
+  if(ro){
+    var f=getWeekDatesVista(), n=-_semanaVista;
+    document.getElementById('vista-banner-txt').innerHTML=
+      'Viendo la semana del <b>'+f[0].getDate()+' '+MN2[f[0].getMonth()]+' al '+f[6].getDate()+' '+MN2[f[6].getMonth()]+'</b>'+
+      ' ('+(n===1?'la semana pasada':'hace '+n+' semanas')+') \u00b7 solo lectura';
+  }
+  b.classList.toggle('visible',ro);
+}
 
 function setupHeader(){
   var h=new Date().getHours();
@@ -1552,8 +1638,16 @@ function onAddKey(ev,diaIdx,el){
 }
 
 /* Dibuja una fila de tarea reutilizable. arrastrable solo va en el grid de la semana. */
-function tareaHTML(diaIdx,t,i,arrastrable){
+function tareaHTML(diaIdx,t,i,arrastrable,soloLectura){
   var tg=tagById(t.tag);
+  /* Historial: sin onclick, sin borrar, sin arrastrar; la etiqueta es un span */
+  if(soloLectura){
+    return '<div class="task ro">'+
+        '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
+        '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
+        (tg?'<span class="tag-pill ro" style="--tc:'+tg.color+'" title="'+tg.label+'">'+tg.label+'</span>':'')+
+      '</div>';
+  }
   var pill = tg
     ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
     : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
@@ -1589,7 +1683,7 @@ function itemsOrdenados(tareas){
 function renderTareas(){
   var hoyIdx=getTodayIdx(), fechas=getWeekDates();
   renderHoy(hoyIdx,fechas);
-  renderSemana(hoyIdx,fechas);
+  renderSemana(hoyIdx,getWeekDatesVista());   /* la tarjeta de la semana sigue a la vista; "Hoy" no */
   renderTagChips();
   renderFiltro();
   renderPendientes(hoyIdx);
@@ -1636,34 +1730,42 @@ function renderHoy(hoyIdx,fechas){
 
 /* ── La semana: una tarjeta por día dentro de un grid adaptable ── */
 function renderSemana(hoyIdx,fechas){
+  var ro=enHistorial(), datos=tareasDeVista();
   document.getElementById('semana-rango').textContent=
     fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
 
+  /* El contador de la tarjeta sigue a la semana que se mira (por eso no está en refrescarStats) */
+  var totalSem=0, hechasSem=0;
+  datos.dias.forEach(function(d){ d.forEach(function(t){ totalSem++; if(t.hecha) hechasSem++; }); });
+  document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
+
   document.getElementById('lista-semana').innerHTML='<div class="semana-grid">'+fechas.map(function(fecha,d){
-    var tareas=tareasData.dias[d];
+    var tareas=datos.dias[d];
     var visibles=tareas.filter(pasaFiltro);
     var hechas=tareas.filter(function(t){return t.hecha;}).length;   /* el contador del día es global */
-    var cls='dia-card'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
-    return '<div class="'+cls+'" data-dia-card="'+d+'"'+
-      ' ondragover="onDragOver(event,'+d+')" ondragleave="onDragLeave(event,'+d+')" ondrop="onDrop(event,'+d+')">'+
+    /* En el historial ningún día es "hoy" ni "pasado": todos se ven parejos, sin lavar */
+    var cls='dia-card'+(ro?' historial':(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':''));
+    var drop = ro ? '' : ' ondragover="onDragOver(event,'+d+')" ondragleave="onDragLeave(event,'+d+')" ondrop="onDrop(event,'+d+')"';
+    return '<div class="'+cls+'" data-dia-card="'+d+'"'+drop+'>'+
       '<div class="dia-hd">'+
-        '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
+        '<span class="dia-chip">'+(!ro&&d===hoyIdx?'HOY':DS3[d])+'</span>'+
         '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
         (tareas.length?'<span class="dia-cant">'+hechas+'/'+tareas.length+'</span>':'')+
       '</div>'+
       (visibles.length
-        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(visibles).map(function(x){ return tareaHTML(d,x.t,x.i,true); }).join('')+'</div>'+
+        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(visibles).map(function(x){ return tareaHTML(d,x.t,x.i,!ro,ro); }).join('')+'</div>'+
           '<div class="dia-mas" id="dia-mas-'+d+'" style="display:none"></div>'
         : '<div class="dia-vacio">'+(tareas.length?'Nada de '+nombreFiltro():'Sin tareas')+'</div>')+
+      (ro ? '' :
       '<div class="add-wrap">'+
         '<span class="add-plus">+</span>'+
         '<input class="add-input" id="add-dia-'+d+'" type="text" placeholder="Agregar..." onkeydown="onAddKey(event,'+d+',this)">'+
-      '</div>'+
+      '</div>')+
     '</div>';
   }).join('')+'</div>';
 
   /* Devolver el foco al input donde estaba escribiendo */
-  if(_focusDia!==null){
+  if(!ro && _focusDia!==null){
     var el=document.getElementById('add-dia-'+_focusDia);
     if(el) el.focus();
     _focusDia=null;
@@ -2227,6 +2329,7 @@ function verificarCambioDeFecha(){
   if(semana===_semanaEnMemoria && dia===_diaEnMemoria) return false;
   var que = semana!==_semanaEnMemoria ? 'semana' : 'dia';
   _semanaEnMemoria=semana; _diaEnMemoria=dia;
+  _semanaVista=0;   /* cambió el día real: se vuelve a la semana en curso */
 
   hbDates=getWeekDates(); hbTodayIdx=dia; hbActiveDay=dia;
   setupHeader();
@@ -2235,7 +2338,7 @@ function verificarCambioDeFecha(){
        reset; todas las mutaciones anteriores ya estaban guardadas, no se pierde nada. */
     loadTareas(); loadHabits(); loadDiario();
   }
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana();
   quizasAbrirResumen();
   return que;
 }
@@ -2536,6 +2639,7 @@ function saveDiario(){
 }
 /* Guarda con un respiro, para no escribir en localStorage en cada tecla */
 function onDiarioInput(el){
+  if(enHistorial()) return;   /* el textarea es readonly en el historial; esto es cinturón y tiradores */
   diario[getWeekKey()]=el.value;
   clearTimeout(_diarioTimer);
   _diarioTimer=setTimeout(function(){
@@ -2558,18 +2662,24 @@ function rangoDeWeekKey(key){
   return lun.getDate()+' '+MN2[lun.getMonth()]+' \u2014 '+dom.getDate()+' '+MN2[dom.getMonth()];
 }
 function renderDiario(){
-  var f=getWeekDates();
+  var ro=enHistorial(), f=getWeekDatesVista(), key=getWeekKeyVista();
   document.getElementById('diario-rango').textContent=
     f[0].getDate()+' '+MN2[f[0].getMonth()]+' \u2014 '+f[6].getDate()+' '+MN2[f[6].getMonth()];
   var el=document.getElementById('diario-txt');
-  if(el && el!==document.activeElement) el.value=diario[getWeekKey()]||'';
+  if(el){
+    /* En el historial se pisa siempre (no hay nada a medio escribir que proteger) */
+    if(ro || el!==document.activeElement) el.value=diario[key]||'';
+    el.readOnly=ro;
+    el.placeholder = ro ? 'No escribiste nada esa semana.' : '¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar...';
+  }
   renderDiarioHistorial();
 }
 function renderDiarioHistorial(){
-  var actual=getWeekKey();
-  /* Solo semanas anteriores con algo escrito, de la mas nueva a la mas vieja */
+  var vista=getWeekKeyVista();
+  /* Todas las semanas con algo escrito menos la que está en el textarea,
+     de la mas nueva a la mas vieja. En el historial, la actual aparece en la lista. */
   var claves=Object.keys(diario).filter(function(k){
-    return k!==actual && /^wk_\d+_\d+_\d+$/.test(k) && (diario[k]||'').trim();
+    return k!==vista && /^wk_\d+_\d+_\d+$/.test(k) && (diario[k]||'').trim();
   }).sort(function(a,b){
     var ma=/^wk_(\d+)_(\d+)_(\d+)$/.exec(a), mb=/^wk_(\d+)_(\d+)_(\d+)$/.exec(b);
     return new Date(+mb[1],+mb[2],+mb[3]) - new Date(+ma[1],+ma[2],+ma[3]);
@@ -2721,7 +2831,6 @@ function renderProgreso(){
 
 /* ═══════════════════ PENDIENTE DE LAS FASES SIGUIENTES ═══════════════════ */
 /* Se reemplazan en las fases E (nav de semanas) e I (nivel y confetti) */
-function renderNavSemana(){}
 function refrescarNivel(){}
 function habitosDelDia(d){ return habitosActivos().filter(function(h){ return tilde(hbData,h.id,d); }).length; }
 function detectarDiaPerfecto(antes,dIdx){}
@@ -2950,6 +3059,7 @@ renderTareas();
 renderHabits();
 loadDiario();
 renderDiario();
+renderNavSemana();
 renderProgreso();
 
 /* Si el objetivo de un hábito se cumplió mientras el dashboard estaba
