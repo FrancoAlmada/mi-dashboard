@@ -798,6 +798,98 @@
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
 
 
+    /* ══════════ TRES GRANDES DE LA SEMANA ══════════ */
+    .grandes-lista { display: flex; flex-direction: column; gap: 4px; }
+    .grande {
+      display: flex; align-items: center; gap: 14px; padding: 12px 12px;
+      border-radius: var(--r-sm); cursor: pointer; transition: background .16s;
+    }
+    .grande:hover { background: var(--surf3); }
+    /* Número 1·2·3 en un aro naranja; al cumplirse se llena y muestra el tilde */
+    .grande-num {
+      width: 28px; height: 28px; flex-shrink: 0; border-radius: var(--r-pill);
+      border: 2px solid var(--tang); color: var(--tang);
+      font-size: 12px; font-weight: 800; font-variant-numeric: tabular-nums;
+      display: flex; align-items: center; justify-content: center; transition: all .18s;
+    }
+    .grande.hecha .grande-num { background: var(--tang); color: var(--on-tang); }
+    .grande-txt { flex: 1; font-size: 16px; font-weight: 700; letter-spacing: -0.3px; color: var(--t1); line-height: 1.35; word-break: break-word; }
+    .grande.hecha .grande-txt { text-decoration: line-through; color: var(--t4); }
+    /* Editar (✎) y borrar (×) aparecen al pasar el mouse, como en las tareas */
+    .grande-edit {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--r-pill); border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 13px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .grande:hover .grande-edit, .grande:hover .task-del { opacity: 1; }
+    .grande-edit:hover { background: var(--surf4); color: var(--t1); }
+    .grande-input {
+      flex: 1; min-width: 0; background: var(--surf3); border: 1px solid var(--line2); border-radius: var(--r-ctl);
+      padding: 8px 10px; color: var(--t1); font-size: 15px; font-weight: 700; font-family: var(--ui); outline: none;
+    }
+    .grande-input:focus { border-color: var(--tang); }
+    @media (hover: none), (max-width: 720px) { .grande .grande-edit, .grande .task-del { opacity: 1; width: 28px; height: 28px; } }
+
+    /* ══════════ PRÓXIMOS HITOS ══════════ */
+    .hitos-lista { display: flex; flex-direction: column; gap: 6px; }
+    .hito {
+      display: flex; align-items: center; gap: 12px; padding: 11px 12px;
+      border-radius: var(--r-sm); border: 1px solid transparent;
+      transition: background .16s, border-color .16s;
+    }
+    .hito:hover { background: var(--surf3); }
+    /* Chip "hoy / mañana / 5 días / hace 2 días" */
+    .hito-dias {
+      flex-shrink: 0; min-width: 74px; text-align: center; font-size: 10px; font-weight: 800; letter-spacing: 0.4px;
+      text-transform: uppercase; padding: 6px 10px; border-radius: var(--r-pill);
+      background: var(--surf3); color: var(--t2); white-space: nowrap; font-variant-numeric: tabular-nums;
+    }
+    .hito-txt { flex: 1; font-size: 14px; font-weight: 600; color: var(--t1); word-break: break-word; line-height: 1.4; }
+    .hito-fecha { font-size: 11px; font-weight: 600; color: var(--t4); white-space: nowrap; }
+    /* A 3 días o menos se resalta en naranja; el de hoy en verde; los vencidos en rojo apagado */
+    .hito.cerca { border-color: rgba(var(--tang-rgb),0.45); background: rgba(var(--tang-rgb),0.08); }
+    .hito.cerca .hito-dias { background: var(--tang); color: var(--on-tang); }
+    .hito.es-hoy { border-color: rgba(var(--lime-rgb),0.5); background: rgba(var(--lime-rgb),0.10); }
+    .hito.es-hoy .hito-dias { background: var(--lime); color: var(--on-lime); }
+    .hito.vencido { opacity: 0.72; }
+    .hito.vencido .hito-dias { background: rgba(var(--coral-rgb),0.16); color: var(--coral); }
+    .hito:hover .task-del { opacity: 1; }
+    /* Alta: texto + fecha + botón. Con flex-wrap se acomoda solo en el celular */
+    .hito-add { display: flex; flex-wrap: wrap; align-items: center; gap: 10px; margin-top: 10px; padding: 0 12px; }
+    .hito-add .hito-txt-in { flex: 1 1 200px; min-width: 0; }
+    .hito-date { flex: 0 0 auto; width: 156px; font-variant-numeric: tabular-nums; }
+    .hito-date::-webkit-calendar-picker-indicator { cursor: pointer; opacity: 0.6; }
+    .hito-add-btn {
+      flex-shrink: 0; border: 1px solid var(--line2); background: transparent; color: var(--t2);
+      border-radius: var(--r-pill); padding: 8px 14px; font-size: 11px; font-weight: 800; font-family: var(--ui);
+      cursor: pointer; transition: all .16s;
+    }
+    .hito-add-btn:hover { border-color: var(--sky); color: var(--sky); }
+    @media (hover: none), (max-width: 720px) {
+      .hito { flex-wrap: wrap; row-gap: 8px; }
+      .hito .hito-txt { flex: 1 1 calc(100% - 100px); }
+      .hito .hito-fecha { margin-left: 86px; }   /* debajo del texto, alineado con él (chip 74 + gap 12) */
+      .hito .task-del { opacity: 1; width: 28px; height: 28px; margin-left: auto; }
+    }
+
+    /* ══════════ NIVEL SEMANAL (gamificación discreta) ══════════ */
+    /* Segunda píldora al lado de la fecha: texto + mini barra hacia el nivel siguiente */
+    .nivel-pill { display: inline-flex; align-items: center; gap: 10px; margin-left: 8px; cursor: default; }
+    .nivel-bar { width: 46px; height: 4px; border-radius: var(--r-pill); background: var(--surf4); overflow: hidden; flex-shrink: 0; }
+    .nivel-bar i { display: block; height: 100%; width: 0; background: var(--lime); border-radius: var(--r-pill); transition: width .4s ease; }
+    @media (max-width: 700px) { .nivel-pill { margin-left: 0; } }
+    /* Confetti: por encima de todo menos el login; nunca atrapa el mouse */
+    .confetti-canvas { position: fixed; inset: 0; z-index: 85; pointer-events: none; }
+    /* Tres grandes y puntos dentro del resumen del domingo (sobre butter) */
+    .modal-grande { display: flex; align-items: center; gap: 10px; margin-bottom: 8px; font-size: 13.5px; font-weight: 700; }
+    .modal-grande-num {
+      width: 22px; height: 22px; flex-shrink: 0; border-radius: var(--r-pill);
+      border: 2px solid rgba(var(--on-butter-rgb),0.55); display: flex; align-items: center; justify-content: center; font-size: 10px; font-weight: 800;
+    }
+    .modal-grande.hecha .modal-grande-num { background: var(--on-butter); border-color: var(--on-butter); color: var(--butter); }
+    .modal-grande:not(.hecha) span:last-child { opacity: 0.6; }
+
     /* ══════════ TEMA: PAPEL EDITORIAL ══════════ */
     /* Cuaderno impreso: crema, tinta sepia, acentos como tintas (oscuros y
        legibles), serif de display, bordes finos y sombra de hoja apoyada. */
@@ -895,7 +987,8 @@
     /* Puntos → cuadraditos */
     [data-tema="terminal"] .stat::before, [data-tema="terminal"] .em-dot, [data-tema="terminal"] .live-dot,
     [data-tema="terminal"] .hb-dot, [data-tema="terminal"] .heat-c, [data-tema="terminal"] .barra,
-    [data-tema="terminal"] .dia-card .tag-pill { border-radius: 0; }
+    [data-tema="terminal"] .dia-card .tag-pill, [data-tema="terminal"] .grande-num, [data-tema="terminal"] .modal-grande-num { border-radius: 0; }
+    [data-tema="terminal"] .hito-dias, [data-tema="terminal"] .hito-add-btn { text-transform: lowercase; letter-spacing: 0; }
     [data-tema="terminal"] .hb-cell { border-radius: var(--r-ctl); }
     [data-tema="terminal"] .live-dot { animation-duration: 1s; }
     [data-tema="terminal"] input, [data-tema="terminal"] textarea { caret-color: var(--lime); }
@@ -914,6 +1007,7 @@
 <div class="hero">
   <div class="brand"><span class="brand-star">✦</span> Mi Dashboard</div>
   <div class="date-pill" id="date-pill">·</div>
+  <div class="date-pill nivel-pill" id="nivel-pill" title=""><span id="nivel-txt">Nivel 1 · Arrancando · 0 pts</span><span class="nivel-bar"><i id="nivel-bar-fill"></i></span></div>
   <button class="tema-btn" id="tema-btn" onclick="cicloTema()" title="Cambiar tema: Nocturno → Papel → Terminal" aria-label="Cambiar tema">◐ <span id="tema-nombre">Nocturno</span></button>
   <h1 class="hero-title">Dashboard</h1>
   <p class="hero-sub" id="hero-sub">Buenos días, Franco — esto es lo que te espera hoy.</p>
@@ -939,6 +1033,23 @@
   <!-- Filtro por etiqueta: afecta las dos tarjetas y el bloque de pendientes -->
   <div class="filtro-bar" id="filtro-bar"></div>
 
+  <!-- Tres grandes de la semana: hasta 3 objetivos, arriba de todo lo demás -->
+  <div class="card" id="card-grandes">
+    <div class="card-hd">
+      <div>
+        <div class="card-label" style="color:var(--tang)">· Tres grandes de la semana ·</div>
+        <div class="card-title">Lo que tiene que pasar</div>
+      </div>
+      <div class="card-count" id="grandes-count">0 / 3</div>
+    </div>
+    <div class="grandes-lista" id="grandes-lista"></div>
+    <div class="add-wrap" id="grandes-add">
+      <span class="add-plus">+</span>
+      <input class="add-input" id="add-grande" type="text" maxlength="120" placeholder="Un objetivo grande para esta semana..." onkeydown="onGrandeAddKey(event,this)">
+    </div>
+    <div class="filtro-nota" id="grandes-nota"></div>
+  </div>
+
   <!-- Tareas de hoy, a todo el ancho -->
   <div class="card" id="card-hoy">
     <div class="card-hd">
@@ -960,6 +1071,24 @@
 
   <!-- Tareas No Completadas: franja propia, oculta cuando no hay nada -->
   <div id="lista-pendientes"></div>
+
+  <!-- Próximos hitos: fechas que se acercan (entregas, exámenes, cumpleaños) -->
+  <div class="card" id="card-hitos">
+    <div class="card-hd">
+      <div>
+        <div class="card-label" style="color:var(--sky)">· Próximos hitos ·</div>
+        <div class="card-title">Lo que se viene</div>
+      </div>
+      <div class="card-count" id="hitos-count">0 próximos</div>
+    </div>
+    <div class="hitos-lista" id="hitos-lista"></div>
+    <div class="hito-add">
+      <span class="add-plus">+</span>
+      <input class="add-input hito-txt-in" id="hito-txt" type="text" maxlength="120" placeholder="Nuevo hito..." onkeydown="onHitoKey(event)">
+      <input class="add-input hito-date" id="hito-fecha" type="date" onkeydown="onHitoKey(event)" aria-label="Fecha del hito">
+      <button class="hito-add-btn" onclick="agregarHitoDesdeInputs()" title="Agregar hito">Agregar</button>
+    </div>
+  </div>
 
   <!-- Las tres tarjetas semanales comparten una misma vista (_semanaVista).
        El banner es sticky dentro de esta zona: te sigue mientras las recorrés y desaparece al salir -->
@@ -1238,10 +1367,10 @@ function subirPendientes(){
 /* Después de bajar datos nuevos hay que volver a dibujar todo */
 function recargarDesdeStorage(){
   _semanaVista=0;   /* bajó algo de la nube: se vuelve a la semana en curso */
-  loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario();
+  loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario(); loadGrandes(); loadHitos();
   /* Se pone al día también el guardián de fecha, así no vuelve a dibujar todo */
   _semanaEnMemoria=getWeekKey(); _diaEnMemoria=hbTodayIdx=getTodayIdx(); hbDates=getWeekDates();
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos();
   if(editorAbierto()) renderEditorHabitos();
 }
 
@@ -1997,6 +2126,18 @@ function deshacer(){
   if(!_undo) return;
   var u=_undo; _undo=null;
   clearTimeout(_undoTimer); ocultarUndo();
+  if(u.tipo==='grande'){
+    if(!Array.isArray(grandes[u.semana])) grandes[u.semana]=[];
+    if(grandes[u.semana].length>=GRANDES_MAX){ mostrarToast('Ya hay tres: no entra el que borraste'); return; }
+    grandes[u.semana].splice(Math.min(u.idx,grandes[u.semana].length),0,u.item);
+    saveGrandes(); renderGrandes();
+    return;
+  }
+  if(u.tipo==='hito'){
+    hitos.splice(Math.min(u.idx,hitos.length),0,u.item);
+    saveHitos(); renderHitos();
+    return;
+  }
   /* Un movimiento se deshace sacándola del destino y devolviéndola a su lugar */
   if(u.tipo==='mover'){
     var dest=tareasData.dias[u.destino];
@@ -2182,8 +2323,10 @@ function saveHabits(){
 function toggleHabit(hId,dIdx){
   if(enHistorial()){ mostrarToast('Estás viendo una semana pasada: volvé a hoy para editar'); return; }
   while(hbData.checks.length<=hId) hbData.checks.push(Array(7).fill(false));   /* hábito recién agregado */
+  var antes=habitosDelDia(dIdx);
   hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];
   saveHabits(); renderHabits();
+  detectarDiaPerfecto(antes,dIdx);
 }
 function setPriority(dIdx,txt){ if(enHistorial()) return; hbData.priorities[dIdx]=txt; saveHabits(); }
 
@@ -2338,7 +2481,7 @@ function verificarCambioDeFecha(){
        reset; todas las mutaciones anteriores ya estaban guardadas, no se pierde nada. */
     loadTareas(); loadHabits(); loadDiario();
   }
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos();
   quizasAbrirResumen();
   return que;
 }
@@ -2829,11 +2972,308 @@ function renderProgreso(){
     '<div><div class="prog-h">Reparto por contexto</div>'+reparto+'</div>';
 }
 
-/* ═══════════════════ PENDIENTE DE LAS FASES SIGUIENTES ═══════════════════ */
-/* Se reemplazan en las fases E (nav de semanas) e I (nivel y confetti) */
-function refrescarNivel(){}
+/* ═══════════════════ HELPERS DE LAS FEATURES NUEVAS ═══════════════════ */
+/* Mismo formato de id que usan las tareas (addTarea) */
+function nuevoId(){ return Date.now().toString(36)+Math.random().toString(36).slice(2,6); }
+/* ¿El foco está en algo donde se escribe? Para que una tecla suelta no robe letras */
+function esCampoDeTexto(el){
+  if(!el) return false;
+  var tag=(el.tagName||'').toUpperCase();
+  return tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||el.isContentEditable===true;
+}
+function hoyCero(){ var h=new Date(); h.setHours(0,0,0,0); return h; }
+
+/* ═══════════════════ TRES GRANDES DE LA SEMANA ═══════════════════ */
+/* Una sola clave con todas las semanas, como el diario:
+   { "wk_2026_8_14": [ {id,texto,hecha} ] } — máximo 3 por semana.
+   Las mutaciones resuelven la semana con getWeekKey() en el momento, así que
+   nunca escriben en la semana equivocada y el mapa conserva las anteriores. */
+var GRANDES_KEY='grandes', GRANDES_MAX=3;
+var grandes={};
+var _grandeEditando=null;   /* id del objetivo con el input de edición abierto */
+
+function loadGrandes(){
+  grandes={};
+  try{
+    var d=JSON.parse(localStorage.getItem(GRANDES_KEY));
+    if(d && typeof d==='object' && !Array.isArray(d)) grandes=d;
+  }catch(e){}
+}
+function saveGrandes(){ lsSet(GRANDES_KEY,JSON.stringify(grandes)); }
+/* Los de ESTA semana. crear=true asegura el array (solo para mutar). */
+function grandesSemana(crear){
+  var k=getWeekKey();
+  if(!Array.isArray(grandes[k])){ if(!crear) return []; grandes[k]=[]; }
+  return grandes[k];
+}
+function buscarGrande(id){
+  var lista=grandesSemana(false);
+  for(var i=0;i<lista.length;i++) if(lista[i].id===id) return i;
+  return -1;
+}
+function addGrande(texto){
+  var lista=grandesSemana(true);
+  if(lista.length>=GRANDES_MAX){ mostrarToast('Tres y no más: si todo es importante, nada lo es'); return; }
+  lista.push({id:nuevoId(), texto:texto, hecha:false});
+  saveGrandes(); renderGrandes();
+}
+function toggleGrande(id){
+  var i=buscarGrande(id); if(i<0) return;
+  var g=grandesSemana(false)[i];
+  g.hecha=!g.hecha;
+  saveGrandes(); renderGrandes();
+}
+function deleteGrande(id,ev){
+  if(ev) ev.stopPropagation();
+  var i=buscarGrande(id); if(i<0) return;
+  var g=grandesSemana(false).splice(i,1)[0];
+  _undo={tipo:'grande', semana:getWeekKey(), idx:i, item:g};
+  mostrarUndo('Objetivo borrado');
+  saveGrandes(); renderGrandes();
+}
+/* Edición inline: el texto se vuelve input; Enter guarda, Escape cancela, salir del campo guarda */
+function editarGrande(id,ev){
+  if(ev) ev.stopPropagation();
+  _grandeEditando=id;
+  renderGrandes();
+  var el=document.getElementById('grande-edit-'+id);
+  if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); }
+}
+function guardarEdicionGrande(id,valor){
+  if(_grandeEditando!==id) return;    /* el blur que sigue al Enter (o al Escape) llega tarde: se ignora */
+  _grandeEditando=null;
+  var i=buscarGrande(id), txt=(valor||'').trim();
+  if(i>=0 && txt){ grandesSemana(false)[i].texto=txt; saveGrandes(); }
+  renderGrandes();
+}
+function onGrandeEditKey(ev,id,el){
+  if(ev.key==='Enter'){ ev.preventDefault(); guardarEdicionGrande(id,el.value); }
+  else if(ev.key==='Escape'){ ev.stopPropagation(); _grandeEditando=null; renderGrandes(); }
+}
+function onGrandeAddKey(ev,el){
+  if(ev.key!=='Enter') return;
+  var txt=el.value.trim(); if(!txt) return;
+  el.value='';
+  addGrande(txt);
+}
+function renderGrandes(){
+  var cont=document.getElementById('grandes-lista'); if(!cont) return;
+  var lista=grandesSemana(false);
+  var hechas=lista.filter(function(g){return g.hecha;}).length;
+  document.getElementById('grandes-count').textContent=hechas+' / '+GRANDES_MAX;
+
+  cont.innerHTML = lista.length
+    ? lista.map(function(g,i){
+        var editando = _grandeEditando===g.id;
+        return '<div class="grande'+(g.hecha?' hecha':'')+'"'+(editando?'':' onclick="toggleGrande(\''+g.id+'\')"')+'>'+
+          '<div class="grande-num">'+(g.hecha?'\u2713':(i+1))+'</div>'+
+          (editando
+            ? '<input class="grande-input" id="grande-edit-'+g.id+'" type="text" maxlength="120" value="'+esc(g.texto)+'" '+
+                'onkeydown="onGrandeEditKey(event,\''+g.id+'\',this)" onblur="guardarEdicionGrande(\''+g.id+'\',this.value)" onclick="event.stopPropagation()">'
+            : '<span class="grande-txt">'+esc(g.texto)+'</span>'+
+              '<button class="grande-edit" onclick="editarGrande(\''+g.id+'\',event)" title="Editar" aria-label="Editar">\u270e</button>'+
+              '<button class="task-del" onclick="deleteGrande(\''+g.id+'\',event)" title="Borrar" aria-label="Borrar"></button>')+
+        '</div>';
+      }).join('')
+    : '<div class="empty-msg">Elegí hasta tres cosas que, si pasan, hacen que la semana valga. Agregá una abajo.</div>';
+
+  var add=document.getElementById('grandes-add'), nota=document.getElementById('grandes-nota');
+  if(add) add.style.display = lista.length>=GRANDES_MAX ? 'none' : '';
+  if(nota) nota.textContent = lista.length>=GRANDES_MAX ? 'Tres y no más: si todo es importante, nada lo es.' : '';
+  refrescarStats();   /* los puntos del chip de nivel dependen de los grandes */
+}
+
+/* ═══════════════════ PRÓXIMOS HITOS ═══════════════════ */
+/* Clave 'hitos': [ {id,texto,fecha:'AAAA-MM-DD',tag} ]. La fecha se guarda como texto
+   y se parsea como fecha LOCAL: new Date('2026-09-20') sería UTC y acá caería el día anterior.
+   Los vencidos se muestran 1 día, se ocultan después y a la semana se borran solos. */
+var HITOS_KEY='hitos';
+var hitos=[];
+var HITO_OCULTAR=-1, HITO_BORRAR=-7;
+
+function loadHitos(){
+  hitos=[];
+  try{
+    var d=JSON.parse(localStorage.getItem(HITOS_KEY));
+    if(Array.isArray(d)) hitos=d.filter(function(h){ return h && h.texto && /^\d{4}-\d{2}-\d{2}$/.test(h.fecha||''); });
+  }catch(e){}
+}
+function saveHitos(){ lsSet(HITOS_KEY,JSON.stringify(hitos)); }
+function parseFechaLocal(str){ var p=str.split('-'); return new Date(+p[0],+p[1]-1,+p[2]); }
+/* Días enteros desde hoy: 0 hoy, 1 mañana, -1 ayer */
+function diasHasta(fechaStr){ return Math.round((parseFechaLocal(fechaStr)-hoyCero())/86400000); }
+function textoFaltan(n){
+  if(n===0) return 'hoy';
+  if(n===1) return 'mañana';
+  if(n>1) return n+' días';
+  return n===-1 ? 'ayer' : 'hace '+(-n)+' días';
+}
+/* "SÁB 20 sep" (con año solo si no es el actual). getDay() es 0=domingo: se pasa a 0=lunes */
+function fmtFechaHito(f){
+  return DS3[(f.getDay()+6)%7]+' '+f.getDate()+' '+MN2[f.getMonth()]+(f.getFullYear()!==hoyCero().getFullYear()?' '+f.getFullYear():'');
+}
+function buscarHito(id){ for(var i=0;i<hitos.length;i++) if(hitos[i].id===id) return i; return -1; }
+
+function addHito(texto,fecha,tag){
+  hitos.push({id:nuevoId(), texto:texto, fecha:fecha, tag: tag===undefined ? tagActiva : tag});
+  saveHitos(); renderHitos();
+}
+function deleteHito(id,ev){
+  if(ev) ev.stopPropagation();
+  var i=buscarHito(id); if(i<0) return;
+  var h=hitos.splice(i,1)[0];
+  _undo={tipo:'hito', idx:i, item:h};
+  mostrarUndo('Hito borrado');
+  saveHitos(); renderHitos();
+}
+/* Mismo ciclo que cambiarTag: uni → agencia → personal → proyectos → sin etiqueta */
+function cambiarTagHito(id,ev){
+  if(ev) ev.stopPropagation();
+  var i=buscarHito(id); if(i<0) return;
+  var actual=-1;
+  for(var k=0;k<TAGS.length;k++) if(TAGS[k].id===hitos[i].tag) actual=k;
+  var sig=actual+1;
+  hitos[i].tag = sig>=TAGS.length ? null : TAGS[sig].id;
+  saveHitos(); renderHitos();
+}
+function agregarHitoDesdeInputs(){
+  var t=document.getElementById('hito-txt'), f=document.getElementById('hito-fecha');
+  var txt=t.value.trim(), fecha=f.value;
+  if(!txt){ t.focus(); return; }
+  if(!/^\d{4}-\d{2}-\d{2}$/.test(fecha)){ f.focus(); mostrarToast('Ponéle fecha al hito'); return; }
+  t.value=''; f.value='';
+  addHito(txt,fecha);
+  t.focus();
+}
+function onHitoKey(ev){ if(ev.key==='Enter'){ ev.preventDefault(); agregarHitoDesdeInputs(); } }
+
+function renderHitos(){
+  var cont=document.getElementById('hitos-lista'); if(!cont) return;
+  /* Limpieza: lo vencido hace más de una semana se va solo */
+  var antes=hitos.length;
+  hitos=hitos.filter(function(h){ return diasHasta(h.fecha)>=HITO_BORRAR; });
+  if(hitos.length!==antes) saveHitos();
+
+  var visibles=hitos.map(function(h){ return {h:h, n:diasHasta(h.fecha)}; })
+    .filter(function(x){ return x.n>=HITO_OCULTAR; })
+    .sort(function(a,b){ return a.n-b.n; });
+  var proximos=visibles.filter(function(x){ return x.n>=0; }).length;
+  document.getElementById('hitos-count').textContent=proximos+' pr\u00f3ximo'+(proximos===1?'':'s');
+
+  cont.innerHTML = visibles.length
+    ? visibles.map(function(x){
+        var h=x.h, n=x.n, tg=tagById(h.tag);
+        var cls='hito'+(n<0?' vencido':n===0?' es-hoy':n<=3?' cerca':'');
+        var titulo = n<0 ? 'Venci\u00f3 hace '+(-n)+' d\u00eda'+(n===-1?'':'s') : n===0 ? 'Es hoy' : 'Faltan '+n+' d\u00eda'+(n===1?'':'s');
+        var pill = tg
+          ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTagHito(\''+h.id+'\',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
+          : '<button class="tag-pill vacia" onclick="cambiarTagHito(\''+h.id+'\',event)" title="Poner etiqueta">+</button>';
+        return '<div class="'+cls+'">'+
+          '<span class="hito-dias" title="'+titulo+'">'+textoFaltan(n)+'</span>'+
+          '<span class="hito-txt">'+esc(h.texto)+'</span>'+
+          '<span class="hito-fecha">'+fmtFechaHito(parseFechaLocal(h.fecha))+'</span>'+
+          pill+
+          '<button class="task-del" onclick="deleteHito(\''+h.id+'\',event)" title="Borrar" aria-label="Borrar"></button>'+
+        '</div>';
+      }).join('')
+    : '<div class="empty-msg">Nada en el horizonte. Carg\u00e1 una entrega, un examen, un cumplea\u00f1os...</div>';
+}
+
+/* ═══════════════════ PUNTOS Y NIVEL (gamificación discreta) ═══════════════════ */
+/* Los puntos NO se guardan: se calculan cada vez desde tareas, hábitos y grandes
+   de la semana. Son un espejo del estado (destildar resta), igual que todos los
+   contadores del hero. Sin clave nueva, sin carreras de sync entre dispositivos. */
+var PTS={tarea:10, habito:5, grande:30, diaPerfecto:25};
+var NIVELES=[
+  {min:0,   nombre:'Arrancando'},
+  {min:60,  nombre:'Metiendo pila'},
+  {min:140, nombre:'Constante'},
+  {min:240, nombre:'Prendido fuego'},
+  {min:360, nombre:'M\u00e1quina'},
+  {min:500, nombre:'Leyenda'}
+];
+var _nivelPrevio=null;   /* para avisar solo cuando se SUBE, y no en el primer cálculo */
+
+/* Hábitos ACTIVOS tildados ese día de la semana en curso */
 function habitosDelDia(d){ return habitosActivos().filter(function(h){ return tilde(hbData,h.id,d); }).length; }
-function detectarDiaPerfecto(antes,dIdx){}
+
+function calcularPuntos(){
+  var tareas=0, habitos=0, grandesN=0, perfectos=0, act=habitosActivos().length;
+  tareasData.dias.forEach(function(dia){ dia.forEach(function(t){ if(t.hecha) tareas++; }); });
+  for(var d=0; d<7; d++){
+    var n=habitosDelDia(d);
+    habitos+=n;
+    if(act>0 && n===act) perfectos++;
+  }
+  grandesSemana(false).forEach(function(g){ if(g.hecha) grandesN++; });
+  var p={
+    tareas:tareas*PTS.tarea, habitos:habitos*PTS.habito, grandes:grandesN*PTS.grande, perfectos:perfectos*PTS.diaPerfecto,
+    nTareas:tareas, nHabitos:habitos, nGrandes:grandesN, nPerfectos:perfectos
+  };
+  p.total=p.tareas+p.habitos+p.grandes+p.perfectos;
+  return p;
+}
+function nivelDe(pts){
+  var i=0;
+  for(var k=0;k<NIVELES.length;k++) if(pts>=NIVELES[k].min) i=k;
+  var actual=NIVELES[i], sig=NIVELES[i+1]||null;
+  var pct = sig ? Math.round(((pts-actual.min)/(sig.min-actual.min))*100) : 100;
+  return {n:i+1, nombre:actual.nombre, sig:sig?sig.min:null, faltan:sig?sig.min-pts:0, pct:Math.max(0,Math.min(100,pct))};
+}
+/* Lo llama refrescarStats: es el que escribe el chip del hero */
+function refrescarNivel(){
+  var el=document.getElementById('nivel-txt'), bar=document.getElementById('nivel-bar-fill'), pill=document.getElementById('nivel-pill');
+  if(!el||!bar) return;
+  var p=calcularPuntos(), nv=nivelDe(p.total);
+  el.textContent='Nivel '+nv.n+' \u00b7 '+nv.nombre+' \u00b7 '+p.total+' pts';
+  bar.style.width=nv.pct+'%';
+  if(pill) pill.title='Tareas '+p.tareas+' \u00b7 H\u00e1bitos '+p.habitos+' \u00b7 Tres grandes '+p.grandes+' \u00b7 D\u00edas perfectos '+p.perfectos+
+    (nv.sig!==null ? ' \u2014 faltan '+nv.faltan+' para Nivel '+(nv.n+1) : ' \u2014 nivel m\u00e1ximo');
+  if(_nivelPrevio!==null && nv.n>_nivelPrevio) mostrarToast('Subiste a Nivel '+nv.n+' \u00b7 '+nv.nombre);
+  _nivelPrevio=nv.n;
+}
+/* Día perfecto: recién ahora quedaron TODOS los de hoy (pasó de N-1 a N) */
+function detectarDiaPerfecto(antes,dIdx){
+  var act=habitosActivos().length;
+  if(dIdx!==hbTodayIdx || act===0) return;
+  var despues=habitosDelDia(dIdx);
+  if(despues===act && antes===act-1){
+    lanzarConfetti();
+    mostrarToast('D\u00eda perfecto +'+PTS.diaPerfecto+' \ud83c\udf89',3200);
+  }
+}
+
+/* ── Confetti: canvas propio, 1,5 s, sin librerías. Con reduce-motion no se dibuja nada. ── */
+function lanzarConfetti(){
+  if(window.matchMedia('(prefers-reduced-motion: reduce)').matches) return;
+  var viejo=document.getElementById('confetti-canvas'); if(viejo) viejo.remove();
+  var cv=document.createElement('canvas'); cv.id='confetti-canvas'; cv.className='confetti-canvas';
+  document.body.appendChild(cv);
+  var dpr=window.devicePixelRatio||1, W=window.innerWidth, H=window.innerHeight;
+  cv.width=W*dpr; cv.height=H*dpr;
+  var ctx=cv.getContext('2d'); ctx.scale(dpr,dpr);
+  /* Colores del tema activo, leídos de los tokens */
+  var cs=getComputedStyle(document.documentElement);
+  var colores=['--lime','--coral','--sky','--butter','--peri','--tang'].map(function(v){ return cs.getPropertyValue(v).trim(); }).filter(Boolean);
+  var parts=[];
+  for(var i=0;i<140;i++){
+    parts.push({ x:W/2+(Math.random()-0.5)*W*0.3, y:H*0.35, vx:(Math.random()-0.5)*14, vy:-(Math.random()*11+5),
+                 w:6+Math.random()*6, h:4+Math.random()*4, rot:Math.random()*Math.PI, vr:(Math.random()-0.5)*0.3, c:colores[i%colores.length] });
+  }
+  var DUR=1500, t0=null;
+  function paso(ts){
+    if(t0===null) t0=ts;
+    var t=ts-t0, k=t/DUR;
+    ctx.clearRect(0,0,W,H);
+    ctx.globalAlpha = k>0.7 ? Math.max(0,1-(k-0.7)/0.3) : 1;   /* se desvanece en el último 30% */
+    parts.forEach(function(p){
+      p.vy+=0.35; p.vx*=0.99; p.x+=p.vx; p.y+=p.vy; p.rot+=p.vr;
+      ctx.save(); ctx.translate(p.x,p.y); ctx.rotate(p.rot); ctx.fillStyle=p.c; ctx.fillRect(-p.w/2,-p.h/2,p.w,p.h); ctx.restore();
+    });
+    if(t<DUR) requestAnimationFrame(paso); else cv.remove();
+  }
+  requestAnimationFrame(paso);
+}
 
 /* ═══════════════════ RESUMEN DE LA SEMANA (domingo) ═══════════════════ */
 function armarResumen(){
@@ -2860,8 +3300,11 @@ function armarResumen(){
   var vivas=act.map(function(h){ return {name:h.name, icon:h.icon, r:rachas[h.id]||0}; })
                 .filter(function(x){ return x.r>=2; })
                 .sort(function(a,b){ return b.r-a.r; });
+  var puntos=calcularPuntos(), nivel=nivelDe(puntos.total);
+  var tresGrandes=grandesSemana(false).slice();
   return {f:f, hechas:hechas, total:total, pct:pct, porTag:porTag, porDia:porDia,
-          hbPct:hbPct, hbTotal:hbTotal, hbMax:hbMax, vivas:vivas};
+          hbPct:hbPct, hbTotal:hbTotal, hbMax:hbMax, vivas:vivas,
+          puntos:puntos, nivel:nivel, tresGrandes:tresGrandes};
 }
 
 function abrirResumen(){
@@ -2890,12 +3333,27 @@ function abrirResumen(){
     '<div class="modal-titulo">Cerraste '+r.hechas+' de '+r.total+' tareas</div>'+
     '<div class="modal-sub">'+rango+'</div>'+
     '<div class="modal-bar-wrap"><div class="modal-bar-fill" style="width:'+r.pct+'%"></div></div>'+
+    (r.tresGrandes.length
+      ? '<div class="modal-seccion"><div class="modal-h">Tres grandes \u00b7 '+r.tresGrandes.filter(function(g){return g.hecha;}).length+' de '+r.tresGrandes.length+'</div>'+
+          r.tresGrandes.map(function(g,i){
+            return '<div class="modal-grande'+(g.hecha?' hecha':'')+'"><span class="modal-grande-num">'+(g.hecha?'\u2713':(i+1))+'</span><span>'+esc(g.texto)+'</span></div>';
+          }).join('')+
+        '</div>'
+      : '')+
     (dias
       ? '<div class="modal-seccion"><div class="modal-h">Lo que hiciste</div>'+dias+'</div>'
       : '<div class="modal-seccion"><div class="modal-vacio">No tildaste ninguna tarea esta semana.</div></div>')+
     (chipsTag ? '<div class="modal-seccion"><div class="modal-h">Por contexto</div><div class="modal-chips">'+chipsTag+'</div></div>' : '')+
     '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de '+r.hbMax+')</div>'+
       '<div class="modal-chips">'+rachasHTML+'</div></div>'+
+    '<div class="modal-seccion"><div class="modal-h">Puntos \u00b7 Nivel '+r.nivel.n+' \u00b7 '+r.nivel.nombre+'</div>'+
+      '<div class="modal-chips">'+
+        '<span class="modal-chip">Total <b>'+r.puntos.total+'</b></span>'+
+        '<span class="modal-chip">Tareas <b>'+r.puntos.tareas+'</b></span>'+
+        '<span class="modal-chip">H\u00e1bitos <b>'+r.puntos.habitos+'</b></span>'+
+        (r.puntos.grandes ? '<span class="modal-chip">Tres grandes <b>'+r.puntos.grandes+'</b></span>' : '')+
+        (r.puntos.nPerfectos ? '<span class="modal-chip">D\u00edas perfectos '+r.puntos.nPerfectos+' <b>+'+r.puntos.perfectos+'</b></span>' : '')+
+      '</div></div>'+
     '<div class="modal-acciones">'+
       '<button class="modal-btn" onclick="irAlDiario()">Escribir mi semana \u2193</button>'+
       '<button class="modal-btn suave" onclick="cerrarResumen()">Cerrar</button>'+
@@ -3055,8 +3513,11 @@ loadHabitosDef();       /* antes que loadHabits y loadTimer: los dos necesitan H
 loadTareas();
 loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
+loadGrandes(); loadHitos();   /* antes de renderTareas: refrescarStats → refrescarNivel lee los grandes */
 renderTareas();
 renderHabits();
+renderGrandes();
+renderHitos();
 loadDiario();
 renderDiario();
 renderNavSemana();
