@@ -573,6 +573,72 @@
     .modal-btn:hover { opacity: 0.85; }
     .modal-btn.suave { background: rgba(var(--scrim-rgb),0.12); color: var(--on-butter); }
 
+    /* ── Variante neutra: superficie del tema, para que los swatches de color se lean ── */
+    .modal.neutra { background: var(--surf); color: var(--t1); border: 1px solid var(--line); }
+    .modal.neutra .modal-label { background: var(--surf3); color: var(--t2); }
+    .modal.neutra .modal-sub { color: var(--t3); }
+    .modal.neutra .modal-cerrar { background: var(--surf3); color: var(--t1); }
+    .modal.neutra .modal-cerrar:hover { background: var(--surf4); }
+
+    /* ══════════ EDITOR DE HÁBITOS ══════════ */
+    .habit-toolbar { display: flex; align-items: center; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
+    .habit-toolbar .habit-toggle { margin-bottom: 0; }
+    .hb-editar-btn { background: var(--surf3); color: var(--t2); padding: 9px 16px; }
+    .hb-editar-btn:hover { color: var(--t1); background: var(--surf4); }
+    .hbe-cab, .hbe-fila {
+      display: grid; grid-template-columns: 46px minmax(120px,1fr) 130px 84px 34px auto; gap: 10px; align-items: center;
+    }
+    .hbe-cab { font-size: 10px; font-weight: 800; letter-spacing: .5px; text-transform: uppercase; color: var(--t4); padding: 0 0 8px; }
+    .hbe-fila { padding: 10px 0; border-top: 1px solid var(--line); }
+    .hbe-fila input[type="text"], .hbe-fila input[type="number"] {
+      width: 100%; background: var(--surf2); border: 1px solid var(--line2); border-radius: var(--r-sm);
+      padding: 9px 10px; color: var(--t1); font-size: 13px; font-weight: 600; outline: none; font-family: var(--ui);
+      transition: border-color .18s;
+    }
+    .hbe-fila input:focus { border-color: var(--lime); }
+    .hbe-icon { text-align: center; font-size: 18px; padding: 6px 4px !important; }
+    .hbe-swatches { display: flex; gap: 5px; flex-wrap: wrap; max-width: 130px; }
+    .hbe-sw { width: 18px; height: 18px; border-radius: 50%; border: 2px solid transparent; background: var(--sw); cursor: pointer; padding: 0; transition: transform .12s; }
+    .hbe-sw:hover { transform: scale(1.15); }
+    .hbe-sw.activo { border-color: var(--t1); box-shadow: 0 0 0 2px var(--surf); }
+    .hbe-min { display: flex; align-items: center; gap: 5px; font-size: 11px; color: var(--t3); font-weight: 700; }
+    .hbe-min input { width: 56px !important; text-align: center; -moz-appearance: textfield; }
+    .hbe-prio { display: flex; justify-content: center; cursor: pointer; }
+    .hbe-prio input { display: none; }
+    .hbe-prio span { font-size: 16px; color: var(--muted); transition: color .15s; }
+    .hbe-prio input:checked + span { color: var(--oro); }
+    .hbe-acciones { display: flex; gap: 4px; align-items: center; }
+    .hbe-btn {
+      border: 1px solid var(--line2); background: transparent; color: var(--t2); border-radius: var(--r-pill);
+      height: 28px; min-width: 28px; padding: 0 10px; font-size: 11px; font-weight: 800; font-family: var(--ui); cursor: pointer;
+      transition: all .16s;
+    }
+    .hbe-btn:hover { border-color: var(--t1); color: var(--t1); }
+    .hbe-btn:disabled { opacity: .3; cursor: default; }
+    .hbe-btn.pausar:hover { border-color: var(--tang); color: var(--tang); }
+    .hbe-btn.reactivar { border-color: var(--lime); color: var(--lime); }
+    .hbe-add {
+      width: 100%; margin-top: 14px; padding: 12px; border-radius: var(--r-sm); cursor: pointer;
+      border: 1px dashed var(--line2); background: transparent; color: var(--t2); font-family: var(--ui); font-size: 13px; font-weight: 700;
+      transition: all .16s;
+    }
+    .hbe-add:hover { border-color: var(--lime); color: var(--lime); }
+    .hbe-pausados { margin-top: 18px; }
+    .hbe-pausados summary { cursor: pointer; font-size: 10px; letter-spacing: .5px; text-transform: uppercase; font-weight: 800; color: var(--t4); padding: 8px 0; list-style: none; }
+    .hbe-pausados summary::before { content: '▸ '; }
+    .hbe-pausados[open] summary::before { content: '▾ '; }
+    .hbe-fila.pausada { opacity: .6; }
+    .hbe-fila.pausada:hover { opacity: 1; }
+    /* Historial: hábitos en solo lectura */
+    .hb-item.ro, .hb-item.ro .hb-body, .hb-cell.ro { cursor: default; }
+    .hb-cell.ro:hover { border-color: var(--line); }
+    @media (max-width: 700px) {
+      .hbe-cab { display: none; }
+      .hbe-fila { grid-template-columns: 46px 1fr auto; }
+      .hbe-swatches, .hbe-min { grid-column: 1 / -1; }
+      .hbe-swatches { max-width: none; }
+    }
+
     /* ══════════ DIARIO DE LA SEMANA ══════════ */
     .diario-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; box-shadow: var(--shadow-card); }
     .diario-txt {
@@ -883,9 +949,12 @@
       </div>
     </div>
     <div class="habit-bar-wrap"><div class="habit-bar-fill" id="hb-bar" style="width:0%"></div></div>
-    <div class="habit-toggle">
-      <button class="habit-toggle-btn active" id="btn-day" onclick="setHbView('day')">Vista Día</button>
-      <button class="habit-toggle-btn" id="btn-week" onclick="setHbView('week')">Vista Semana</button>
+    <div class="habit-toolbar">
+      <div class="habit-toggle">
+        <button class="habit-toggle-btn active" id="btn-day" onclick="setHbView('day')">Vista Día</button>
+        <button class="habit-toggle-btn" id="btn-week" onclick="setHbView('week')">Vista Semana</button>
+      </div>
+      <button class="habit-toggle-btn hb-editar-btn" onclick="abrirEditorHabitos()" title="Agregar, renombrar, reordenar o pausar hábitos">✎ Editar</button>
     </div>
     <div class="habit-days" id="hb-days"></div>
     <div id="hb-content"></div>
@@ -966,6 +1035,21 @@
 <!-- Resumen del domingo -->
 <div class="modal-fondo" id="modal-fondo" onclick="if(event.target===this) cerrarResumen()">
   <div class="modal" id="modal-resumen"></div>
+</div>
+
+<!-- Editor de hábitos: nodo propio, se redibuja solo cuando cambia la estructura
+     (orden, alta, pausa), nunca mientras escribís -->
+<div class="modal-fondo" id="hb-editor-fondo" onclick="if(event.target===this) cerrarEditorHabitos()">
+  <div class="modal neutra" id="hb-editor">
+    <button class="modal-cerrar" onclick="cerrarEditorHabitos()" title="Cerrar" aria-label="Cerrar"></button>
+    <div class="modal-label">· Hábitos ·</div>
+    <div class="modal-titulo">Editar hábitos</div>
+    <div class="modal-sub">Cada cambio se guarda solo. Pausar esconde el hábito sin borrar su historial.</div>
+    <div class="hbe-cab"><span>Ícono</span><span>Nombre</span><span>Color</span><span>Cronómetro</span><span title="Lleva el campo de prioridad del día">★</span><span></span></div>
+    <div id="hb-editor-lista"></div>
+    <button class="hbe-add" onclick="agregarHabito()">+ Agregar hábito</button>
+    <div id="hbe-pausados"></div>
+  </div>
 </div>
 
 <script>
@@ -1085,10 +1169,12 @@ function subirPendientes(){
 
 /* Después de bajar datos nuevos hay que volver a dibujar todo */
 function recargarDesdeStorage(){
-  loadPrefs(); loadTareas(); loadHabits(); loadDiario();
+  _semanaVista=0;   /* bajó algo de la nube: se vuelve a la semana en curso */
+  loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario();
   /* Se pone al día también el guardián de fecha, así no vuelve a dibujar todo */
   _semanaEnMemoria=getWeekKey(); _diaEnMemoria=hbTodayIdx=getTodayIdx(); hbDates=getWeekDates();
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana();
+  if(editorAbierto()) renderEditorHabitos();
 }
 
 /* ── Login ── */
@@ -1139,7 +1225,7 @@ function initSync(){
 }
 
 /* ═══════════════════ HELPERS ═══════════════════ */
-function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;'); }
 
 /* Convierte una fecha ISO en texto relativo: "2h", "ayer", "9 ago" */
 function relDate(iso){
@@ -1171,6 +1257,65 @@ function getMonday(){var n=new Date(),d=n.getDay(),m=new Date(n);m.setDate(n.get
 function getWeekKey(){var m=getMonday();return'wk_'+m.getFullYear()+'_'+m.getMonth()+'_'+m.getDate();}
 function getWeekDates(){var m=getMonday();return Array.from({length:7},function(_,i){var d=new Date(m);d.setDate(m.getDate()+i);return d;});}
 function getTodayIdx(){var d=new Date().getDay();return d===0?6:d-1;}
+
+/* ── Vista de semana ──────────────────────────────────────────────
+   _semanaVista: 0 = la semana en curso (editable); -1, -2… = semanas pasadas,
+   SOLO LECTURA. Nunca se persiste: cada apertura arranca en 0. Las primitivas
+   de arriba (getMonday y cía.) siguen siendo "la semana real": todo lo que
+   guarda usa esas; solo las tres tarjetas semanales usan las variantes *Vista. */
+var _semanaVista=0;
+function enHistorial(){ return _semanaVista!==0; }
+function getMondayVista(){ var m=getMonday(); m.setDate(m.getDate()+_semanaVista*7); return m; }
+function getWeekKeyVista(){ var m=getMondayVista(); return 'wk_'+m.getFullYear()+'_'+m.getMonth()+'_'+m.getDate(); }
+function getWeekDatesVista(){ var m=getMondayVista(); return Array.from({length:7},function(_,i){var d=new Date(m);d.setDate(m.getDate()+i);return d;}); }
+
+/* Datos de la semana que se está MIRANDO. En la actual devuelven los objetos
+   vivos; en el historial, una copia leída de localStorage que nadie escribe. */
+function tareasDeVista(){
+  if(!enHistorial()) return tareasData;
+  var d=leerSemanaKey('tareas_'+getWeekKeyVista());
+  if(!d) return mkTareasDefault();
+  while(d.dias.length<7) d.dias.push([]);
+  return d;
+}
+function habitsDeVista(){
+  if(!enHistorial()) return hbData;
+  try{
+    var d=JSON.parse(localStorage.getItem(getWeekKeyVista()));
+    if(d && Array.isArray(d.checks)){
+      if(!Array.isArray(d.priorities)) d.priorities=Array(7).fill('');
+      while(d.priorities.length<7) d.priorities.push('');
+      return d;
+    }
+  }catch(e){}
+  return mkDefault();
+}
+/* En el historial se muestran los activos MÁS los pausados que esa semana tuvieron algún tilde */
+function habitosParaVista(D){
+  if(!enHistorial()) return habitosActivos();
+  return HABITS.filter(function(h){
+    if(!h.pausado) return true;
+    for(var d=0; d<7; d++) if(tilde(D,h.id,d)) return true;
+    return false;
+  });
+}
+
+function irSemana(delta){
+  var nuevo=_semanaVista+delta;
+  if(nuevo>0) return;                     /* el futuro no existe */
+  if(nuevo===_semanaVista) return;
+  _semanaVista=nuevo;
+  renderVista();
+}
+function volverAHoy(){ if(!enHistorial()) return; _semanaVista=0; renderVista(); }
+
+/* ÚNICO punto que redibuja las tres tarjetas semanales tras cambiar la vista */
+function renderVista(){
+  renderSemana(getTodayIdx(), getWeekDatesVista());
+  renderHabits();
+  renderDiario();
+  renderNavSemana();
+}
 
 function setupHeader(){
   var h=new Date().getHours();
@@ -1452,10 +1597,12 @@ function renderTareas(){
 }
 
 /* ═══════════════════ CONTADORES ═══════════════════ */
-/* ÚNICO lugar donde se escriben los números del hero y de las tarjetas.
+/* ÚNICO lugar donde se escriben los números del HERO y de la tarjeta de hoy.
    Todos son GLOBALES: el filtro por etiqueta solo oculta listas, nunca
    cambia un número. Se llama al final de renderTareas y de renderHabits,
-   que es por donde pasa cualquier mutación (tareas, hábitos, cronómetro, sync). */
+   que es por donde pasa cualquier mutación (tareas, hábitos, cronómetro, sync).
+   Los contadores de las tarjetas semanales (semana-count, hb-pct) los escribe
+   cada render, porque esas tarjetas pueden estar mostrando otra semana. */
 var _pendTotal=0;   /* lo cuenta renderPendientes, que ya recorre todas las semanas */
 
 function refrescarStats(){
@@ -1464,22 +1611,14 @@ function refrescarStats(){
   var hechasHoy=hoy.filter(function(t){return t.hecha;}).length;
   var pctHoy = hoy.length ? Math.round((hechasHoy/hoy.length)*100) : 0;
 
-  var totalSem=0, hechasSem=0;
-  tareasData.dias.forEach(function(d){ d.forEach(function(t){ totalSem++; if(t.hecha) hechasSem++; }); });
-
-  var hbMax=HABITS.length*7;
-  var hbTotal=hbData.checks.flat().filter(Boolean).length;
-  var hbPct=Math.round((hbTotal/hbMax)*100);
-  var hbHoy=hbData.checks.filter(function(r){return r[hbTodayIdx];}).length;
+  var hbHoy=habitosActivos().filter(function(h){ return tilde(hbData,h.id,hbTodayIdx); }).length;
 
   document.getElementById('s-tasks').textContent=hoy.length-hechasHoy;     /* "Faltan hoy" */
   document.getElementById('s-pendientes').textContent=_pendTotal;
   document.getElementById('s-habits').textContent=hbHoy;
   document.getElementById('hoy-count').textContent=hechasHoy+' / '+hoy.length;
   document.getElementById('hoy-bar').style.width=pctHoy+'%';
-  document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
-  document.getElementById('hb-pct').textContent=hbPct+'%';
-  document.getElementById('hb-bar').style.width=hbPct+'%';
+  refrescarNivel();
 }
 
 /* ── Tarjeta de hoy: progreso arriba, tareas en columnas ── */
@@ -1847,7 +1986,18 @@ function importarDatos(input){
 }
 
 /* ═══════════════════ HABIT TRACKER ═══════════════════ */
-var HABITS=[
+/* La definición de los hábitos vive en la clave sincronizada 'habitos_def'.
+   Cada hábito: { id, name, icon, color:'var(--x)', minutos, pausado, prio }
+   - id = CASILLERO fijo en checks[] de cada semana wk_*. Nunca se reutiliza
+     ni se renumera: así los tildes viejos siguen apuntando al hábito correcto.
+   - Alta nueva: id = maxSlot()+1. Baja: NO existe, se pausa (pausado:true).
+   - color: siempre el token, nunca hex (los temas los redefinen).
+   - prio: el que lleva el input "prioridad del día". Uno solo, o ninguno. */
+var HABITOS_DEF_KEY='habitos_def';
+var PALETA=['var(--coral)','var(--lime)','var(--butter)','var(--peri)','var(--sky)','var(--tang)','var(--azul)','var(--menta)','var(--oro)'];
+
+/* Solo se usa la primera vez, si 'habitos_def' no existe todavía */
+var HABITS_SEMILLA=[
   {id:0,name:'Dormir 7hrs',       icon:'🛏️',color:'var(--peri)'},
   {id:1,name:'Comer Saludable',   icon:'🍎',color:'var(--lime)'},
   {id:2,name:'Higiene',           icon:'🫧',color:'var(--sky)'},
@@ -1856,10 +2006,48 @@ var HABITS=[
   {id:5,name:'Ejercicio',         icon:'🏋️',color:'var(--tang)'},
   {id:6,name:'UNI 90min',         icon:'📖',color:'var(--azul)', minutos:90},
   {id:7,name:'30min Aprendizaje', icon:'✏️',color:'var(--menta)', minutos:30},
-  {id:8,name:'1 Prioridad del día',icon:'⭐',color:'var(--oro)'}
+  {id:8,name:'1 Prioridad del día',icon:'⭐',color:'var(--oro)', prio:true}
 ];
+var HABITS=[];   /* la llena loadHabitosDef() en el INIT, antes que loadHabits */
 
-function mkDefault(){return{checks:Array.from({length:9},function(){return Array(7).fill(false)}),priorities:Array(7).fill('')};}
+/* Deja cada hábito con todos los campos y tipos correctos, venga de donde venga */
+function normalizarHabito(h){
+  return {
+    id: h.id,
+    name: String(h.name||'Hábito').slice(0,40),
+    icon: String(h.icon||'•').slice(0,16),
+    color: PALETA.indexOf(h.color)>=0 ? h.color : 'var(--peri)',
+    minutos: (+h.minutos>0) ? Math.round(+h.minutos) : 0,
+    pausado: !!h.pausado,
+    prio: !!h.prio
+  };
+}
+function loadHabitosDef(){
+  var def=null;
+  try{
+    var d=JSON.parse(localStorage.getItem(HABITOS_DEF_KEY));
+    if(Array.isArray(d) && d.length){
+      def=d.filter(function(h){ return h && typeof h.id==='number' && h.id>=0; }).map(normalizarHabito);
+    }
+  }catch(e){}
+  if(def && def.length){ HABITS=def; return; }
+  /* Primera vez: se siembra desde la lista de siempre. Se guarda SIN lsSet a
+     propósito: con marca de tiempo, bajarTodo() creería que esta semilla es más
+     nueva que la definición que ya está en la nube y la pisaría. */
+  HABITS=HABITS_SEMILLA.map(normalizarHabito);
+  try{ localStorage.setItem(HABITOS_DEF_KEY, JSON.stringify(HABITS)); }catch(e){}
+}
+function saveHabitosDef(){ lsSet(HABITOS_DEF_KEY, JSON.stringify(HABITS)); }
+
+function habitPorId(id){ for(var i=0;i<HABITS.length;i++) if(HABITS[i].id===id) return HABITS[i]; return null; }
+function habitosActivos(){ return HABITS.filter(function(h){ return !h.pausado; }); }
+function maxSlot(){ var m=-1; HABITS.forEach(function(h){ if(h.id>m) m=h.id; }); return m; }
+/* Cuántas filas necesita checks[] para que checks[id] exista para todo id */
+function slotsNecesarios(){ return maxSlot()+1; }
+/* Lectura segura de un tilde: la semana puede ser vieja y tener menos filas */
+function tilde(D,id,d){ var r=D.checks[id]; return !!(r && r[d]); }
+
+function mkDefault(){return{checks:Array.from({length:slotsNecesarios()},function(){return Array(7).fill(false)}),priorities:Array(7).fill('')};}
 
 var hbData=mkDefault(),hbActiveDay=getTodayIdx(),hbView='day',hbDates=getWeekDates(),hbTodayIdx=getTodayIdx();
 
@@ -1874,7 +2062,7 @@ function loadHabits(){
       var d=JSON.parse(s);
       if(d&&Array.isArray(d.checks)){
         hbData=d;
-        while(hbData.checks.length<HABITS.length) hbData.checks.push(Array(7).fill(false));
+        while(hbData.checks.length<slotsNecesarios()) hbData.checks.push(Array(7).fill(false));
         /* Objetos viejos sin priorities hacían explotar setPriority */
         if(!Array.isArray(hbData.priorities)) hbData.priorities=Array(7).fill('');
         while(hbData.priorities.length<7) hbData.priorities.push('');
@@ -1889,8 +2077,13 @@ function saveHabits(){
   lsSet(getWeekKey(),JSON.stringify(hbData));
   programarProgreso();
 }
-function toggleHabit(hId,dIdx){hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];saveHabits();renderHabits();}
-function setPriority(dIdx,txt){hbData.priorities[dIdx]=txt;saveHabits();}
+function toggleHabit(hId,dIdx){
+  if(enHistorial()){ mostrarToast('Estás viendo una semana pasada: volvé a hoy para editar'); return; }
+  while(hbData.checks.length<=hId) hbData.checks.push(Array(7).fill(false));   /* hábito recién agregado */
+  hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];
+  saveHabits(); renderHabits();
+}
+function setPriority(dIdx,txt){ if(enHistorial()) return; hbData.priorities[dIdx]=txt; saveHabits(); }
 
 /* Reparación puntual (se llama desde la consola: limpiarHabitosFuturos()).
    Si una semana arrancó con los tildes heredados de la anterior —bug corregido
@@ -1912,6 +2105,114 @@ function setHbView(v){
   renderHabits();
 }
 function selectHabitDay(i){hbActiveDay=i;renderHabits();}
+
+/* ═══════════ EDITOR DE HÁBITOS ═══════════
+   Guardado INMEDIATO con lsSet en cada cambio confirmado (onchange / click):
+   es lo que hace todo el dashboard (tareas, tildes, diario), no hay estado
+   "sucio" que perder al cerrar con Escape, y la capa de sync ya agrupa las
+   subidas (1,5 s), así que diez cambios seguidos son una sola subida.
+   Los campos de texto usan onchange (no oninput) y NO redibujan la lista:
+   redibujar reemplaza innerHTML y te saca el foco (ver comentario en arrancarTick). */
+var _hbePausadosAbierto=false;
+
+function editorAbierto(){ var el=document.getElementById('hb-editor-fondo'); return !!(el && el.classList.contains('visible')); }
+function abrirEditorHabitos(){ renderEditorHabitos(); document.getElementById('hb-editor-fondo').classList.add('visible'); }
+function cerrarEditorHabitos(){ document.getElementById('hb-editor-fondo').classList.remove('visible'); }
+
+function filaEditorHTML(h,pos,n){
+  var sw=PALETA.map(function(c){
+    return '<button class="hbe-sw'+(h.color===c?' activo':'')+'" style="--sw:'+c+'" onclick="setHabitCampo('+h.id+',\'color\',\''+c+'\')" title="'+c.slice(6,-1)+'" aria-label="Color '+c.slice(6,-1)+'"></button>';
+  }).join('');
+  var acciones = h.pausado
+    ? '<div class="hbe-acciones"><button class="hbe-btn reactivar" onclick="reactivarHabito('+h.id+')">Reactivar</button></div>'
+    : '<div class="hbe-acciones">'+
+        '<button class="hbe-btn" onclick="moverHabito('+h.id+',-1)"'+(pos===0?' disabled':'')+' title="Subir">↑</button>'+
+        '<button class="hbe-btn" onclick="moverHabito('+h.id+',1)"'+(pos===n-1?' disabled':'')+' title="Bajar">↓</button>'+
+        '<button class="hbe-btn pausar" onclick="pausarHabito('+h.id+')" title="Pausar: se esconde, el historial queda">Pausar</button>'+
+      '</div>';
+  /* Los valores del usuario van SOLO en value="" (con esc, que escapa comillas)
+     o se leen con this.value; en los onclick solo viajan ids numéricos y tokens de PALETA */
+  return '<div class="hbe-fila'+(h.pausado?' pausada':'')+'" data-id="'+h.id+'">'+
+    '<input class="hbe-icon" type="text" value="'+esc(h.icon)+'" maxlength="16" title="Emoji" onchange="setHabitCampo('+h.id+',\'icon\',this.value)">'+
+    '<input class="hbe-name" type="text" value="'+esc(h.name)+'" maxlength="40" placeholder="Nombre" onchange="setHabitCampo('+h.id+',\'name\',this.value)">'+
+    '<div class="hbe-swatches">'+sw+'</div>'+
+    '<label class="hbe-min" title="Minutos del cronómetro. Vacío = sin cronómetro"><input type="number" min="0" max="600" step="5" value="'+(h.minutos||'')+'" placeholder="—" onchange="setHabitCampo('+h.id+',\'minutos\',this.value)"><span>min</span></label>'+
+    '<label class="hbe-prio" title="Lleva el campo de prioridad del día"><input type="radio" name="hbe-prio"'+(h.prio?' checked':'')+(h.pausado?' disabled':'')+' onchange="setHabitPrio('+h.id+')"><span>★</span></label>'+
+    acciones+
+  '</div>';
+}
+function renderEditorHabitos(){
+  var act=habitosActivos(), pau=HABITS.filter(function(h){ return h.pausado; });
+  document.getElementById('hb-editor-lista').innerHTML =
+    act.length ? act.map(function(h,i){ return filaEditorHTML(h,i,act.length); }).join('')
+               : '<div class="empty-msg">No hay hábitos activos.</div>';
+  var det=document.getElementById('hbe-pausados');
+  det.innerHTML = pau.length
+    ? '<details class="hbe-pausados"'+(_hbePausadosAbierto?' open':'')+' ontoggle="_hbePausadosAbierto=this.open">'+
+        '<summary>Pausados ('+pau.length+')</summary>'+
+        pau.map(function(h){ return filaEditorHTML(h,0,1); }).join('')+
+      '</details>'
+    : '';
+}
+
+/* Un cambio de campo. Texto/ícono/minutos NO redibujan el editor (el input ya
+   muestra el valor nuevo); color sí, para mover el anillo del swatch. */
+function setHabitCampo(id,campo,valor){
+  var h=habitPorId(id); if(!h) return;
+  if(campo==='name'){
+    var nm=String(valor).trim();
+    if(!nm){ renderEditorHabitos(); return; }          /* vacío: se descarta y vuelve el nombre anterior */
+    h.name=nm.slice(0,40);
+  } else if(campo==='icon'){
+    h.icon=(String(valor).trim()||'•').slice(0,16);
+  } else if(campo==='minutos'){
+    var m=parseInt(valor,10);
+    h.minutos = (m>0) ? Math.min(m,600) : 0;
+    /* Si el cronómetro corre sobre este hábito, el objetivo cambió: se cancela */
+    if(timerActivo && timerActivo.habitId===id){ timerActivo=null; saveTimer(); pararTick(); }
+  } else if(campo==='color'){
+    if(PALETA.indexOf(valor)<0) return;
+    h.color=valor;
+    renderEditorHabitos();
+  } else return;
+  saveHabitosDef(); renderHabits();
+}
+function setHabitPrio(id){
+  HABITS.forEach(function(h){ h.prio=(h.id===id && !h.pausado); });
+  saveHabitosDef(); renderHabits();
+}
+/* Reordena dentro de los ACTIVOS; los pausados quedan al final del array */
+function moverHabito(id,dir){
+  var act=habitosActivos(), pau=HABITS.filter(function(h){ return h.pausado; });
+  var i=-1; for(var k=0;k<act.length;k++) if(act[k].id===id){ i=k; break; }
+  var j=i+dir;
+  if(i<0 || j<0 || j>=act.length) return;
+  var tmp=act[i]; act[i]=act[j]; act[j]=tmp;
+  HABITS=act.concat(pau);
+  saveHabitosDef(); renderEditorHabitos(); renderHabits();
+}
+function pausarHabito(id){
+  var h=habitPorId(id); if(!h) return;
+  h.pausado=true;
+  if(h.prio) h.prio=false;                              /* el input de prioridad no puede vivir en un pausado */
+  if(timerActivo && timerActivo.habitId===id){ timerActivo=null; saveTimer(); pararTick(); }
+  saveHabitosDef(); renderEditorHabitos(); renderHabits();
+  mostrarToast('"'+h.name+'" pausado. Su historial sigue guardado.');
+}
+function reactivarHabito(id){
+  var h=habitPorId(id); if(!h) return;
+  h.pausado=false;
+  saveHabitosDef(); renderEditorHabitos(); renderHabits();
+}
+function agregarHabito(){
+  var h=normalizarHabito({ id:maxSlot()+1, name:'Nuevo hábito', icon:'✨', color:PALETA[HABITS.length%PALETA.length] });
+  HABITS.push(h);                                       /* id nuevo: casillero que nunca se usó */
+  saveHabitosDef();
+  while(hbData.checks.length<slotsNecesarios()) hbData.checks.push(Array(7).fill(false));   /* se persiste con el primer tilde */
+  renderEditorHabitos(); renderHabits();
+  var inp=document.querySelector('#hb-editor-lista .hbe-fila[data-id="'+h.id+'"] .hbe-name');
+  if(inp){ inp.focus(); inp.select(); }
+}
 
 /* ═══════════ GUARDIÁN DE FECHA ═══════════
    La pestaña (o la app instalada) puede quedar abierta días. "Hoy" y "esta
@@ -1949,7 +2250,7 @@ function claveDia(f){ return f.getFullYear()+'-'+f.getMonth()+'-'+f.getDate(); }
 var _rachasCache=null;   /* se calcula una vez por render */
 
 function calcularRachas(){
-  var mapa={};   /* 'AAAA-M-D' → [bool x9] */
+  var mapa={};   /* 'AAAA-M-D' → [bool por casillero] */
   try{
     for(var i=0;i<localStorage.length;i++){
       var key=localStorage.key(i);
@@ -1962,14 +2263,15 @@ function calcularRachas(){
       for(var d=0; d<7; d++){
         var f=new Date(lunes); f.setDate(lunes.getDate()+d);
         var arr=[];
-        for(var hid=0; hid<9; hid++) arr[hid]=!!(data.checks[hid] && data.checks[hid][d]);
+        for(var hid=0; hid<data.checks.length; hid++) arr[hid]=!!(data.checks[hid] && data.checks[hid][d]);
         mapa[claveDia(f)]=arr;
       }
     }
   }catch(e){}
 
   var hoy=new Date(); hoy.setHours(0,0,0,0);
-  return HABITS.map(function(h){
+  var out={};   /* id → días seguidos. OBJETO por id: HABITS puede estar reordenado o con pausados */
+  HABITS.forEach(function(h){
     var cursor=new Date(hoy), racha=0;
     /* Si hoy todavía no lo tildaste, se cuenta desde ayer: un día en
        curso sin marcar no debería romper la racha a la mañana. */
@@ -1981,8 +2283,9 @@ function calcularRachas(){
       racha++;
       cursor.setDate(cursor.getDate()-1);
     }
-    return racha;
+    out[h.id]=racha;
   });
+  return out;
 }
 
 /* ═══════════ CRONÓMETRO ═══════════
@@ -2001,8 +2304,9 @@ function loadTimer(){
     if(!s) return;
     var t=JSON.parse(s);
     if(!t) return;
-    /* Los cronómetros de tarea ya no existen: uno guardado por la versión anterior se descarta */
-    if(t.tipo==='tarea' || typeof t.habitId!=='number'){ localStorage.removeItem(TIMER_KEY); return; }
+    /* Los cronómetros de tarea ya no existen, y uno de un hábito pausado o sin minutos tampoco vale */
+    var hT = typeof t.habitId==='number' ? habitPorId(t.habitId) : null;
+    if(t.tipo==='tarea' || !hT || hT.pausado || !hT.minutos){ localStorage.removeItem(TIMER_KEY); return; }
     /* Un cronómetro arrancado otro día se descarta: sumarle las horas que
        pasaron mientras la máquina estaba apagada seria mentira */
     var dia=new Date(t.inicio); dia.setHours(0,0,0,0);
@@ -2030,7 +2334,7 @@ function fmtMMSS(seg){
    Devuelve true si se puede arrancar el nuevo. */
 function liberarTimer(){
   if(!timerActivo) return true;
-  var queEs='el hábito "'+HABITS[timerActivo.habitId].name+'"';
+  var hT=habitPorId(timerActivo.habitId); var queEs='el hábito "'+(hT?hT.name:'?')+'"';
   if(!confirm('Ya tenés el cronómetro corriendo en '+queEs+'.\n\nSolo puede haber uno a la vez. ¿Lo paro y arranco este?')) return false;
   timerActivo=null; saveTimer(); pararTick();
   return true;
@@ -2038,7 +2342,7 @@ function liberarTimer(){
 
 function arrancarTimer(hId,ev){
   if(ev) ev.stopPropagation();
-  var h=HABITS[hId]; if(!h||!h.minutos) return;
+  var h=habitPorId(hId); if(!h||!h.minutos||h.pausado) return;
   if(!liberarTimer()) return;
   timerActivo={habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
   saveTimer(); renderHabits(); arrancarTick();
@@ -2051,9 +2355,12 @@ function completarTimer(){
   if(!timerActivo) return;
   var hId=timerActivo.habitId;
   timerActivo=null; saveTimer(); pararTick();
-  /* toggleHabit ya guarda y vuelve a dibujar */
-  if(!hbData.checks[hId][hbTodayIdx]) toggleHabit(hId,hbTodayIdx);
-  else renderHabits();
+  /* Se escribe directo (sin pasar por la guarda de historial de toggleHabit) */
+  while(hbData.checks.length<=hId) hbData.checks.push(Array(7).fill(false));
+  var antesTimer=habitosDelDia(hbTodayIdx);
+  if(!hbData.checks[hId][hbTodayIdx]){ hbData.checks[hId][hbTodayIdx]=true; saveHabits(); }
+  renderHabits();
+  detectarDiaPerfecto(antesTimer,hbTodayIdx);
   beep();
   var card=document.getElementById('hb-card-'+hId);
   if(card) card.classList.add('listo');
@@ -2098,16 +2405,23 @@ function makeRingSVG(pct,color,size){
 }
 
 function renderHabits(){
-  _rachasCache=calcularRachas();   /* una sola pasada por localStorage por render */
-  var dayTotals=Array.from({length:7},function(_,d){return hbData.checks.filter(function(r){return r[d];}).length;});
-  var habTotals=hbData.checks.map(function(r){return r.filter(Boolean).length;});
-  var total=hbData.checks.flat().filter(Boolean).length;
-  var dr=hbDates[0].getDate()+' '+MN2[hbDates[0].getMonth()]+' — '+hbDates[6].getDate()+' '+MN2[hbDates[6].getMonth()];
+  /* En el historial (_semanaVista<0) se dibuja una semana vieja en solo lectura:
+     sin handlers, sin cronómetro, sin rachas, ningún día es "hoy". */
+  var ro=enHistorial(), D=habitsDeVista(), lista=habitosParaVista(D);
+  var fechas = ro ? getWeekDatesVista() : hbDates;
+  var hoyI = ro ? -1 : hbTodayIdx;
+  _rachasCache = ro ? {} : calcularRachas();   /* una sola pasada por localStorage por render */
+
+  var dayTotals=Array.from({length:7},function(_,d){ return lista.filter(function(h){ return tilde(D,h.id,d); }).length; });
+  var habTotals={}; lista.forEach(function(h){ var n=0; for(var d=0;d<7;d++) if(tilde(D,h.id,d)) n++; habTotals[h.id]=n; });
+  var total=0; lista.forEach(function(h){ total+=habTotals[h.id]; });
+  var maxSem=lista.length*7;
+  var dr=fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
   document.getElementById('hb-week-range').textContent=dr;
 
   /* Day scroller */
-  document.getElementById('hb-days').innerHTML=hbDates.map(function(date,i){
-    var isT=i===hbTodayIdx,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/HABITS.length)*100),ringColor=isA?'var(--on-accent)':'var(--lime)';
+  document.getElementById('hb-days').innerHTML=fechas.map(function(date,i){
+    var isT=i===hoyI,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/(lista.length||1))*100),ringColor=isA?'var(--on-accent)':'var(--lime)';
     return '<button class="hday-btn'+(isT?' today':'')+(isA?' active':'')+'" onclick="selectHabitDay('+i+')">'+
       '<div class="hday-ds">'+DS[i]+'</div><div class="hday-num">'+date.getDate()+'</div>'+
       '<div class="hday-ring-wrap" style="width:34px;height:34px;position:relative">'+
@@ -2116,30 +2430,39 @@ function renderHabits(){
       '</div></button>';
   }).join('');
 
+  if(!lista.length){
+    document.getElementById('hb-content').innerHTML='<div class="empty-msg">Todos los hábitos están pausados. Tocá "Editar" para reactivar alguno.</div>';
+    document.getElementById('hb-pct').textContent='0%';
+    document.getElementById('hb-bar').style.width='0%';
+    refrescarStats();
+    return;
+  }
+
   /* Content */
   if(hbView==='day'){
     document.getElementById('hb-content').innerHTML=
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">'+
         '<span style="font-size:16px;font-weight:600;color:var(--t1);font-weight:800;letter-spacing:-0.8px">'+DF[hbActiveDay]+'</span>'+
-        (hbActiveDay===hbTodayIdx?'<span style="font-size:9px;background:var(--lime);color:var(--on-accent);padding:4px 10px;border-radius:var(--r-pill);font-weight:800;letter-spacing:0.5px;font-family:var(--ui)">HOY</span>':'')+
-        '<span style="margin-left:auto;font-size:12px;color:var(--t3)">'+dayTotals[hbActiveDay]+'/9</span>'+
+        (hbActiveDay===hoyI?'<span style="font-size:9px;background:var(--lime);color:var(--on-accent);padding:4px 10px;border-radius:var(--r-pill);font-weight:800;letter-spacing:0.5px;font-family:var(--ui)">HOY</span>':'')+
+        '<span style="margin-left:auto;font-size:12px;color:var(--t3)">'+dayTotals[hbActiveDay]+'/'+lista.length+'</span>'+
       '</div>'+
       '<div class="habit-grid">'+
-        HABITS.map(function(h){
-          var done=hbData.checks[h.id][hbActiveDay],isPrio=h.id===8;
+        lista.map(function(h){
+          var done=tilde(D,h.id,hbActiveDay),isPrio=!!h.prio;
           var dots=Array.from({length:7},function(_,d){
-            var cls='hb-dot'+(d===hbActiveDay?' today-ring':'')+(hbData.checks[h.id][d]?' filled':'');
-            return '<div class="'+cls+'" style="--hc:'+h.color+';'+(hbData.checks[h.id][d]?'background:'+(done?'var(--on-accent)':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(var(--scrim-rgb),0.55)':h.color):'')+'"></div>';
+            var on=tilde(D,h.id,d);
+            var cls='hb-dot'+(d===hbActiveDay?' today-ring':'')+(on?' filled':'');
+            return '<div class="'+cls+'" style="--hc:'+h.color+';'+(on?'background:'+(done?'var(--on-accent)':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(var(--scrim-rgb),0.55)':h.color):'')+'"></div>';
           }).join('');
-          /* Racha: se muestra recién a partir de 2 días, con 1 no dice nada */
-          var racha=_rachasCache[h.id]||0;
+          /* Racha: se muestra recién a partir de 2 días, con 1 no dice nada. En el historial no aplica. */
+          var racha=ro?0:(_rachasCache[h.id]||0);
           var rachaHTML = racha>=2 ? '<span class="hb-racha">🔥 '+racha+'</span>' : '';
           /* Cronómetro: en los hábitos con objetivo de minutos, solo sobre el día de hoy.
              Se muestra aunque el hábito ya esté tildado, así podés arrancar otra sesión
              y el botón no "desaparece" de golpe. */
-          var corriendo = timerActivo && timerActivo.habitId===h.id;
+          var corriendo = !ro && timerActivo && timerActivo.habitId===h.id;
           var timerHTML='';
-          if(h.minutos && hbActiveDay===hbTodayIdx){
+          if(h.minutos && !ro && hbActiveDay===hoyI){
             timerHTML = corriendo
               ? '<div class="hb-timer">'+
                   '<span class="hb-timer-count'+(done?' on-color':'')+'" id="hb-count-'+h.id+'">'+fmtMMSS(segundosRestantes())+'</span>'+
@@ -2148,45 +2471,49 @@ function renderHabits(){
               : '<button class="hb-timer-btn'+(done?' on-color':'')+'" onclick="arrancarTimer('+h.id+',event)" '+
                   'title="Arrancar cronómetro de '+h.minutos+' minutos">▶ '+h.minutos+'min</button>';
           }
-          return '<div class="hb-item'+(corriendo?' corriendo':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
-            '<div class="hb-body" onclick="toggleHabit('+h.id+','+hbActiveDay+')">'+
-              '<span class="hb-icon">'+h.icon+'</span>'+
+          return '<div class="hb-item'+(corriendo?' corriendo':'')+(ro?' ro':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
+            '<div class="hb-body"'+(ro?'':' onclick="toggleHabit('+h.id+','+hbActiveDay+')"')+'>'+
+              '<span class="hb-icon">'+esc(h.icon)+'</span>'+
               '<div class="hb-info"><div class="hb-name'+(done?' done':'')+'">'+esc(h.name)+rachaHTML+'</div><div class="hb-dots">'+dots+'</div></div>'+
               timerHTML+
               '<div class="hb-check" style="'+(done?'background:var(--on-accent);border-color:var(--on-accent);color:'+h.color:'border-color:var(--line2)')+'">'+(done?'✓':'')+'</div>'+
             '</div>'+
-            (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(hbData.priorities[hbActiveDay])+'" placeholder="Escribí tu prioridad de hoy..." oninput="setPriority('+hbActiveDay+',this.value)" onclick="event.stopPropagation()"/></div>':'')+
+            (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(D.priorities[hbActiveDay])+'" placeholder="'+(ro?'Sin prioridad ese día':'Escribí tu prioridad de hoy...')+'"'+(ro?' readonly':' oninput="setPriority('+hbActiveDay+',this.value)"')+' onclick="event.stopPropagation()"/></div>':'')+
           '</div>';
         }).join('')+
       '</div>';
   } else {
-    var thead='<tr><th></th>'+DS.map(function(d,i){return'<th class="'+(i===hbTodayIdx?'today-col':'')+'">'+d+'</th>';}).join('')+'<th style="padding-left:8px;text-align:center">sem</th><th style="padding-left:8px;text-align:center">racha</th></tr>';
-    var tbody=HABITS.map(function(h){
+    var thead='<tr><th></th>'+DS.map(function(d,i){return'<th class="'+(i===hoyI?'today-col':'')+'">'+d+'</th>';}).join('')+'<th style="padding-left:8px;text-align:center">sem</th><th style="padding-left:8px;text-align:center">racha</th></tr>';
+    var tbody=lista.map(function(h){
       var cells=Array.from({length:7},function(_,d){
-        var done=hbData.checks[h.id][d],cls='hb-cell'+(d===hbTodayIdx?' today-ring':'')+( done?' filled':'');
-        return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hbTodayIdx?'border-color:'+h.color:'')+';" onclick="toggleHabit('+h.id+','+d+')">'+(done?'✓':'')+'</div></td>';
+        var done=tilde(D,h.id,d),cls='hb-cell'+(d===hoyI?' today-ring':'')+( done?' filled':'')+(ro?' ro':'');
+        return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hoyI?'border-color:'+h.color:'')+';"'+(ro?'':' onclick="toggleHabit('+h.id+','+d+')"')+'>'+(done?'✓':'')+'</div></td>';
       }).join('');
       var sc=habTotals[h.id]===7?'var(--lime)':habTotals[h.id]>=5?'var(--sky)':habTotals[h.id]>=3?'var(--butter)':'var(--muted)';
-      var rc=_rachasCache[h.id]||0;
+      var rc=ro?0:(_rachasCache[h.id]||0);
       /* Icono y nombre van separados para poder esconder el nombre en el celular */
       return '<tr><td><span class="hb-row-label" title="'+esc(h.name)+'">'+
-          '<span class="hb-ico">'+h.icon+'</span>'+
+          '<span class="hb-ico">'+esc(h.icon)+'</span>'+
           '<span class="hb-nombre">'+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span>'+
         '</span></td>'+cells+
         '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+sc+'">'+habTotals[h.id]+'/7</span></td>'+
         '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+(rc>=2?'var(--tang)':'var(--muted)')+'">'+(rc>=2?'🔥 '+rc:'—')+'</span></td></tr>';
     }).join('');
-    var mejorRacha=Math.max.apply(null,_rachasCache);
+    var mejorRacha=0; lista.forEach(function(h){ var r=ro?0:(_rachasCache[h.id]||0); if(r>mejorRacha) mejorRacha=r; });
     var totalRow='<tr class="hb-total-row"><td style="color:var(--t3);padding-right:8px">Total</td>'+
-      dayTotals.map(function(t,i){return'<td style="text-align:center"><span style="font-size:11px;font-weight:700;color:'+(i===hbTodayIdx?'var(--lime)':'var(--muted)')+'">'+t+'</span></td>';}).join('')+
+      dayTotals.map(function(t,i){return'<td style="text-align:center"><span style="font-size:11px;font-weight:700;color:'+(i===hoyI?'var(--lime)':'var(--muted)')+'">'+t+'</span></td>';}).join('')+
       '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:var(--lime)">'+total+'</span></td>'+
       '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:'+(mejorRacha>=2?'var(--tang)':'var(--muted)')+'">'+(mejorRacha>=2?mejorRacha:'—')+'</span></td></tr>';
-    var hasPrios=hbData.priorities.some(Boolean);
+    var hasPrios=D.priorities.some(Boolean);
     var priosHtml='<div class="habit-prios-box"><div class="habit-prios-label">Prioridades de la semana</div>'+
-      (hasPrios?hbData.priorities.map(function(p,i){return p?'<div class="hb-prio-line"><span class="hb-prio-day" style="color:'+(i===hbTodayIdx?'var(--lime)':'var(--muted)')+'">'+DS[i]+'</span><span style="font-size:12.5px;color:var(--t2)">'+esc(p)+'</span></div>':'';}).join(''):'<div style="font-size:12px;color:var(--t4)">Sin prioridades registradas aún.</div>')+
+      (hasPrios?D.priorities.map(function(p,i){return p?'<div class="hb-prio-line"><span class="hb-prio-day" style="color:'+(i===hoyI?'var(--lime)':'var(--muted)')+'">'+DS[i]+'</span><span style="font-size:12.5px;color:var(--t2)">'+esc(p)+'</span></div>':'';}).join(''):'<div style="font-size:12px;color:var(--t4)">Sin prioridades registradas aún.</div>')+
     '</div>';
     document.getElementById('hb-content').innerHTML='<div style="overflow-x:auto"><table class="habit-table"><thead>'+thead+'</thead><tbody>'+tbody+totalRow+'</tbody></table></div>'+priosHtml;
   }
+  /* El % de la tarjeta se escribe acá (y no en refrescarStats) porque sigue a la semana que se mira */
+  var pctSem = maxSem ? Math.round((total/maxSem)*100) : 0;
+  document.getElementById('hb-pct').textContent=pctSem+'%';
+  document.getElementById('hb-bar').style.width=pctSem+'%';
   refrescarStats();
 }
 
@@ -2281,7 +2608,7 @@ function armarHistorial(){
         for(var d=0; d<7; d++){
           var f=new Date(lunH); f.setDate(lunH.getDate()+d);
           var n=0;
-          for(var h=0; h<9; h++) if(dh.checks[h] && dh.checks[h][d]) n++;
+          for(var h=0; h<dh.checks.length; h++) if(dh.checks[h] && dh.checks[h][d]) n++;
           habitosPorDia[claveDia(f)]=n;
         }
         continue;
@@ -2308,11 +2635,13 @@ function armarHistorial(){
   return {habitosPorDia:habitosPorDia, semanas:semanas};
 }
 
+/* Proporcional a la cantidad de hábitos activos (antes eran cortes fijos para 9) */
 function nivelHeat(n){
   if(!n) return '';
-  if(n<=2) return ' n1';
-  if(n<=4) return ' n2';
-  if(n<=6) return ' n3';
+  var p=n/(habitosActivos().length||1);
+  if(p<=0.25) return ' n1';
+  if(p<=0.5)  return ' n2';
+  if(p<=0.75) return ' n3';
   return ' n4';
 }
 
@@ -2336,7 +2665,7 @@ function renderProgreso(){
       var futuro = f.getTime()>hoy.getTime();
       var n = futuro ? -1 : (hist.habitosPorDia[claveDia(f)]||0);
       celdas.push('<div class="heat-c'+(futuro?' futuro':nivelHeat(n))+'"'+
-        (futuro?'':' title="'+f.getDate()+' '+MN2[f.getMonth()]+' \u00b7 '+n+' de 9"')+'></div>');
+        (futuro?'':' title="'+f.getDate()+' '+MN2[f.getMonth()]+' \u00b7 '+n+' h\u00e1bito'+(n===1?'':'s')+'"')+'></div>');
     }
     cols.push('<div class="heat-col">'+celdas.join('')+'</div>');
   }
@@ -2390,6 +2719,13 @@ function renderProgreso(){
     '<div><div class="prog-h">Reparto por contexto</div>'+reparto+'</div>';
 }
 
+/* ═══════════════════ PENDIENTE DE LAS FASES SIGUIENTES ═══════════════════ */
+/* Se reemplazan en las fases E (nav de semanas) e I (nivel y confetti) */
+function renderNavSemana(){}
+function refrescarNivel(){}
+function habitosDelDia(d){ return habitosActivos().filter(function(h){ return tilde(hbData,h.id,d); }).length; }
+function detectarDiaPerfecto(antes,dIdx){}
+
 /* ═══════════════════ RESUMEN DE LA SEMANA (domingo) ═══════════════════ */
 function armarResumen(){
   var f=getWeekDates();
@@ -2408,14 +2744,15 @@ function armarResumen(){
     if(lista.length) porDia.push({d:d, lista:lista});
   });
   var pct = total ? Math.round((hechas/total)*100) : 0;
-  var hbTotal=hbData.checks.flat().filter(Boolean).length;
-  var hbPct=Math.round((hbTotal/(HABITS.length*7))*100);
+  var act=habitosActivos(), hbTotal=0, hbMax=act.length*7;
+  act.forEach(function(h){ for(var d=0;d<7;d++) if(tilde(hbData,h.id,d)) hbTotal++; });
+  var hbPct = hbMax ? Math.round((hbTotal/hbMax)*100) : 0;
   var rachas=calcularRachas();
-  var vivas=HABITS.map(function(h,i){ return {name:h.name, icon:h.icon, r:rachas[i]}; })
-                  .filter(function(x){ return x.r>=2; })
-                  .sort(function(a,b){ return b.r-a.r; });
+  var vivas=act.map(function(h){ return {name:h.name, icon:h.icon, r:rachas[h.id]||0}; })
+                .filter(function(x){ return x.r>=2; })
+                .sort(function(a,b){ return b.r-a.r; });
   return {f:f, hechas:hechas, total:total, pct:pct, porTag:porTag, porDia:porDia,
-          hbPct:hbPct, hbTotal:hbTotal, vivas:vivas};
+          hbPct:hbPct, hbTotal:hbTotal, hbMax:hbMax, vivas:vivas};
 }
 
 function abrirResumen(){
@@ -2435,7 +2772,7 @@ function abrirResumen(){
   }).join('');
 
   var rachasHTML=r.vivas.length
-    ? r.vivas.slice(0,5).map(function(v){ return '<span class="modal-chip">'+v.icon+' '+esc(v.name)+' <b>\ud83d\udd25'+v.r+'</b></span>'; }).join('')
+    ? r.vivas.slice(0,5).map(function(v){ return '<span class="modal-chip">'+esc(v.icon)+' '+esc(v.name)+' <b>\ud83d\udd25'+v.r+'</b></span>'; }).join('')
     : '<span class="modal-vacio">Todav\u00eda no hay rachas de 2 d\u00edas o m\u00e1s.</span>';
 
   document.getElementById('modal-resumen').innerHTML=
@@ -2448,7 +2785,7 @@ function abrirResumen(){
       ? '<div class="modal-seccion"><div class="modal-h">Lo que hiciste</div>'+dias+'</div>'
       : '<div class="modal-seccion"><div class="modal-vacio">No tildaste ninguna tarea esta semana.</div></div>')+
     (chipsTag ? '<div class="modal-seccion"><div class="modal-h">Por contexto</div><div class="modal-chips">'+chipsTag+'</div></div>' : '')+
-    '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de '+(HABITS.length*7)+')</div>'+
+    '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de '+r.hbMax+')</div>'+
       '<div class="modal-chips">'+rachasHTML+'</div></div>'+
     '<div class="modal-acciones">'+
       '<button class="modal-btn" onclick="irAlDiario()">Escribir mi semana \u2193</button>'+
@@ -2474,7 +2811,17 @@ function quizasAbrirResumen(){
   abrirResumen();
 }
 document.addEventListener('keydown',function(e){
-  if(e.key==='Escape' && document.getElementById('modal-fondo').classList.contains('visible')) cerrarResumen();
+  var modal=document.getElementById('modal-fondo').classList.contains('visible');
+  if(e.key==='Escape'){
+    if(modal) cerrarResumen(); else if(editorAbierto()) cerrarEditorHabitos();
+    return;
+  }
+  /* ←/→ navegan semanas, pero nunca mientras escribís ni con un modal abierto */
+  if(modal || editorAbierto()) return;
+  var tag=(e.target && e.target.tagName)||'';
+  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey) return;
+  if(e.key==='ArrowLeft'){ e.preventDefault(); irSemana(-1); }
+  else if(e.key==='ArrowRight'){ e.preventDefault(); irSemana(1); }
 });
 
 /* ═══════════════════ MAILS SIN RESPONDER ═══════════════════ */
@@ -2595,6 +2942,7 @@ aplicarTema(temaActual());   /* el script del <head> ya puso el atributo; acá s
 setupHeader();
 renderFrase();
 loadPrefs();
+loadHabitosDef();       /* antes que loadHabits y loadTimer: los dos necesitan HABITS */
 loadTareas();
 loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */

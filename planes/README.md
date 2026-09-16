@@ -22,7 +22,8 @@ mensaje de commit no alcanza a contar.
 | 2026-08-28 | [Mover tareas entre días arrastrando](2026-08-28-mover-tareas-arrastrando.md) | `86cb0f9` |
 | 2026-08-28 | [App instalable y datos sincronizados](2026-08-28-app-instalable-y-sincronizada.md) | `1a21043` → `d6e37ed` |
 | 2026-08-29 | [Arreglos de pantalla en celular y escritorio](2026-08-29-arreglos-de-pantalla.md) | `e7dc6ac` |
-| 2026-09-16 | [Limpieza, contadores coherentes, semana nueva y temas](2026-09-16-limpieza-contadores-semana-y-temas.md) | (este) |
+| 2026-09-16 | [Limpieza, contadores coherentes, semana nueva y temas](2026-09-16-limpieza-contadores-semana-y-temas.md) | `d1e72c4` `2cc6439` `a59c5a7` |
+| 2026-09-16 | [Tanda 2: seis mejoras](2026-09-16-tanda-2-seis-mejoras.md) | (este) |
 
 ## Aviso sobre los cuatro primeros
 
