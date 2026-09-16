@@ -144,38 +144,6 @@
     .task-box.checked::after { content: '✓'; color: #0A1A0C; font-size: 12px; font-weight: 800; }
     .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; word-break: break-word; }
     .task-text.done { text-decoration: line-through; color: var(--t4); }
-    /* Tareas recurrentes */
-    .task-rep {
-      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
-      background: transparent; color: var(--t4); font-size: 13px; line-height: 1; font-family: var(--ui);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .16s, background .16s, color .16s;
-    }
-    .task:hover .task-rep { opacity: 1; }
-    .task-rep:hover { background: var(--peri); color: #F2F2FF; }
-    .task-rep.activa { opacity: 1; color: var(--peri); }
-    .task-rep.activa:hover { background: var(--peri); color: #F2F2FF; }
-    /* Selector de dias que se abre debajo de la tarea */
-    .rep-picker {
-      display: flex; align-items: center; flex-wrap: wrap; gap: 6px;
-      padding: 10px 12px; margin: 2px 0 6px; border-radius: 14px;
-      background: var(--surf3); border: 1px solid var(--peri);
-    }
-    .rep-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase; color: var(--peri); margin-right: 4px; }
-    .rep-dia {
-      width: 27px; height: 27px; border-radius: 100px; cursor: pointer; font-family: var(--ui);
-      border: 1px solid var(--line2); background: transparent; color: var(--t3);
-      font-size: 11px; font-weight: 800; transition: all .14s;
-    }
-    .rep-dia:hover { border-color: var(--peri); color: var(--t1); }
-    .rep-dia.on { background: var(--peri); border-color: var(--peri); color: #F2F2FF; }
-    .rep-acc {
-      border: none; cursor: pointer; border-radius: 100px; padding: 6px 13px; font-family: var(--ui);
-      font-size: 11px; font-weight: 800; background: var(--t1); color: #0A0A0A; margin-left: auto;
-    }
-    .rep-acc.quitar { background: transparent; color: var(--t3); border: 1px solid var(--line2); margin-left: 4px; }
-    .rep-acc.quitar:hover { border-color: var(--coral); color: var(--coral); }
-
     /* La × de la fuente se dibuja por debajo del centro óptico del botón:
        en un círculo de 24px se nota descentrada. Se reemplaza por dos barras
        rotadas, que quedan clavadas en el centro sin depender de la tipografía. */
@@ -192,24 +160,6 @@
     .pend-btn.tirar::before, .pend-btn.tirar::after { width: 11px; height: 1.5px; }
     .modal-cerrar::before, .modal-cerrar::after { width: 14px; height: 1.8px; }
 
-    /* Cronómetro por tarea */
-    .task-play {
-      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
-      background: transparent; color: var(--t4); font-size: 10px; line-height: 1; font-family: var(--ui);
-      display: flex; align-items: center; justify-content: center;
-      opacity: 0; transition: opacity .16s, background .16s, color .16s;
-    }
-    .task:hover .task-play { opacity: 1; }
-    .task-play:hover { background: var(--tang); color: #1A0E02; }
-    .task-play.corriendo { opacity: 1; background: var(--tang); color: #1A0E02; }
-    .task-crono {
-      flex-shrink: 0; font-size: 12px; font-weight: 800; color: var(--tang);
-      font-variant-numeric: tabular-nums; min-width: 44px; text-align: right;
-    }
-    .task-tiempo {
-      flex-shrink: 0; font-size: 11px; font-weight: 700; color: var(--t4);
-      font-variant-numeric: tabular-nums;
-    }
     .task-del {
       flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
       background: transparent; color: var(--t4); font-size: 16px; line-height: 1; font-family: var(--ui);
@@ -602,15 +552,10 @@
       .hoy-grid .task { flex-wrap: wrap; row-gap: 8px; padding-bottom: 12px; }
       /* El texto llena la primera linea y empuja todo lo demas a la segunda */
       .hoy-grid .task .task-text { flex: 1 1 calc(100% - 32px); }
-      /* Visibles y tocables: hasta ahora no se podia ni borrar desde el celular */
-      .hoy-grid .task .task-play,
-      .hoy-grid .task .task-rep,
+      /* Visible y tocable: hasta ahora no se podia ni borrar desde el celular */
       .hoy-grid .task .task-del { opacity: 1; width: 28px; height: 28px; }
-      /* Alinea el primero de la segunda linea con el texto de arriba.
-         Puede ser el tiempo acumulado o la etiqueta, segun el caso. */
-      .hoy-grid .task .task-tiempo,
+      /* Alinea la etiqueta, primera de la segunda linea, con el texto de arriba */
       .hoy-grid .task .tag-pill { margin-left: 32px; }
-      .hoy-grid .task .task-tiempo ~ .tag-pill { margin-left: 0; }
     }
 
     /* ══════════ TABLA DE HÁBITOS EN EL CELULAR ══════════ */
@@ -970,7 +915,7 @@ function subirPendientes(){
 
 /* Después de bajar datos nuevos hay que volver a dibujar todo */
 function recargarDesdeStorage(){
-  loadPrefs(); loadRecurrentes(); loadTareas(); loadHabits(); loadDiario();
+  loadPrefs(); loadTareas(); loadHabits(); loadDiario();
   hbDates=getWeekDates(); hbTodayIdx=getTodayIdx();
   renderTareas(); renderHabits(); renderDiario(); renderProgreso();
 }
@@ -1169,81 +1114,6 @@ function renderFiltro(){
   nota.textContent = filtroTag ? 'Filtrando por '+tagById(filtroTag).label+' — hay más tareas ocultas' : '';
 }
 
-/* ═══════════════════ TAREAS RECURRENTES ═══════════════════ */
-/* Una clave global: [ {id, texto, tag, dias:[0,2,4]} ]  0=Lunes … 6=Domingo
-   Se generan solas la primera vez que se abre una semana nueva. */
-var REC_KEY='recurrentes';
-var recurrentes=[];
-var _repAbierto=null;   /* id de la tarea con el selector de días abierto */
-
-function loadRecurrentes(){
-  try{
-    var r=JSON.parse(localStorage.getItem(REC_KEY));
-    if(Array.isArray(r)) recurrentes=r;
-  }catch(e){}
-}
-function saveRecurrentes(){
-  lsSet(REC_KEY,JSON.stringify(recurrentes));
-}
-function recDeTexto(texto){
-  for(var i=0;i<recurrentes.length;i++) if(recurrentes[i].texto===texto) return recurrentes[i];
-  return null;
-}
-
-/* Abre / cierra el selector de días debajo de la tarea */
-function toggleRepPicker(diaIdx,i,ev){
-  if(ev) ev.stopPropagation();
-  var t=tareasData.dias[diaIdx][i]; if(!t) return;
-  _repAbierto = (_repAbierto===t.id) ? null : t.id;
-  /* Si es nueva, el día donde está la tarea viene pre-marcado */
-  if(_repAbierto && !recDeTexto(t.texto)) _repBorrador=[diaIdx];
-  else if(_repAbierto){ _repBorrador=recDeTexto(t.texto).dias.slice(); }
-  renderTareas();
-}
-var _repBorrador=[];
-
-function toggleRepDia(d,ev){
-  if(ev) ev.stopPropagation();
-  var k=_repBorrador.indexOf(d);
-  if(k>=0) _repBorrador.splice(k,1); else _repBorrador.push(d);
-  _repBorrador.sort();
-  renderTareas();
-}
-function guardarRep(diaIdx,i,ev){
-  if(ev) ev.stopPropagation();
-  var t=tareasData.dias[diaIdx][i]; if(!t) return;
-  if(!_repBorrador.length){ quitarRep(diaIdx,i,ev); return; }
-  var r=recDeTexto(t.texto);
-  if(r){ r.dias=_repBorrador.slice(); r.tag=t.tag; }
-  else recurrentes.push({id:'r'+Date.now().toString(36), texto:t.texto, tag:t.tag, dias:_repBorrador.slice()});
-  saveRecurrentes();
-  _repAbierto=null; renderTareas();
-}
-function quitarRep(diaIdx,i,ev){
-  if(ev) ev.stopPropagation();
-  var t=tareasData.dias[diaIdx][i]; if(!t) return;
-  recurrentes=recurrentes.filter(function(r){ return r.texto!==t.texto; });
-  saveRecurrentes();
-  _repAbierto=null; renderTareas();
-}
-
-/* Inserta las recurrentes en una semana recién estrenada */
-function generarRecurrentes(){
-  var creadas=0;
-  recurrentes.forEach(function(r){
-    r.dias.forEach(function(d){
-      if(d<0||d>6) return;
-      tareasData.dias[d].push({
-        id: 'g'+Date.now().toString(36)+Math.random().toString(36).slice(2,6),
-        texto: r.texto, hecha: false, segundos: 0, tag: r.tag
-      });
-      creadas++;
-    });
-  });
-  if(creadas) saveTareas();
-  return creadas;
-}
-
 /* ═══════════════════ TAREAS (hoy + semana, misma fuente) ═══════════════════ */
 /* Estructura guardada: { dias: [ [ {id,texto,hecha,tag} ], ... x7 ] }  0=Lunes */
 function getTareasKey(){ return 'tareas_'+getWeekKey(); }
@@ -1253,11 +1123,13 @@ var tareasData=mkTareasDefault();
 var _focusDia=null;   /* qué input de la semana tenía el foco, para devolvérselo tras re-render */
 
 function loadTareas(){
-  var habia=false;
+  /* Arranca vacío: si la clave de esta semana no existe (semana recién
+     estrenada), en memoria NO puede quedar la semana anterior. Antes pasaba,
+     y el primer guardado la copiaba entera bajo la clave nueva. */
+  tareasData=mkTareasDefault();
   try{
     var s=localStorage.getItem(getTareasKey());
     if(s){
-      habia=true;
       var d=JSON.parse(s);
       if(d&&Array.isArray(d.dias)){
         tareasData=d;
@@ -1266,9 +1138,6 @@ function loadTareas(){
       }
     }
   }catch(e){}
-  /* Semana estrenada: se siembran las recurrentes una sola vez.
-     Si después borrás una instancia, no vuelve hasta la semana que viene. */
-  if(!habia) generarRecurrentes();
 }
 function saveTareas(){
   lsSet(getTareasKey(),JSON.stringify(tareasData));
@@ -1312,7 +1181,6 @@ function addTarea(diaIdx,texto,tag){
     id: Date.now().toString(36)+Math.random().toString(36).slice(2,6),
     texto: texto,
     hecha: false,
-    segundos: 0,
     tag: tag===undefined ? tagActiva : tag
   });
   saveTareas(); renderTareas();
@@ -1350,43 +1218,12 @@ function onAddKey(ev,diaIdx,el){
   addTarea(idx,txt);
 }
 
-/* Dibuja una fila de tarea reutilizable.
-   conTimer solo va en la tarjeta de hoy: en las tarjetas de día angostas no hay lugar. */
-function tareaHTML(diaIdx,t,i,conTimer,arrastrable){
+/* Dibuja una fila de tarea reutilizable. arrastrable solo va en el grid de la semana. */
+function tareaHTML(diaIdx,t,i,arrastrable){
   var tg=tagById(t.tag);
   var pill = tg
     ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
     : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
-
-  var cronoHTML='', tiempoHTML='';
-  if(conTimer){
-    var corriendo = timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===t.id;
-    if(corriendo){
-      cronoHTML='<span class="task-crono" id="tarea-count-'+t.id+'">'+fmtCrono(segundosTranscurridos())+'</span>'+
-        '<button class="task-play corriendo" onclick="pararTimerTarea(event)" title="Parar y sumar el tiempo">■</button>';
-    } else {
-      if(t.segundos>0) tiempoHTML='<span class="task-tiempo">'+fmtDuracion(t.segundos)+'</span>';
-      cronoHTML='<button class="task-play" onclick="arrancarTimerTarea('+diaIdx+',\''+t.id+'\',event)" title="Medir el tiempo de esta tarea">▶</button>';
-    }
-  }
-
-  /* Botón de recurrencia: solo en la tarjeta de hoy, donde hay lugar */
-  var repHTML='', pickerHTML='';
-  if(conTimer){
-    var rec=recDeTexto(t.texto);
-    var titulo = rec ? 'Se repite '+rec.dias.map(function(d){return DS3[d];}).join(' ') : 'Repetir todas las semanas';
-    repHTML='<button class="task-rep'+(rec?' activa':'')+'" onclick="toggleRepPicker('+diaIdx+','+i+',event)" title="'+titulo+'">↻</button>';
-    if(_repAbierto===t.id){
-      pickerHTML='<div class="rep-picker" onclick="event.stopPropagation()">'+
-        '<span class="rep-lbl">Repetir los</span>'+
-        DS.map(function(letra,d){
-          return '<button class="rep-dia'+(_repBorrador.indexOf(d)>=0?' on':'')+'" onclick="toggleRepDia('+d+',event)">'+letra+'</button>';
-        }).join('')+
-        '<button class="rep-acc" onclick="guardarRep('+diaIdx+','+i+',event)">Guardar</button>'+
-        (rec?'<button class="rep-acc quitar" onclick="quitarRep('+diaIdx+','+i+',event)">Quitar</button>':'')+
-      '</div>';
-    }
-  }
 
   /* El arrastre va SOLO en el grid de la semana. Se identifica la tarea por id
      y no por indice: al soltar, el array de origen se reordena y el indice
@@ -1397,18 +1234,12 @@ function tareaHTML(diaIdx,t,i,conTimer,arrastrable){
       ' ondragend="onDragEnd(event)"'
     : '';
 
-  return '<div>'+
-    '<div class="task"'+dragAttrs+' onclick="toggleTarea('+diaIdx+','+i+')">'+
+  return '<div class="task"'+dragAttrs+' onclick="toggleTarea('+diaIdx+','+i+')">'+
       '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
       '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
-      tiempoHTML+
       pill+
-      cronoHTML+
-      repHTML+
       '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar" aria-label="Borrar"></button>'+
-    '</div>'+
-    pickerHTML+
-  '</div>';
+    '</div>';
 }
 
 /* Ordena para dibujar: pendientes arriba, completadas al fondo.
@@ -1445,7 +1276,7 @@ function renderHoy(hoyIdx,fechas){
   document.getElementById('s-tasks').textContent=visibles.length;
 
   document.getElementById('lista-hoy').innerHTML = visibles.length
-    ? '<div class="hoy-grid">'+itemsOrdenados(hoy).map(function(x){ return tareaHTML(hoyIdx,x.t,x.i,true); }).join('')+'</div>'
+    ? '<div class="hoy-grid">'+itemsOrdenados(hoy).map(function(x){ return tareaHTML(hoyIdx,x.t,x.i,false); }).join('')+'</div>'
     : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
 }
 
@@ -1472,7 +1303,7 @@ function renderSemana(hoyIdx,fechas){
         (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
       '</div>'+
       (visibles.length
-        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i,false,true); }).join('')+'</div>'+
+        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i,true); }).join('')+'</div>'+
           '<div class="dia-mas" id="dia-mas-'+d+'" style="display:none"></div>'
         : '<div class="dia-vacio">Sin tareas</div>')+
       '<div class="add-wrap">'+
@@ -1582,18 +1413,9 @@ function moverTareaADia(diaOrigen,tareaId,diaDestino){
   for(var i=0;i<origen.length;i++) if(origen[i].id===tareaId){ pos=i; break; }
   if(pos<0) return;
 
-  /* La tarea viaja entera: texto, etiqueta, tildado y segundos medidos */
+  /* La tarea viaja entera: texto, etiqueta y tildado */
   var t=origen.splice(pos,1)[0];
   tareasData.dias[diaDestino].push(t);
-
-  /* El cronómetro guarda el día de la tarea que mide. Si no se actualiza,
-     buscarTarea() falla y al pararlo el tiempo se pierde sin avisar. */
-  if(timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===tareaId){
-    timerActivo.diaIdx=diaDestino;
-    saveTimer();
-  }
-  /* El selector de recurrencia quedaría colgado sobre una fila que ya no está */
-  if(_repAbierto===tareaId) _repAbierto=null;
 
   _undo={tipo:'mover', key:null, dia:diaOrigen, idx:pos, tarea:t, destino:diaDestino};
   mostrarUndo('Tarea movida al '+DF[diaDestino].toLowerCase());
@@ -1716,9 +1538,6 @@ function deshacer(){
     var dest=tareasData.dias[u.destino];
     for(var k=0;k<dest.length;k++) if(dest[k].id===u.tarea.id){ dest.splice(k,1); break; }
     tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
-    if(timerActivo && timerActivo.tipo==='tarea' && timerActivo.tareaId===u.tarea.id){
-      timerActivo.diaIdx=u.dia; saveTimer();
-    }
     saveTareas(); renderTareas();
     return;
   }
@@ -1884,9 +1703,8 @@ function calcularRachas(){
    Por eso sobrevive a recargar o cerrar la pestaña: al volver se
    recalcula cuánto pasó contra el reloj. */
 var TIMER_KEY='timer_activo';
-/* Un solo cronómetro a la vez. Dos formas:
-   habito: { tipo:'habito', habitId, inicio, objetivoMin }  cuenta hacia ABAJO y auto-tilda
-   tarea:  { tipo:'tarea', diaIdx, tareaId, inicio }        cuenta hacia ARRIBA, libre */
+/* Un solo cronómetro a la vez, siempre de un hábito:
+   { habitId, inicio, objetivoMin }  cuenta hacia ABAJO y al llegar a cero tilda el hábito */
 var timerActivo=null;
 var _tickId=null;
 
@@ -1896,9 +1714,8 @@ function loadTimer(){
     if(!s) return;
     var t=JSON.parse(s);
     if(!t) return;
-    if(!t.tipo) t.tipo='habito';           /* compatibilidad con timers guardados antes */
-    if(t.tipo==='habito' && typeof t.habitId!=='number') return;
-    if(t.tipo==='tarea'  && !t.tareaId) return;
+    /* Los cronómetros de tarea ya no existen: uno guardado por la versión anterior se descarta */
+    if(t.tipo==='tarea' || typeof t.habitId!=='number'){ localStorage.removeItem(TIMER_KEY); return; }
     /* Un cronómetro arrancado otro día se descarta: sumarle las horas que
        pasaron mientras la máquina estaba apagada seria mentira */
     var dia=new Date(t.inicio); dia.setHours(0,0,0,0);
@@ -1922,71 +1739,22 @@ function segundosRestantes(){
 function fmtMMSS(seg){
   return Math.floor(seg/60)+':'+String(seg%60).padStart(2,'0');
 }
-/* Segundos desde que arrancó (para tareas, que cuentan hacia arriba) */
-function segundosTranscurridos(){
-  if(!timerActivo) return 0;
-  return Math.max(0, Math.floor((Date.now()-timerActivo.inicio)/1000));
-}
-/* Cronómetro vivo: M:SS, y H:MM:SS si pasó la hora */
-function fmtCrono(seg){
-  var h=Math.floor(seg/3600), m=Math.floor((seg%3600)/60), s=seg%60;
-  if(h>0) return h+':'+String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');
-  return m+':'+String(s).padStart(2,'0');
-}
-/* Tiempo ya acumulado, en lenguaje corto: 45m · 1h 12m · 2h */
-function fmtDuracion(seg){
-  if(!seg || seg<60) return '';
-  var h=Math.floor(seg/3600), m=Math.round((seg%3600)/60);
-  if(h===0) return m+'m';
-  return m>0 ? h+'h '+m+'m' : h+'h';
-}
-/* Busca una tarea por id dentro de un día (los índices se mueven, el id no) */
-function buscarTarea(diaIdx,id){
-  var dia=tareasData.dias[diaIdx]; if(!dia) return null;
-  for(var i=0;i<dia.length;i++) if(dia[i].id===id) return dia[i];
-  return null;
-}
 /* Si hay otro cronómetro corriendo, pregunta antes de pisarlo.
    Devuelve true si se puede arrancar el nuevo. */
 function liberarTimer(){
   if(!timerActivo) return true;
-  var queEs;
-  if(timerActivo.tipo==='tarea'){
-    var t=buscarTarea(timerActivo.diaIdx,timerActivo.tareaId);
-    queEs='la tarea "'+(t?t.texto:'?')+'"';
-  } else {
-    queEs='el hábito "'+HABITS[timerActivo.habitId].name+'"';
-  }
+  var queEs='el hábito "'+HABITS[timerActivo.habitId].name+'"';
   if(!confirm('Ya tenés el cronómetro corriendo en '+queEs+'.\n\nSolo puede haber uno a la vez. ¿Lo paro y arranco este?')) return false;
-  /* Si era de tarea, el tiempo medido no se tira: se suma antes de soltarlo */
-  if(timerActivo.tipo==='tarea') guardarTiempoTarea();
   timerActivo=null; saveTimer(); pararTick();
   return true;
-}
-/* Suma al acumulado de la tarea lo que corrió el cronómetro */
-function guardarTiempoTarea(){
-  if(!timerActivo || timerActivo.tipo!=='tarea') return;
-  var t=buscarTarea(timerActivo.diaIdx,timerActivo.tareaId);
-  if(t){ t.segundos=(t.segundos||0)+segundosTranscurridos(); saveTareas(); }
 }
 
 function arrancarTimer(hId,ev){
   if(ev) ev.stopPropagation();
   var h=HABITS[hId]; if(!h||!h.minutos) return;
   if(!liberarTimer()) return;
-  timerActivo={tipo:'habito', habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
-  saveTimer(); renderHabits(); renderTareas(); arrancarTick();
-}
-function arrancarTimerTarea(diaIdx,id,ev){
-  if(ev) ev.stopPropagation();
-  if(!liberarTimer()) return;
-  timerActivo={tipo:'tarea', diaIdx:diaIdx, tareaId:id, inicio:Date.now()};
-  saveTimer(); renderTareas(); renderHabits(); arrancarTick();
-}
-function pararTimerTarea(ev){
-  if(ev) ev.stopPropagation();
-  guardarTiempoTarea();
-  timerActivo=null; saveTimer(); pararTick(); renderTareas();
+  timerActivo={habitId:hId, inicio:Date.now(), objetivoMin:h.minutos};
+  saveTimer(); renderHabits(); arrancarTick();
 }
 function cancelarTimer(ev){
   if(ev) ev.stopPropagation();
@@ -2010,11 +1778,6 @@ function arrancarTick(){
     if(!timerActivo){ pararTick(); return; }
     /* Se toca SOLO el texto del contador: un re-render completo le
        sacaría el foco a los inputs mientras escribís */
-    if(timerActivo.tipo==='tarea'){
-      var et=document.getElementById('tarea-count-'+timerActivo.tareaId);
-      if(et) et.textContent=fmtCrono(segundosTranscurridos());
-      return;                                  /* la cuenta libre no termina sola */
-    }
     var seg=segundosRestantes();
     if(seg<=0){ completarTimer(); return; }
     var el=document.getElementById('hb-count-'+timerActivo.habitId);
@@ -2221,7 +1984,7 @@ function renderDiarioHistorial(){
    habitos por dia (claves wk_*) y tareas por semana (claves tareas_wk_*) */
 function armarHistorial(){
   var habitosPorDia={};   /* 'AAAA-M-D' -> cuantos habitos cumplidos */
-  var semanas={};         /* 'wk_...'   -> {lunes, hechas, total, porTag:{}, segPorTag:{}} */
+  var semanas={};         /* 'wk_...'   -> {lunes, hechas, total, porTag:{}} */
   try{
     for(var i=0;i<localStorage.length;i++){
       var key=localStorage.key(i);
@@ -2244,7 +2007,7 @@ function armarHistorial(){
         var dt=null;
         try{ dt=JSON.parse(localStorage.getItem(key)); }catch(e){ continue; }
         if(!dt||!Array.isArray(dt.dias)) continue;
-        var reg={lunes:new Date(+mt[1],+mt[2],+mt[3]), hechas:0, total:0, porTag:{}, segPorTag:{}};
+        var reg={lunes:new Date(+mt[1],+mt[2],+mt[3]), hechas:0, total:0, porTag:{}};
         dt.dias.forEach(function(dia){
           (dia||[]).forEach(function(t){
             reg.total++;
@@ -2252,7 +2015,6 @@ function armarHistorial(){
               reg.hechas++;
               var k=t.tag||'_'; reg.porTag[k]=(reg.porTag[k]||0)+1;
             }
-            if(t.segundos>0){ var kt=t.tag||'_'; reg.segPorTag[kt]=(reg.segPorTag[kt]||0)+t.segundos; }
           });
         });
         semanas['wk_'+mt[1]+'_'+mt[2]+'_'+mt[3]]=reg;
@@ -2316,20 +2078,19 @@ function renderProgreso(){
   }).join('')+'</div>';
 
   /* ── Reparto por etiqueta, sumando todas las semanas ── */
-  var totTag={}, totSeg={}, granTotal=0;
+  var totTag={}, granTotal=0;
   Object.keys(hist.semanas).forEach(function(k){
     var r=hist.semanas[k];
     Object.keys(r.porTag).forEach(function(t){ totTag[t]=(totTag[t]||0)+r.porTag[t]; granTotal+=r.porTag[t]; });
-    Object.keys(r.segPorTag).forEach(function(t){ totSeg[t]=(totSeg[t]||0)+r.segPorTag[t]; });
   });
   var reparto = granTotal
     ? TAGS.map(function(tg){
-        var n3=totTag[tg.id]||0, seg=totSeg[tg.id]||0;
+        var n3=totTag[tg.id]||0;
         var pctT=Math.round((n3/granTotal)*100);
         return '<div class="reparto-fila" style="--tc:'+tg.color+'">'+
           '<span class="reparto-lbl">'+tg.label+'</span>'+
           '<div class="reparto-track"><div class="reparto-fill" style="width:'+pctT+'%"></div></div>'+
-          '<span class="reparto-num">'+n3+' tarea'+(n3===1?'':'s')+(seg>=60?' \u00b7 '+fmtDuracion(seg):'')+'</span>'+
+          '<span class="reparto-num">'+n3+' tarea'+(n3===1?'':'s')+'</span>'+
         '</div>';
       }).join('')
     : '<div class="prog-vacio">Todav\u00eda no cerraste tareas etiquetadas.</div>';
@@ -2343,7 +2104,7 @@ function renderProgreso(){
 /* ═══════════════════ RESUMEN DE LA SEMANA (domingo) ═══════════════════ */
 function armarResumen(){
   var f=getWeekDates();
-  var hechas=0, total=0, porTag={}, porDia=[], segPorTag={};
+  var hechas=0, total=0, porTag={}, porDia=[];
   tareasData.dias.forEach(function(dia,d){
     var lista=[];
     dia.forEach(function(t){
@@ -2354,7 +2115,6 @@ function armarResumen(){
         var k=t.tag||'_';
         porTag[k]=(porTag[k]||0)+1;
       }
-      if(t.segundos>0){ var kt=t.tag||'_'; segPorTag[kt]=(segPorTag[kt]||0)+t.segundos; }
     });
     if(lista.length) porDia.push({d:d, lista:lista});
   });
@@ -2366,7 +2126,7 @@ function armarResumen(){
                   .filter(function(x){ return x.r>=2; })
                   .sort(function(a,b){ return b.r-a.r; });
   return {f:f, hechas:hechas, total:total, pct:pct, porTag:porTag, porDia:porDia,
-          segPorTag:segPorTag, hbPct:hbPct, hbTotal:hbTotal, vivas:vivas};
+          hbPct:hbPct, hbTotal:hbTotal, vivas:vivas};
 }
 
 function abrirResumen(){
@@ -2376,11 +2136,6 @@ function abrirResumen(){
   var chipsTag=TAGS.map(function(tg){
     var n=r.porTag[tg.id]||0; if(!n) return '';
     return '<span class="modal-chip">'+tg.label+' <b>'+n+'</b></span>';
-  }).join('');
-
-  var chipsTiempo=TAGS.map(function(tg){
-    var seg=r.segPorTag[tg.id]||0; if(seg<60) return '';
-    return '<span class="modal-chip">'+tg.label+' <b>'+fmtDuracion(seg)+'</b></span>';
   }).join('');
 
   var dias=r.porDia.map(function(x){
@@ -2404,7 +2159,6 @@ function abrirResumen(){
       ? '<div class="modal-seccion"><div class="modal-h">Lo que hiciste</div>'+dias+'</div>'
       : '<div class="modal-seccion"><div class="modal-vacio">No tildaste ninguna tarea esta semana.</div></div>')+
     (chipsTag ? '<div class="modal-seccion"><div class="modal-h">Por contexto</div><div class="modal-chips">'+chipsTag+'</div></div>' : '')+
-    (chipsTiempo ? '<div class="modal-seccion"><div class="modal-h">Tiempo medido</div><div class="modal-chips">'+chipsTiempo+'</div></div>' : '')+
     '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de 63)</div>'+
       '<div class="modal-chips">'+rachasHTML+'</div></div>'+
     '<div class="modal-acciones">'+
@@ -2522,7 +2276,6 @@ function actualizarMails(){
 setupHeader();
 renderFrase();
 loadPrefs();
-loadRecurrentes();      /* antes de loadTareas: si la semana es nueva, las siembra */
 loadTareas();
 loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
@@ -2533,10 +2286,9 @@ renderDiario();
 renderProgreso();
 
 /* Si el objetivo de un hábito se cumplió mientras el dashboard estaba
-   cerrado, queda tildado al abrirlo. Los de tarea cuentan libre, así que
-   simplemente siguen. */
+   cerrado, queda tildado al abrirlo */
 if(timerActivo){
-  if(timerActivo.tipo==='habito' && segundosRestantes()<=0) completarTimer();
+  if(segundosRestantes()<=0) completarTimer();
   else arrancarTick();
 }
 
