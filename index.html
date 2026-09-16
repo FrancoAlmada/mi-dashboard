@@ -17,16 +17,59 @@
   <script src="https://cdn.jsdelivr.net/npm/@supabase/supabase-js@2/dist/umd/supabase.js" defer></script>
   <link rel="preconnect" href="https://fonts.googleapis.com">
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&display=swap" rel="stylesheet">
+  <!-- Una familia por tema: Plus Jakarta Sans (Nocturno), Fraunces + Inter (Papel), JetBrains Mono (Terminal).
+       El navegador solo descarga la que el tema activo usa. -->
+  <link href="https://fonts.googleapis.com/css2?family=Plus+Jakarta+Sans:wght@400;500;600;700;800&family=Fraunces:opsz,wght@9..144,500..700&family=Inter:wght@400..800&family=JetBrains+Mono:wght@400..800&display=swap" rel="stylesheet">
+  <script>
+  /* Tema guardado en ESTE dispositivo: se aplica antes del primer pintado para que no parpadee */
+  (function(){
+    try{
+      var t=localStorage.getItem('tema');
+      if(t && t!=='nocturno') document.documentElement.setAttribute('data-tema',t);
+    }catch(e){}
+  })();
+  </script>
   <style>
+    /* ══════════ TOKENS (tema Nocturno, el de siempre) ══════════
+       Todo color, tipografía y radio pasa por acá. Los otros dos temas
+       (al final del CSS) redefinen estas mismas variables y nada más. */
     :root {
       color-scheme: dark;
+      /* ── Fondos y líneas ── */
       --ink:#050505; --surf:#121212; --surf2:#171717; --surf3:#1E1E1E; --surf4:#262626;
       --line:#242424; --line2:#333333;
+      /* ── Texto ── */
       --t1:#F5F5F5; --t2:#A8A8A8; --t3:#7A7A7A; --t4:#767676;
+      --muted:#525252;                       /* "apagado": totales en cero, rachas vacías */
+      /* ── Acentos ── */
       --coral:#F0512E; --lime:#86E88F; --butter:#F2EE87; --peri:#7B7BF0; --sky:#7FC4F5; --tang:#FF9E4A;
-      --ui:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
-      --r:26px;
+      --azul:#5AA9FF; --menta:#5EE0C0; --oro:#FFD166;       /* solo los usan los hábitos */
+      --lime-hover:#A2F0A9; --link-hover:#A6D7FA;
+      /* ── Tinta sobre acento: texto que va ENCIMA de un bloque de color ── */
+      --on-accent:#0A0A0A;                   /* sobre cualquier acento y sobre --t1 */
+      --on-accent-rgb:0,0,0;
+      --on-coral:#140502; --on-coral-hi:#FFF0EC;
+      --on-lime:#0A1A0C; --on-butter:#16150A; --on-tang:#1A0E02;
+      /* ── Tripletas RGB para los rgba(): rgba(var(--coral-rgb),.16) ── */
+      --coral-rgb:240,81,46; --lime-rgb:134,232,143; --tang-rgb:255,158,74;
+      --on-coral-rgb:20,5,2; --on-butter-rgb:22,21,10;
+      --scrim-rgb:0,0,0;                     /* velos oscuros sobre bloques de color y fondo del modal */
+      /* ── Heatmap, de menos a más ── */
+      --heat-1:#1F4A28; --heat-2:#2F7A3D; --heat-3:#4FB25C; --heat-4:#86E88F;
+      /* ── Tipografías ── */
+      --font-display:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
+      --font-ui:'Plus Jakarta Sans',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
+      --font-mono:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --ui:var(--font-ui);                   /* alias: todos los usos existentes siguen igual */
+      /* ── Radios (la misma escala que había) ── */
+      --r:26px; --r-md:20px; --r-in:18px; --r-sm:14px; --r-xs:12px; --r-ctl:10px;
+      --r-box:7px; --r-mini:6px; --r-pill:100px;
+      /* ── Sombras y título ── */
+      --shadow-card:none;
+      --shadow-toast:0 10px 30px rgba(0,0,0,0.55);
+      --shadow-modal:0 24px 70px rgba(0,0,0,0.6);
+      --title-grad:linear-gradient(100deg, var(--lime) 0%, var(--sky) 48%, var(--peri) 100%);
+      --title-fill:transparent;
     }
     *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
 
@@ -38,7 +81,7 @@
       min-height: 100vh; width: 100%;
     }
     a { color: var(--sky); }
-    a:hover { color: #A6D7FA; }
+    a:hover { color: var(--link-hover); }
 
     /* ══════════ HERO ══════════ */
     .hero { padding: 40px 40px 26px; max-width: 1560px; margin: 0 auto; }
@@ -50,17 +93,32 @@
     }
     .brand-star { color: var(--lime); font-size: 15px; }
     .date-pill {
-      display: inline-block; border: 1px solid var(--line2); border-radius: 100px;
+      display: inline-block; border: 1px solid var(--line2); border-radius: var(--r-pill);
       padding: 7px 16px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
       text-transform: uppercase; color: var(--t2); margin-bottom: 22px; white-space: nowrap;
     }
+    /* Botón de tema: arriba a la derecha del hero, mismo tono que la píldora de
+       fecha. Absoluto para no mover ni un píxel el layout que ya estaba. */
+    .hero { position: relative; }
+    .tema-btn {
+      position: absolute; top: 36px; right: 40px;
+      display: inline-flex; align-items: center; gap: 7px;
+      border: 1px solid var(--line2); border-radius: var(--r-pill); background: transparent;
+      padding: 7px 14px; font-size: 10px; font-weight: 700; letter-spacing: 0.8px;
+      text-transform: uppercase; color: var(--t2); font-family: var(--ui); cursor: pointer;
+      transition: border-color .16s, color .16s;
+    }
+    .tema-btn:hover { border-color: var(--lime); color: var(--t1); }
+    /* En celular no hay lugar a la derecha: la fecha ya llega hasta el borde.
+       El botón deja de ser absoluto y sigue a la fecha en la misma línea (o en la siguiente). */
+    @media (max-width: 700px) { .tema-btn { position: static; vertical-align: top; margin: 0 0 22px 2px; } }
     /* Título grande con gradiente */
     .hero-title {
-      font-size: clamp(56px, 9vw, 120px); font-weight: 800;
+      font-size: clamp(56px, 9vw, 120px); font-weight: 800; font-family: var(--font-display);
       line-height: 0.92; letter-spacing: -4px; margin-bottom: 16px;
-      background: linear-gradient(100deg, var(--lime) 0%, var(--sky) 48%, var(--peri) 100%);
+      background: var(--title-grad);
       -webkit-background-clip: text; background-clip: text;
-      -webkit-text-fill-color: transparent; color: transparent;
+      -webkit-text-fill-color: var(--title-fill); color: var(--title-fill);
       width: fit-content;
     }
     .hero-sub { font-size: 15px; font-weight: 500; color: var(--t3); margin-bottom: 26px; }
@@ -70,7 +128,7 @@
     @media (max-width: 760px) { .stats { grid-template-columns: 1fr 1fr; } }
     .stat {
       text-align: left; padding: 22px 22px 20px; border-radius: var(--r);
-      background: var(--surf); border: 1px solid var(--line); position: relative;
+      background: var(--surf); border: 1px solid var(--line); position: relative; box-shadow: var(--shadow-card);
     }
     .stat::before {
       content:''; position:absolute; top:22px; right:22px;
@@ -79,7 +137,7 @@
     .stat:nth-child(1){--sc:var(--lime)} .stat:nth-child(2){--sc:var(--coral)}
     .stat:nth-child(3){--sc:var(--sky)}  .stat:nth-child(4){--sc:var(--butter)}
     .stat-num {
-      font-size: 52px; font-weight: 800; letter-spacing: -2.5px;
+      font-size: 52px; font-weight: 800; letter-spacing: -2.5px; font-family: var(--font-display);
       color: var(--t1); line-height: 1; margin-bottom: 10px; font-variant-numeric: tabular-nums;
     }
     .stat-label { font-size: 12px; font-weight: 600; color: var(--t3); }
@@ -91,43 +149,43 @@
     /* ── Frase del día: bloque de color plano ── */
     .frase {
       background: var(--coral); border: none; border-radius: var(--r);
-      padding: 34px 38px 36px; margin-bottom: 14px; color: #140502; position: relative;
+      padding: 34px 38px 36px; margin-bottom: 14px; color: var(--on-coral); position: relative;
     }
     .frase-label {
       display: inline-block; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase;
-      color: #140502; margin-bottom: 18px; font-weight: 800;
-      background: rgba(0,0,0,0.14); padding: 7px 13px; border-radius: 100px;
+      color: var(--on-coral); margin-bottom: 18px; font-weight: 800;
+      background: rgba(var(--scrim-rgb),0.14); padding: 7px 13px; border-radius: var(--r-pill);
     }
     .frase-txt {
-      font-size: 36px; font-weight: 800; letter-spacing: -1.6px; color: #140502;
+      font-size: 36px; font-weight: 800; letter-spacing: -1.6px; font-family: var(--font-display); color: var(--on-coral);
       line-height: 1.04; margin-bottom: 12px; max-width: 24ch;
     }
     @media (max-width: 700px) { .frase-txt { font-size: 27px; letter-spacing: -1px; } }
-    .frase-bajada { font-size: 15px; font-weight: 500; line-height: 1.6; color: rgba(20,5,2,0.72); max-width: 60ch; text-wrap: pretty; }
+    .frase-bajada { font-size: 15px; font-weight: 500; line-height: 1.6; color: rgba(var(--on-coral-rgb),0.72); max-width: 60ch; text-wrap: pretty; }
     .frase-btn {
       position: absolute; top: 30px; right: 30px;
-      width: 40px; height: 40px; border-radius: 100px; border: none; cursor: pointer;
-      background: rgba(0,0,0,0.14); color: #140502; font-size: 17px; font-weight: 700;
+      width: 40px; height: 40px; border-radius: var(--r-pill); border: none; cursor: pointer;
+      background: rgba(var(--scrim-rgb),0.14); color: var(--on-coral); font-size: 17px; font-weight: 700;
       display: flex; align-items: center; justify-content: center;
       transition: background 0.18s, transform 0.3s;
     }
-    .frase-btn:hover { background: rgba(0,0,0,0.28); transform: rotate(180deg); }
+    .frase-btn:hover { background: rgba(var(--scrim-rgb),0.28); transform: rotate(180deg); }
 
     /* ── Cards ── */
-    .card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
+    .card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; box-shadow: var(--shadow-card); }
     .card-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; margin-bottom: 20px; }
     .card-label { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--lime); margin-bottom: 7px; font-weight: 800; }
-    .card-title { font-size: 22px; font-weight: 700; letter-spacing: -0.8px; color: var(--t1); line-height: 1.15; }
+    .card-title { font-size: 22px; font-weight: 700; letter-spacing: -0.8px; font-family: var(--font-display); color: var(--t1); line-height: 1.15; }
     .card-count {
       font-size: 12px; font-weight: 700; color: var(--t3); background: var(--surf3);
-      padding: 8px 14px; border-radius: 100px; white-space: nowrap; flex-shrink: 0;
+      padding: 8px 14px; border-radius: var(--r-pill); white-space: nowrap; flex-shrink: 0;
     }
 
     /* ── Tareas de hoy: barra de progreso + columnas ── */
     /* Mismos valores que la barra de hábitos, pero con su propia clase
        para no acoplar dos secciones distintas al mismo selector */
-    .hoy-bar-wrap { background: var(--surf4); border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 20px; }
-    .hoy-bar-fill { height: 100%; border-radius: 99px; background: var(--lime); transition: width 0.4s ease; width: 0; }
+    .hoy-bar-wrap { background: var(--surf4); border-radius: var(--r-pill); height: 8px; overflow: hidden; margin-bottom: 20px; }
+    .hoy-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--lime); transition: width 0.4s ease; width: 0; }
     /* auto-fill + minmax resuelve el responsive solo: cuantas columnas entren */
     /* 360px de minimo hace que nunca entren 4 columnas: el contenido de la
        tarjeta no pasa de ~1432px y cuatro columnas necesitarian 1470px.
@@ -137,11 +195,11 @@
     .hoy-grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(360px,100%),1fr)); gap: 2px 10px; }
 
     /* ── Task items ── */
-    .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: 14px; border: none; cursor: pointer; transition: background .16s; }
+    .task { display: flex; align-items: center; gap: 12px; padding: 11px 12px; border-radius: var(--r-sm); border: none; cursor: pointer; transition: background .16s; }
     .task:hover { background: var(--surf3); }
-    .task-box { width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--line2); border-radius: 7px; display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
+    .task-box { width: 20px; height: 20px; flex-shrink: 0; border: 2px solid var(--line2); border-radius: var(--r-box); display: flex; align-items: center; justify-content: center; transition: all 0.18s; }
     .task-box.checked { background: var(--lime); border-color: var(--lime); }
-    .task-box.checked::after { content: '✓'; color: #0A1A0C; font-size: 12px; font-weight: 800; }
+    .task-box.checked::after { content: '✓'; color: var(--on-lime); font-size: 12px; font-weight: 800; }
     .task-text { font-size: 14px; font-weight: 500; color: var(--t1); line-height: 1.4; flex: 1; word-break: break-word; }
     .task-text.done { text-decoration: line-through; color: var(--t4); }
     /* La × de la fuente se dibuja por debajo del centro óptico del botón:
@@ -161,13 +219,13 @@
     .modal-cerrar::before, .modal-cerrar::after { width: 14px; height: 1.8px; }
 
     .task-del {
-      flex-shrink: 0; width: 24px; height: 24px; border-radius: 100px; border: none; cursor: pointer;
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--r-pill); border: none; cursor: pointer;
       background: transparent; color: var(--t4); font-size: 16px; line-height: 1; font-family: var(--ui);
       display: flex; align-items: center; justify-content: center;
       opacity: 0; transition: opacity .16s, background .16s, color .16s;
     }
     .task:hover .task-del { opacity: 1; }
-    .task-del:hover { background: var(--coral); color: #FFF0EC; }
+    .task-del:hover { background: var(--coral); color: var(--on-coral-hi); }
 
     /* ── Input de alta ── */
     .add-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 0 12px; }
@@ -186,9 +244,9 @@
     /* El color de cada etiqueta llega por la variable inline --tc */
     .tag-pill {
       flex-shrink: 0; font-size: 9.5px; font-weight: 800; letter-spacing: 0.3px;
-      padding: 4px 9px; border-radius: 100px; cursor: pointer; border: none;
+      padding: 4px 9px; border-radius: var(--r-pill); cursor: pointer; border: none;
       font-family: var(--ui); text-transform: uppercase; white-space: nowrap;
-      background: var(--tc); color: #0A0A0A; transition: opacity .16s;
+      background: var(--tc); color: var(--on-accent); transition: opacity .16s;
     }
     .tag-pill:hover { opacity: 0.75; }
     .tag-pill.vacia { background: transparent; border: 1px dashed var(--line2); color: var(--t4); }
@@ -198,23 +256,23 @@
     .tag-chips { display: flex; flex-wrap: wrap; gap: 6px; padding: 0 12px; margin-top: 14px; }
     .tag-chip {
       font-size: 9.5px; font-weight: 800; letter-spacing: 0.3px; text-transform: uppercase;
-      padding: 6px 11px; border-radius: 100px; cursor: pointer; font-family: var(--ui);
+      padding: 6px 11px; border-radius: var(--r-pill); cursor: pointer; font-family: var(--ui);
       background: transparent; border: 1px solid var(--line2); color: var(--t3);
       transition: all .16s;
     }
     .tag-chip:hover { border-color: var(--tc); color: var(--tc); }
-    .tag-chip.activo { background: var(--tc); border-color: var(--tc); color: #0A0A0A; }
+    .tag-chip.activo { background: var(--tc); border-color: var(--tc); color: var(--on-accent); }
 
     /* ── Barra de filtro ── */
     .filtro-bar { display: flex; flex-wrap: wrap; align-items: center; gap: 7px; margin-bottom: 14px; }
     .filtro-lbl { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; text-transform: uppercase; color: var(--t4); margin-right: 4px; }
     .filtro-pill {
-      font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: 100px; cursor: pointer;
+      font-size: 11px; font-weight: 700; padding: 8px 14px; border-radius: var(--r-pill); cursor: pointer;
       font-family: var(--ui); background: var(--surf); border: 1px solid var(--line); color: var(--t2);
       transition: all .16s; display: inline-flex; align-items: center; gap: 7px;
     }
     .filtro-pill:hover { border-color: var(--tc, var(--line2)); color: var(--t1); }
-    .filtro-pill.activo { background: var(--tc, var(--t1)); border-color: var(--tc, var(--t1)); color: #0A0A0A; }
+    .filtro-pill.activo { background: var(--tc, var(--t1)); border-color: var(--tc, var(--t1)); color: var(--on-accent); }
     .filtro-num { font-size: 10px; font-weight: 800; opacity: 0.62; font-variant-numeric: tabular-nums; }
     .filtro-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 10px; padding: 0 12px; }
 
@@ -227,7 +285,7 @@
     @media (max-width: 560px) { .semana-grid { grid-template-columns: 1fr; } }
     .dia-card {
       display: flex; flex-direction: column; min-height: 132px;
-      background: var(--surf2); border: 1px solid var(--line); border-radius: 20px;
+      background: var(--surf2); border: 1px solid var(--line); border-radius: var(--r-md);
       padding: 14px 10px 10px; transition: border-color .16s;
     }
     .dia-card.es-hoy { background: var(--surf3); border-color: var(--line2); }
@@ -236,10 +294,10 @@
     .dia-hd { display: flex; align-items: center; gap: 8px; margin-bottom: 8px; padding: 0 6px; }
     .dia-chip {
       font-size: 10px; font-weight: 800; letter-spacing: 0.4px; text-transform: uppercase;
-      padding: 5px 10px; border-radius: 100px; white-space: nowrap;
+      padding: 5px 10px; border-radius: var(--r-pill); white-space: nowrap;
       background: var(--surf4); color: var(--t2);
     }
-    .dia-card.es-hoy .dia-chip { background: var(--lime); color: #0A0A0A; }
+    .dia-card.es-hoy .dia-chip { background: var(--lime); color: var(--on-accent); }
     .dia-num { font-size: 11px; font-weight: 600; color: var(--t3); white-space: nowrap; }
     .dia-cant { font-size: 11px; font-weight: 700; color: var(--t4); margin-left: auto; }
     /* Centrado en el hueco: con las tarjetas estiradas, el texto pegado arriba
@@ -253,7 +311,7 @@
       scrollbar-width: thin; scrollbar-color: var(--line2) transparent;
     }
     .dia-tareas::-webkit-scrollbar { width: 5px; }
-    .dia-tareas::-webkit-scrollbar-thumb { background: var(--line2); border-radius: 99px; }
+    .dia-tareas::-webkit-scrollbar-thumb { background: var(--line2); border-radius: var(--r-pill); }
     .dia-tareas::-webkit-scrollbar-track { background: transparent; }
     /* Arrastrar tareas entre dias */
     .dia-card .task[draggable="true"] { cursor: grab; }
@@ -263,9 +321,9 @@
        llena y con scroll, asi que si solo fuera la lista no habria donde soltar */
     .dia-card.destino {
       border-color: var(--lime);
-      background: rgba(134,232,143,0.10);
+      background: rgba(var(--lime-rgb),0.10);
     }
-    .dia-card.destino .dia-chip { background: var(--lime); color: #0A0A0A; }
+    .dia-card.destino .dia-chip { background: var(--lime); color: var(--on-accent); }
 
     /* Aviso de que quedan tareas abajo.
        Cuando el dia desborda, el aviso ocupa su lugar SIEMPRE y solo se
@@ -286,7 +344,7 @@
     }
     .dia-card .task { padding: 7px 8px; gap: 9px; }
     .dia-card .task-text { font-size: 13px; }
-    .dia-card .task-box { width: 18px; height: 18px; border-radius: 6px; }
+    .dia-card .task-box { width: 18px; height: 18px; border-radius: var(--r-mini); }
     /* El input de alta queda pegado al fondo de la tarjeta */
     .dia-card .add-wrap { margin-top: auto; padding: 6px 8px 0 8px; gap: 8px; }
     .dia-card .add-input { font-size: 13px; padding: 6px 0; border-bottom: none; }
@@ -301,8 +359,8 @@
 
     /* ── Tareas No Completadas ── */
     .pend-box {
-      margin-bottom: 14px; border: 1px solid rgba(240,81,46,0.42); background: rgba(240,81,46,0.08);
-      border-radius: 20px; padding: 20px 22px 16px;
+      margin-bottom: 14px; border: 1px solid rgba(var(--coral-rgb),0.42); background: rgba(var(--coral-rgb),0.08);
+      border-radius: var(--r-md); padding: 20px 22px 16px;
     }
     /* A todo el ancho la lista quedaria estirada, asi que tambien va en columnas */
     .pend-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap: 2px 12px; }
@@ -310,61 +368,61 @@
       font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
       font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
     }
-    .pend-item { display: flex; align-items: center; gap: 11px; padding: 8px 4px 8px 8px; border-radius: 12px; transition: background .16s; }
-    .pend-item:hover { background: rgba(240,81,46,0.1); }
+    .pend-item { display: flex; align-items: center; gap: 11px; padding: 8px 4px 8px 8px; border-radius: var(--r-xs); transition: background .16s; }
+    .pend-item:hover { background: rgba(var(--coral-rgb),0.1); }
     .pend-day {
       font-size: 10px; font-weight: 800; color: var(--coral); flex-shrink: 0; white-space: nowrap;
-      background: rgba(240,81,46,0.16); padding: 4px 8px; border-radius: 100px; text-align: center;
+      background: rgba(var(--coral-rgb),0.16); padding: 4px 8px; border-radius: var(--r-pill); text-align: center;
     }
     .pend-text { font-size: 13px; font-weight: 500; color: var(--t2); flex: 1; word-break: break-word; cursor: pointer; }
     .pend-text:hover { color: var(--t1); }
     /* → pasar a hoy · × descartar */
     .pend-btn {
-      flex-shrink: 0; width: 26px; height: 26px; border-radius: 100px; border: none; cursor: pointer;
+      flex-shrink: 0; width: 26px; height: 26px; border-radius: var(--r-pill); border: none; cursor: pointer;
       background: transparent; color: var(--t4); font-size: 14px; line-height: 1; font-family: var(--ui);
       display: flex; align-items: center; justify-content: center;
       opacity: 0; transition: opacity .16s, background .16s, color .16s;
     }
     .pend-item:hover .pend-btn { opacity: 1; }
-    .pend-btn.mover:hover { background: var(--lime); color: #0A1A0C; }
-    .pend-btn.tirar:hover { background: var(--coral); color: #FFF0EC; }
+    .pend-btn.mover:hover { background: var(--lime); color: var(--on-lime); }
+    .pend-btn.tirar:hover { background: var(--coral); color: var(--on-coral-hi); }
     .pend-mas { font-size: 11px; font-weight: 600; color: var(--t4); padding: 10px 8px 2px; font-style: italic; }
 
     /* ══════════ HABIT TRACKER ══════════ */
-    .habit-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 30px 28px 28px; }
+    .habit-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 30px 28px 28px; box-shadow: var(--shadow-card); }
     .habit-header { display: flex; align-items: flex-start; justify-content: space-between; gap: 20px; margin-bottom: 18px; }
-    .habit-pct-num { font-size: 52px; font-weight: 800; letter-spacing: -2.5px; color: var(--lime); line-height: 1; font-variant-numeric: tabular-nums; }
+    .habit-pct-num { font-size: 52px; font-weight: 800; letter-spacing: -2.5px; font-family: var(--font-display); color: var(--lime); line-height: 1; font-variant-numeric: tabular-nums; }
     .habit-pct-lbl { font-size: 12px; font-weight: 600; color: var(--t3); margin-top: 4px; text-align: right; }
-    .habit-bar-wrap { background: var(--surf4); border-radius: 99px; height: 8px; overflow: hidden; margin-bottom: 22px; }
-    .habit-bar-fill { height: 100%; border-radius: 99px; background: var(--lime); transition: width 0.5s ease; }
-    .habit-toggle { display: flex; gap: 6px; margin-bottom: 20px; background: var(--surf3); padding: 5px; border-radius: 100px; width: fit-content; }
-    .habit-toggle-btn { white-space: nowrap; flex: 0 0 auto; padding: 9px 20px; border-radius: 100px; border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--ui); transition: all 0.18s; background: transparent; color: var(--t2); }
+    .habit-bar-wrap { background: var(--surf4); border-radius: var(--r-pill); height: 8px; overflow: hidden; margin-bottom: 22px; }
+    .habit-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--lime); transition: width 0.5s ease; }
+    .habit-toggle { display: flex; gap: 6px; margin-bottom: 20px; background: var(--surf3); padding: 5px; border-radius: var(--r-pill); width: fit-content; }
+    .habit-toggle-btn { white-space: nowrap; flex: 0 0 auto; padding: 9px 20px; border-radius: var(--r-pill); border: none; cursor: pointer; font-size: 13px; font-weight: 700; font-family: var(--ui); transition: all 0.18s; background: transparent; color: var(--t2); }
     .habit-toggle-btn:hover { color: var(--t1); }
-    .habit-toggle-btn.active { background: var(--t1); color: #0A0A0A; }
+    .habit-toggle-btn.active { background: var(--t1); color: var(--on-accent); }
     .habit-days { display: flex; gap: 8px; overflow-x: auto; scrollbar-width: none; margin-bottom: 22px; padding-bottom: 4px; }
     .habit-days::-webkit-scrollbar { display: none; }
-    .hday-btn { flex: 0 0 auto; border-radius: 20px; padding: 13px 12px; cursor: pointer; text-align: center; min-width: 62px; border: 1px solid var(--line); transition: all 0.18s; background: var(--surf2); color: var(--t3); font-family: var(--ui); }
+    .hday-btn { flex: 0 0 auto; border-radius: var(--r-md); padding: 13px 12px; cursor: pointer; text-align: center; min-width: 62px; border: 1px solid var(--line); transition: all 0.18s; background: var(--surf2); color: var(--t3); font-family: var(--ui); }
     .hday-btn:hover { border-color: var(--line2); color: var(--t2); }
     .hday-btn.today { border-color: var(--line2); }
-    .hday-btn.active { background: var(--t1); color: #0A0A0A; border-color: var(--t1); }
+    .hday-btn.active { background: var(--t1); color: var(--on-accent); border-color: var(--t1); }
     .hday-ds { font-size: 10px; font-weight: 800; letter-spacing: 0.6px; margin-bottom: 3px; }
     .hday-num { font-size: 20px; font-weight: 800; letter-spacing: -0.6px; margin-bottom: 6px; }
     .hday-ring-wrap { position: relative; width: 34px; height: 34px; margin: 0 auto; display: flex; align-items: center; justify-content: center; }
     .hday-ring-lbl { position: absolute; font-size: 10px; font-weight: 800; font-family: var(--ui); }
     .habit-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; }
     @media (max-width: 760px) { .habit-grid { grid-template-columns: 1fr; } }
-    .hb-item { border-radius: 20px; overflow: hidden; transition: all 0.18s; cursor: pointer; border: 1px solid var(--line); background: var(--surf2); }
+    .hb-item { border-radius: var(--r-md); overflow: hidden; transition: all 0.18s; cursor: pointer; border: 1px solid var(--line); background: var(--surf2); }
     .hb-body { padding: 16px 16px 13px; display: flex; align-items: center; gap: 13px; }
     .hb-icon { font-size: 19px; flex-shrink: 0; line-height: 1; }
     .hb-info { flex: 1; min-width: 0; }
     .hb-name { font-size: 14px; font-weight: 700; color: var(--t2); margin-bottom: 8px; letter-spacing: -0.2px; }
-    .hb-name.done { color: #0A0A0A; }
+    .hb-name.done { color: var(--on-accent); }
     .hb-dots { display: flex; gap: 5px; }
     .hb-dot { width: 7px; height: 7px; border-radius: 50%; background: var(--line2); transition: all 0.15s; }
-    .hb-check { width: 26px; height: 26px; border-radius: 100px; flex-shrink: 0; border: 2px solid var(--line2); background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.18s; font-size: 13px; font-weight: 800; color: #0A0A0A; }
+    .hb-check { width: 26px; height: 26px; border-radius: var(--r-pill); flex-shrink: 0; border: 2px solid var(--line2); background: transparent; display: flex; align-items: center; justify-content: center; transition: all 0.18s; font-size: 13px; font-weight: 800; color: var(--on-accent); }
     /* Racha de días seguidos */
     .hb-racha { font-size: 10px; font-weight: 800; color: var(--tang); margin-left: 7px; white-space: nowrap; }
-    .hb-name.done .hb-racha { color: rgba(0,0,0,0.6); }
+    .hb-name.done .hb-racha { color: rgba(var(--on-accent-rgb),0.6); }
     /* Cronómetro de los hábitos con objetivo de minutos */
     .hb-timer {
       flex-shrink: 0; display: flex; align-items: center; gap: 7px;
@@ -372,51 +430,51 @@
     /* Píldora con texto, para que no se confunda con el círculo de tildar */
     .hb-timer-btn {
       flex-shrink: 0; display: inline-flex; align-items: center; gap: 5px;
-      height: 28px; padding: 0 12px; border-radius: 100px; cursor: pointer;
-      border: 1px solid var(--tang); background: rgba(255,158,74,0.14); color: var(--tang);
+      height: 28px; padding: 0 12px; border-radius: var(--r-pill); cursor: pointer;
+      border: 1px solid var(--tang); background: rgba(var(--tang-rgb),0.14); color: var(--tang);
       font-size: 11px; font-weight: 800; line-height: 1; font-family: var(--ui);
       white-space: nowrap; transition: all .16s;
     }
-    .hb-timer-btn:hover { background: var(--tang); color: #1A0E02; }
+    .hb-timer-btn:hover { background: var(--tang); color: var(--on-tang); }
     .hb-timer-btn.parar { padding: 0; width: 28px; justify-content: center; }
-    .hb-timer-btn.on-color { border-color: rgba(0,0,0,0.42); background: rgba(0,0,0,0.14); color: #0A0A0A; }
-    .hb-timer-btn.on-color:hover { background: rgba(0,0,0,0.32); color: #FFFFFF; }
+    .hb-timer-btn.on-color { border-color: rgba(var(--scrim-rgb),0.42); background: rgba(var(--scrim-rgb),0.14); color: var(--on-accent); }
+    .hb-timer-btn.on-color:hover { background: rgba(var(--scrim-rgb),0.32); color: #FFFFFF; }
     .hb-timer-count {
       font-size: 14px; font-weight: 800; font-variant-numeric: tabular-nums;
       letter-spacing: -0.4px; color: var(--tang); min-width: 48px; text-align: right;
     }
-    .hb-timer-count.on-color { color: #0A0A0A; }
+    .hb-timer-count.on-color { color: var(--on-accent); }
     .hb-item.corriendo { border-color: var(--tang); box-shadow: 0 0 0 1px var(--tang); }
     @keyframes hb-listo { 0%,100%{transform:scale(1)} 35%{transform:scale(1.035)} }
     .hb-item.listo { animation: hb-listo 0.5s ease 2; }
     .hb-prio-wrap { padding: 0 16px 14px; }
-    .hb-prio-input { width: 100%; background: var(--surf3); border: 1px solid var(--line2); border-radius: 12px; padding: 10px 13px; color: var(--t1); font-size: 13px; font-weight: 600; outline: none; font-family: var(--ui); transition: border-color 0.18s; }
-    .hb-prio-input:focus { border-color: rgba(0,0,0,0.55); }
+    .hb-prio-input { width: 100%; background: var(--surf3); border: 1px solid var(--line2); border-radius: var(--r-xs); padding: 10px 13px; color: var(--t1); font-size: 13px; font-weight: 600; outline: none; font-family: var(--ui); transition: border-color 0.18s; }
+    .hb-prio-input:focus { border-color: rgba(var(--scrim-rgb),0.55); }
     .hb-prio-input::placeholder { color: var(--t4); }
-    .hb-prio-input.on-color { background: rgba(0,0,0,0.22); border-color: rgba(0,0,0,0.28); color: #0A0A0A; }
-    .hb-prio-input.on-color::placeholder { color: rgba(0,0,0,0.45); }
-    .hb-prio-input.on-color:focus { border-color: rgba(0,0,0,0.6); }
+    .hb-prio-input.on-color { background: rgba(var(--scrim-rgb),0.22); border-color: rgba(var(--scrim-rgb),0.28); color: var(--on-accent); }
+    .hb-prio-input.on-color::placeholder { color: rgba(var(--on-accent-rgb),0.45); }
+    .hb-prio-input.on-color:focus { border-color: rgba(var(--scrim-rgb),0.6); }
     .habit-table { width: 100%; border-collapse: separate; border-spacing: 0 5px; }
     .habit-table th { font-size: 11px; color: var(--t3); font-weight: 700; padding-bottom: 12px; text-align: center; }
     .habit-table th.today-col { color: var(--lime); font-weight: 800; }
     .habit-table th:first-child { text-align: left; }
-    .hb-cell { width: 30px; height: 30px; border-radius: 10px; margin: 0 auto; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--surf3); transition: all 0.15s; font-size: 13px; font-weight: 800; color: #0A0A0A; }
+    .hb-cell { width: 30px; height: 30px; border-radius: var(--r-ctl); margin: 0 auto; cursor: pointer; display: flex; align-items: center; justify-content: center; border: 1px solid var(--line); background: var(--surf3); transition: all 0.15s; font-size: 13px; font-weight: 800; color: var(--on-accent); }
     .hb-cell:hover { border-color: var(--line2); }
     .hb-row-label { font-size: 12.5px; font-weight: 600; color: var(--t2); white-space: nowrap; padding-right: 12px; }
     .hb-nombre { margin-left: 6px; }
     .hb-sem { font-size: 12px; font-weight: 800; padding-left: 8px; }
     .habit-table tr td { padding-bottom: 5px; }
     .hb-total-row td { padding-top: 12px; border-top: 1px solid var(--line); font-size: 12px; }
-    .habit-prios-box { margin-top: 22px; background: var(--surf2); border: 1px solid var(--line); border-radius: 20px; padding: 18px 20px; }
+    .habit-prios-box { margin-top: 22px; background: var(--surf2); border: 1px solid var(--line); border-radius: var(--r-md); padding: 18px 20px; }
     .habit-prios-label { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--butter); margin-bottom: 14px; font-weight: 800; }
     .hb-prio-line { display: flex; gap: 11px; margin-bottom: 8px; align-items: flex-start; }
     .hb-prio-day { font-size: 11px; font-weight: 800; min-width: 16px; padding-top: 1px; }
 
     /* ══════════ MAILS SIN RESPONDER ══════════ */
-    .mail-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-top: 14px; }
+    .mail-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-top: 14px; box-shadow: var(--shadow-card); }
     .mail-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 8px; }
     @media (max-width: 1000px) { .mail-grid { grid-template-columns: 1fr; } }
-    .em { padding: 15px 16px; border-radius: 18px; background: var(--surf2); border: 1px solid var(--line); transition: background .16s, border-color .16s; }
+    .em { padding: 15px 16px; border-radius: var(--r-in); background: var(--surf2); border: 1px solid var(--line); transition: background .16s, border-color .16s; }
     .em:hover { background: var(--surf3); border-color: var(--line2); }
     .em-subject {
       font-size: 15px; font-weight: 700; color: var(--t1); letter-spacing: -0.3px;
@@ -431,7 +489,7 @@
     .mail-nota { font-size: 11px; font-weight: 600; color: var(--t4); margin-top: 16px; text-align: center; }
 
     /* ══════════ PANEL DE PROGRESO ══════════ */
-    .prog-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
+    .prog-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; box-shadow: var(--shadow-card); }
     .prog-grid { display: grid; grid-template-columns: repeat(auto-fit, minmax(320px,1fr)); gap: 26px; }
     .prog-h { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 800; color: var(--t3); margin-bottom: 14px; }
     /* Heatmap: una columna por semana, 7 filas (lun a dom) */
@@ -442,8 +500,8 @@
     .heat-col { display: grid; grid-template-rows: repeat(7, 13px); gap: 3px; }
     .heat-c { width: 13px; height: 13px; border-radius: 3px; background: var(--surf3); transition: transform .12s; }
     .heat-c:hover { transform: scale(1.35); }
-    .heat-c.n1 { background: #1F4A28; } .heat-c.n2 { background: #2F7A3D; }
-    .heat-c.n3 { background: #4FB25C; } .heat-c.n4 { background: #86E88F; }
+    .heat-c.n1 { background: var(--heat-1); } .heat-c.n2 { background: var(--heat-2); }
+    .heat-c.n3 { background: var(--heat-3); } .heat-c.n4 { background: var(--heat-4); }
     .heat-c.futuro { background: transparent; }
     .heat-leyenda { display: flex; align-items: center; gap: 6px; margin-top: 12px; font-size: 10px; font-weight: 600; color: var(--t4); }
     .heat-leyenda .heat-c { width: 11px; height: 11px; }
@@ -457,69 +515,69 @@
     /* Reparto por etiqueta */
     .reparto-fila { display: flex; align-items: center; gap: 11px; margin-bottom: 11px; }
     .reparto-lbl { font-size: 11px; font-weight: 800; width: 78px; flex-shrink: 0; color: var(--tc); }
-    .reparto-track { flex: 1; height: 9px; border-radius: 99px; background: var(--surf3); overflow: hidden; }
-    .reparto-fill { height: 100%; border-radius: 99px; background: var(--tc); transition: width .35s; }
+    .reparto-track { flex: 1; height: 9px; border-radius: var(--r-pill); background: var(--surf3); overflow: hidden; }
+    .reparto-fill { height: 100%; border-radius: var(--r-pill); background: var(--tc); transition: width .35s; }
     .reparto-num { font-size: 11px; font-weight: 700; color: var(--t3); white-space: nowrap; flex-shrink: 0; min-width: 84px; text-align: right; }
     .prog-vacio { font-size: 13px; font-weight: 500; color: var(--t4); }
 
     /* ══════════ MODAL DEL DOMINGO ══════════ */
     .modal-fondo {
-      position: fixed; inset: 0; z-index: 80; background: rgba(0,0,0,0.72);
+      position: fixed; inset: 0; z-index: 80; background: rgba(var(--scrim-rgb),0.72);
       display: flex; align-items: center; justify-content: center; padding: 24px;
       opacity: 0; pointer-events: none; transition: opacity .22s ease;
       overflow-y: auto;
     }
     .modal-fondo.visible { opacity: 1; pointer-events: auto; }
     .modal {
-      background: var(--butter); color: #16150A; border-radius: var(--r);
+      background: var(--butter); color: var(--on-butter); border-radius: var(--r);
       padding: 34px 36px 30px; width: min(720px, 100%); max-height: 88vh; overflow-y: auto;
       position: relative; transform: translateY(16px); transition: transform .22s ease;
-      box-shadow: 0 24px 70px rgba(0,0,0,0.6);
+      box-shadow: var(--shadow-modal);
     }
     .modal-fondo.visible .modal { transform: translateY(0); }
     .modal-label {
       display: inline-block; font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase;
-      font-weight: 800; background: rgba(0,0,0,0.13); padding: 7px 13px; border-radius: 100px; margin-bottom: 16px;
+      font-weight: 800; background: rgba(var(--scrim-rgb),0.13); padding: 7px 13px; border-radius: var(--r-pill); margin-bottom: 16px;
     }
-    .modal-titulo { font-size: 34px; font-weight: 800; letter-spacing: -1.5px; line-height: 1.05; margin-bottom: 6px; }
-    .modal-sub { font-size: 14px; font-weight: 600; color: rgba(22,21,10,0.68); margin-bottom: 22px; }
+    .modal-titulo { font-size: 34px; font-weight: 800; letter-spacing: -1.5px; font-family: var(--font-display); line-height: 1.05; margin-bottom: 6px; }
+    .modal-sub { font-size: 14px; font-weight: 600; color: rgba(var(--on-butter-rgb),0.68); margin-bottom: 22px; }
     .modal-cerrar {
-      position: absolute; top: 26px; right: 26px; width: 34px; height: 34px; border-radius: 100px;
-      border: none; cursor: pointer; background: rgba(0,0,0,0.13); color: #16150A;
+      position: absolute; top: 26px; right: 26px; width: 34px; height: 34px; border-radius: var(--r-pill);
+      border: none; cursor: pointer; background: rgba(var(--scrim-rgb),0.13); color: var(--on-butter);
       font-size: 17px; font-weight: 700; font-family: var(--ui);
       display: flex; align-items: center; justify-content: center; transition: background .16s;
     }
-    .modal-cerrar:hover { background: rgba(0,0,0,0.28); }
-    .modal-bar-wrap { background: rgba(0,0,0,0.14); border-radius: 99px; height: 9px; overflow: hidden; margin-bottom: 24px; }
-    .modal-bar-fill { height: 100%; border-radius: 99px; background: #16150A; }
+    .modal-cerrar:hover { background: rgba(var(--scrim-rgb),0.28); }
+    .modal-bar-wrap { background: rgba(var(--scrim-rgb),0.14); border-radius: var(--r-pill); height: 9px; overflow: hidden; margin-bottom: 24px; }
+    .modal-bar-fill { height: 100%; border-radius: var(--r-pill); background: var(--on-butter); }
     .modal-seccion { margin-bottom: 22px; }
-    .modal-h { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 800; color: rgba(22,21,10,0.6); margin-bottom: 10px; }
+    .modal-h { font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; font-weight: 800; color: rgba(var(--on-butter-rgb),0.6); margin-bottom: 10px; }
     .modal-chips { display: flex; flex-wrap: wrap; gap: 7px; }
     .modal-chip {
-      font-size: 11px; font-weight: 800; padding: 7px 13px; border-radius: 100px;
-      background: rgba(0,0,0,0.1); color: #16150A; display: inline-flex; align-items: center; gap: 7px;
+      font-size: 11px; font-weight: 800; padding: 7px 13px; border-radius: var(--r-pill);
+      background: rgba(var(--scrim-rgb),0.1); color: var(--on-butter); display: inline-flex; align-items: center; gap: 7px;
     }
     .modal-chip b { font-size: 13px; }
     .modal-dia { display: flex; gap: 11px; align-items: flex-start; margin-bottom: 9px; }
     .modal-dia-chip {
-      font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: 100px; flex-shrink: 0;
-      background: rgba(0,0,0,0.14); min-width: 42px; text-align: center;
+      font-size: 10px; font-weight: 800; padding: 4px 9px; border-radius: var(--r-pill); flex-shrink: 0;
+      background: rgba(var(--scrim-rgb),0.14); min-width: 42px; text-align: center;
     }
     .modal-dia-lista { font-size: 13.5px; font-weight: 600; line-height: 1.55; }
-    .modal-vacio { font-size: 13px; font-weight: 600; color: rgba(22,21,10,0.55); }
+    .modal-vacio { font-size: 13px; font-weight: 600; color: rgba(var(--on-butter-rgb),0.55); }
     .modal-acciones { display: flex; flex-wrap: wrap; gap: 9px; margin-top: 26px; }
     .modal-btn {
-      border: none; cursor: pointer; border-radius: 100px; padding: 12px 20px; font-family: var(--ui);
-      font-size: 13px; font-weight: 800; background: #16150A; color: var(--butter); transition: opacity .16s;
+      border: none; cursor: pointer; border-radius: var(--r-pill); padding: 12px 20px; font-family: var(--ui);
+      font-size: 13px; font-weight: 800; background: var(--on-butter); color: var(--butter); transition: opacity .16s;
     }
     .modal-btn:hover { opacity: 0.85; }
-    .modal-btn.suave { background: rgba(0,0,0,0.12); color: #16150A; }
+    .modal-btn.suave { background: rgba(var(--scrim-rgb),0.12); color: var(--on-butter); }
 
     /* ══════════ DIARIO DE LA SEMANA ══════════ */
-    .diario-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; }
+    .diario-card { background: var(--surf); border: 1px solid var(--line); border-radius: var(--r); padding: 26px 24px 22px; margin-bottom: 14px; box-shadow: var(--shadow-card); }
     .diario-txt {
       width: 100%; min-height: 132px; resize: vertical;
-      background: var(--surf2); border: 1px solid var(--line); border-radius: 18px;
+      background: var(--surf2); border: 1px solid var(--line); border-radius: var(--r-in);
       padding: 16px 18px; color: var(--t1); font-size: 14px; font-weight: 500; line-height: 1.65;
       outline: none; font-family: var(--ui); transition: border-color .18s;
     }
@@ -531,7 +589,7 @@
     .diario-vieja { border-top: 1px solid var(--line); }
     .diario-vieja-hd {
       display: flex; align-items: center; gap: 11px; padding: 13px 4px; cursor: pointer;
-      transition: background .16s; border-radius: 10px;
+      transition: background .16s; border-radius: var(--r-ctl);
     }
     .diario-vieja-hd:hover { background: var(--surf2); }
     .diario-flecha { font-size: 10px; color: var(--t4); transition: transform .18s; flex-shrink: 0; width: 12px; }
@@ -582,32 +640,32 @@
     .login-fondo.visible { opacity: 1; pointer-events: auto; }
     .login-caja {
       background: var(--surf); border: 1px solid var(--line); border-radius: var(--r);
-      padding: 34px 32px 28px; width: min(400px, 100%);
+      padding: 34px 32px 28px; width: min(400px, 100%); box-shadow: var(--shadow-card);
     }
     .login-logo { display: flex; gap: 5px; flex-wrap: wrap; width: 46px; margin-bottom: 20px; }
-    .login-logo i { width: 20px; height: 20px; border-radius: 6px; display: block; }
-    .login-titulo { font-size: 26px; font-weight: 800; letter-spacing: -1px; margin-bottom: 6px; }
+    .login-logo i { width: 20px; height: 20px; border-radius: var(--r-mini); display: block; }
+    .login-titulo { font-size: 26px; font-weight: 800; letter-spacing: -1px; font-family: var(--font-display); margin-bottom: 6px; }
     .login-sub { font-size: 13px; font-weight: 500; color: var(--t3); margin-bottom: 22px; line-height: 1.5; }
     .login-input {
-      width: 100%; background: var(--surf2); border: 1px solid var(--line2); border-radius: 14px;
+      width: 100%; background: var(--surf2); border: 1px solid var(--line2); border-radius: var(--r-sm);
       padding: 13px 15px; color: var(--t1); font-size: 14px; font-weight: 500;
       outline: none; font-family: var(--ui); margin-bottom: 10px; transition: border-color .18s;
     }
     .login-input:focus { border-color: var(--lime); }
     .login-input::placeholder { color: var(--t4); }
     .login-btn {
-      width: 100%; border: none; cursor: pointer; border-radius: 100px; padding: 14px;
-      background: var(--lime); color: #0A1A0C; font-size: 14px; font-weight: 800;
+      width: 100%; border: none; cursor: pointer; border-radius: var(--r-pill); padding: 14px;
+      background: var(--lime); color: var(--on-lime); font-size: 14px; font-weight: 800;
       font-family: var(--ui); margin-top: 6px; transition: background .16s;
     }
-    .login-btn:hover { background: #A2F0A9; }
+    .login-btn:hover { background: var(--lime-hover); }
     .login-msg { font-size: 12px; font-weight: 600; color: var(--tang); margin-top: 14px; min-height: 16px; text-align: center; }
 
     /* ── Respaldo y aviso de deshacer ── */
     .status-acciones { display: flex; justify-content: center; flex-wrap: wrap; gap: 8px; margin-top: 14px; }
     .status-btn {
       border: 1px solid var(--line); background: var(--surf); color: var(--t3);
-      border-radius: 100px; padding: 8px 16px; font-size: 11px; font-weight: 700;
+      border-radius: var(--r-pill); padding: 8px 16px; font-size: 11px; font-weight: 700;
       font-family: var(--ui); cursor: pointer; transition: all .16s;
     }
     .status-btn:hover { border-color: var(--line2); color: var(--t1); }
@@ -615,26 +673,135 @@
     .toast {
       position: fixed; left: 24px; bottom: 24px; z-index: 60;
       display: flex; align-items: center; gap: 14px;
-      background: var(--surf3); border: 1px solid var(--line2); border-radius: 100px;
+      background: var(--surf3); border: 1px solid var(--line2); border-radius: var(--r-pill);
       padding: 11px 12px 11px 20px; font-size: 13px; font-weight: 600; color: var(--t1);
-      box-shadow: 0 10px 30px rgba(0,0,0,0.55);
+      box-shadow: var(--shadow-toast);
       opacity: 0; transform: translateY(14px); pointer-events: none;
       transition: opacity .2s ease, transform .2s ease;
     }
     .toast.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
     .toast.sin-boton { padding: 11px 20px; }   /* sin el botón de deshacer, el padding vuelve a ser parejo */
     .toast-btn {
-      border: none; cursor: pointer; border-radius: 100px; padding: 7px 15px;
-      background: var(--lime); color: #0A1A0C; font-size: 12px; font-weight: 800; font-family: var(--ui);
+      border: none; cursor: pointer; border-radius: var(--r-pill); padding: 7px 15px;
+      background: var(--lime); color: var(--on-lime); font-size: 12px; font-weight: 800; font-family: var(--ui);
       transition: background .16s;
     }
-    .toast-btn:hover { background: #A2F0A9; }
+    .toast-btn:hover { background: var(--lime-hover); }
     @media (max-width: 560px) { .toast { left: 14px; right: 14px; bottom: 14px; } }
 
     /* Status */
     .status-bar { text-align: center; padding-top: 32px; font-size: 11px; font-weight: 600; color: var(--t4); }
     .live-dot { display: inline-block; width: 7px; height: 7px; border-radius: 50%; background: var(--lime); margin-right: 8px; vertical-align: middle; animation: blink 2.5s ease-in-out infinite; }
     @keyframes blink { 0%,100%{opacity:1} 50%{opacity:.25} }
+
+
+    /* ══════════ TEMA: PAPEL EDITORIAL ══════════ */
+    /* Cuaderno impreso: crema, tinta sepia, acentos como tintas (oscuros y
+       legibles), serif de display, bordes finos y sombra de hoja apoyada. */
+    [data-tema="papel"] {
+      color-scheme: light;
+      --ink:#F4EFE6; --surf:#FBF8F2; --surf2:#F7F2E9; --surf3:#EFE8DB; --surf4:#E5DCCB;
+      --line:#DCD3C2; --line2:#C6BBA6;
+      --t1:#2B2118; --t2:#4A3E33; --t3:#66584A; --t4:#7A6C5D;
+      --muted:#B8AE9C;
+      --coral:#B0471F;   /* terracota */
+      --lime:#55753A;    /* oliva */
+      --butter:#8A6508;  /* ocre: la mostaza pura no se lee como texto sobre crema */
+      --peri:#6A5AA8;    /* lavanda oscura */
+      --sky:#3B5BA5;     /* azul tinta */
+      --tang:#9E5410;    /* naranja quemado */
+      --azul:#2E6DA4; --menta:#2E7D6B; --oro:#A0641C;
+      --lime-hover:#466330; --link-hover:#2A478A;
+      /* Los acentos son oscuros: la tinta que va encima es papel */
+      --on-accent:#FBF8F2; --on-accent-rgb:251,248,242;
+      --on-coral:#FFF3EC; --on-coral-hi:#FFF3EC; --on-lime:#F4F8EE; --on-butter:#FFF7E0; --on-tang:#FFF4E8;
+      --coral-rgb:176,71,31; --lime-rgb:85,117,58; --tang-rgb:158,84,16;
+      --on-coral-rgb:255,243,236; --on-butter-rgb:255,247,224;
+      --scrim-rgb:43,33,24;      /* velos sepia, no negro */
+      --heat-1:#D3DCC0; --heat-2:#A9BF8A; --heat-3:#7E9A5F; --heat-4:#55753A;
+      --font-display:'Fraunces',Georgia,'Times New Roman',serif;
+      --font-ui:'Inter',-apple-system,BlinkMacSystemFont,'Segoe UI',Helvetica,sans-serif;
+      --r:10px; --r-md:8px; --r-in:8px; --r-sm:6px; --r-xs:6px; --r-ctl:4px; --r-box:4px; --r-mini:3px; --r-pill:100px;
+      --shadow-card:0 1px 2px rgba(43,33,24,0.05), 0 8px 24px rgba(43,33,24,0.06);
+      --shadow-toast:0 10px 30px rgba(43,33,24,0.22);
+      --shadow-modal:0 24px 70px rgba(43,33,24,0.28);
+      --title-grad:none; --title-fill:var(--t1);
+    }
+    [data-tema="papel"] body { -webkit-font-smoothing: auto; }
+    /* Fraunces viene en 500..700: los 800 se clampean a 700; acá se fija el tono serif */
+    [data-tema="papel"] .hero-title { font-weight: 600; letter-spacing: -2.5px; line-height: 0.98; font-variation-settings: 'SOFT' 30; }
+    [data-tema="papel"] .stat-num, [data-tema="papel"] .habit-pct-num { font-weight: 600; letter-spacing: -1.5px; }
+    [data-tema="papel"] .frase-txt { font-weight: 600; letter-spacing: -0.8px; line-height: 1.1; }
+    [data-tema="papel"] .card-title, [data-tema="papel"] .modal-titulo, [data-tema="papel"] .login-titulo { font-weight: 600; letter-spacing: -0.4px; }
+    /* Regla fina bajo la cabecera, como un diario */
+    [data-tema="papel"] .hero { border-bottom: 1px solid var(--line2); margin-bottom: 8px; }
+    /* Fecha y cronómetro en mono: toque de máquina de escribir */
+    [data-tema="papel"] .date-pill, [data-tema="papel"] .hb-timer-count { font-family: var(--font-mono); }
+    /* En claro, .62 de opacidad deja los días pasados lavados */
+    [data-tema="papel"] .dia-card.pasado { opacity: 0.78; }
+    [data-tema="papel"] .tag-pill.vacia { border-color: var(--t4); }
+    [data-tema="papel"] .tema-btn:hover { border-color: var(--coral); }
+
+    /* ══════════ TEMA: TERMINAL ══════════ */
+    /* Consola: negro verdoso, todo en JetBrains Mono, verde fósforo + ámbar,
+       radios casi nulos, prompt y cursor en el título. */
+    [data-tema="terminal"] {
+      color-scheme: dark;
+      --ink:#0B0F0C; --surf:#0F1510; --surf2:#121A13; --surf3:#172117; --surf4:#1E2B1F;
+      --line:#1F2E21; --line2:#2E4430;
+      --t1:#CFF5CF; --t2:#8FBF8F; --t3:#6FA070; --t4:#5E8A60;
+      --muted:#3E5540;
+      --coral:#FF4D4D;   /* rojo de terminal */
+      --lime:#4AF626;    /* verde fósforo */
+      --butter:#FFD447;  /* amarillo */
+      --peri:#FF5FD2;    /* magenta */
+      --sky:#22D3EE;     /* cyan */
+      --tang:#FFB000;    /* ámbar: acento secundario (cronómetros, rachas) */
+      --azul:#5FA8FF; --menta:#2EE6A6; --oro:#F2C230;
+      --lime-hover:#7DFF5E; --link-hover:#67E8F9;
+      --on-accent:#0B0F0C; --on-accent-rgb:11,15,12;
+      --on-coral:#1A0505; --on-coral-hi:#FFF0F0; --on-lime:#04110A; --on-butter:#141200; --on-tang:#1A0E00;
+      --coral-rgb:255,77,77; --lime-rgb:74,246,38; --tang-rgb:255,176,0;
+      --on-coral-rgb:26,5,5; --on-butter-rgb:20,18,0;
+      --scrim-rgb:0,0,0;
+      --heat-1:#0F3A14; --heat-2:#1B6B22; --heat-3:#2DB335; --heat-4:#4AF626;
+      --font-display:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --font-ui:'JetBrains Mono',ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
+      --r:4px; --r-md:3px; --r-in:3px; --r-sm:2px; --r-xs:2px; --r-ctl:2px; --r-box:0; --r-mini:0; --r-pill:2px;
+      --shadow-card:none;
+      --shadow-toast:0 0 0 1px var(--lime), 0 0 24px rgba(74,246,38,0.18);
+      --shadow-modal:0 0 0 1px var(--tang), 0 0 40px rgba(255,176,0,0.15);
+      --title-grad:none; --title-fill:var(--lime);
+    }
+    [data-tema="terminal"] body { -webkit-font-smoothing: auto; }
+    /* La mono es ancha: "> Dashboard_" son 12 caracteres; con el clamp original desborda a 400px */
+    [data-tema="terminal"] .hero-title { font-weight: 700; letter-spacing: -2px; font-size: clamp(34px, 6.5vw, 88px); }
+    [data-tema="terminal"] .hero-title::before { content: '>'; margin-right: 0.22em; -webkit-text-fill-color: var(--t3); color: var(--t3); }
+    [data-tema="terminal"] .hero-title::after { content: '_'; margin-left: 0.04em; animation: cursor-parpadeo 1.1s steps(1, end) infinite; }
+    @keyframes cursor-parpadeo { 0%, 49% { opacity: 1; } 50%, 100% { opacity: 0; } }
+    [data-tema="terminal"] .stat-num, [data-tema="terminal"] .habit-pct-num { font-weight: 700; letter-spacing: -1.5px; }
+    [data-tema="terminal"] .frase-txt { font-weight: 700; letter-spacing: -0.6px; font-size: 30px; }
+    [data-tema="terminal"] .card-title { letter-spacing: -0.3px; }
+    [data-tema="terminal"] .card-title::before { content: '$ '; color: var(--lime); }
+    /* Labels en minúscula y sin tracking: la mono ya separa sola */
+    [data-tema="terminal"] .card-label, [data-tema="terminal"] .brand, [data-tema="terminal"] .date-pill,
+    [data-tema="terminal"] .frase-label, [data-tema="terminal"] .filtro-lbl, [data-tema="terminal"] .prog-h,
+    [data-tema="terminal"] .habit-prios-label, [data-tema="terminal"] .modal-label, [data-tema="terminal"] .modal-h,
+    [data-tema="terminal"] .pend-title, [data-tema="terminal"] .dia-chip,
+    [data-tema="terminal"] .tag-pill, [data-tema="terminal"] .tag-chip, [data-tema="terminal"] .tema-btn { text-transform: lowercase; letter-spacing: 0; }
+    /* Puntos → cuadraditos */
+    [data-tema="terminal"] .stat::before, [data-tema="terminal"] .em-dot, [data-tema="terminal"] .live-dot,
+    [data-tema="terminal"] .hb-dot, [data-tema="terminal"] .heat-c, [data-tema="terminal"] .barra,
+    [data-tema="terminal"] .dia-card .tag-pill { border-radius: 0; }
+    [data-tema="terminal"] .hb-cell { border-radius: var(--r-ctl); }
+    [data-tema="terminal"] .live-dot { animation-duration: 1s; }
+    [data-tema="terminal"] input, [data-tema="terminal"] textarea { caret-color: var(--lime); }
+    [data-tema="terminal"] ::selection { background: var(--lime); color: var(--on-lime); }
+    /* Scanlines muy suaves: por encima de todo pero sin atrapar el mouse */
+    [data-tema="terminal"] body::after {
+      content: ''; position: fixed; inset: 0; z-index: 999; pointer-events: none;
+      background: repeating-linear-gradient(to bottom, rgba(0,0,0,0) 0 2px, rgba(0,0,0,0.09) 2px 3px);
+    }
 
   </style>
 </head>
@@ -644,6 +811,7 @@
 <div class="hero">
   <div class="brand"><span class="brand-star">✦</span> Mi Dashboard</div>
   <div class="date-pill" id="date-pill">·</div>
+  <button class="tema-btn" id="tema-btn" onclick="cicloTema()" title="Cambiar tema: Nocturno → Papel → Terminal" aria-label="Cambiar tema">◐ <span id="tema-nombre">Nocturno</span></button>
   <h1 class="hero-title">Dashboard</h1>
   <p class="hero-sub" id="hero-sub">Buenos días, Franco — esto es lo que te espera hoy.</p>
   <div class="stats">
@@ -781,8 +949,8 @@
 <div class="login-fondo" id="login-fondo">
   <div class="login-caja">
     <div class="login-logo">
-      <i style="background:#7FC4F5"></i><i style="background:#F0512E"></i>
-      <i style="background:#86E88F"></i><i style="background:#7B7BF0"></i>
+      <i style="background:var(--sky)"></i><i style="background:var(--coral)"></i>
+      <i style="background:var(--lime)"></i><i style="background:var(--peri)"></i>
     </div>
     <div class="login-titulo">Mi Dashboard</div>
     <div class="login-sub">Entrá una vez y este dispositivo queda recordado.</div>
@@ -807,7 +975,7 @@
    Este es el ÚNICO punto por el que pasan las escrituras. */
 
 /* Estas claves NO viajan: son de este dispositivo o descartables */
-var NO_SINCRONIZAR = ['timer_activo','mails_cache','ultima_frase','sync_meta','filtro_tag','tag_activa'];
+var NO_SINCRONIZAR = ['timer_activo','mails_cache','ultima_frase','sync_meta','filtro_tag','tag_activa','tema'];
 var META_KEY='sync_meta';          /* {clave: cuándo cambió acá} */
 var _pendientes={};                /* claves esperando subir */
 var _subirTimer=null;
@@ -1050,10 +1218,10 @@ function renderFrase(){
 /* ═══════════════════ ETIQUETAS ═══════════════════ */
 /* Los cuatro colores salen de la paleta que ya usa el dashboard */
 var TAGS=[
-  {id:'uni',       label:'UNI',       color:'#7FC4F5'},  /* sky   */
-  {id:'agencia',   label:'AGENCIA',   color:'#F0512E'},  /* coral */
-  {id:'personal',  label:'PERSONAL',  color:'#86E88F'},  /* lime  */
-  {id:'proyectos', label:'PROYECTOS', color:'#7B7BF0'}   /* peri  */
+  {id:'uni',       label:'UNI',       color:'var(--sky)'},
+  {id:'agencia',   label:'AGENCIA',   color:'var(--coral)'},
+  {id:'personal',  label:'PERSONAL',  color:'var(--lime)'},
+  {id:'proyectos', label:'PROYECTOS', color:'var(--peri)'}
 ];
 function tagById(id){ for(var i=0;i<TAGS.length;i++) if(TAGS[i].id===id) return TAGS[i]; return null; }
 
@@ -1093,7 +1261,7 @@ function renderTagChips(){
       return '<button class="tag-chip'+(tagActiva===tg.id?' activo':'')+'" style="--tc:'+tg.color+'" '+
         'onclick="setTagActiva('+i+')">'+tg.label+'</button>';
     }).join('')+
-    '<button class="tag-chip'+(tagActiva===null?' activo':'')+'" style="--tc:#767676" '+
+    '<button class="tag-chip'+(tagActiva===null?' activo':'')+'" style="--tc:var(--t4)" '+
       'onclick="setTagActiva(-1)" title="Cargar sin etiqueta">—</button>';
 }
 
@@ -1120,7 +1288,7 @@ function renderFiltro(){
     }).join('')+
     /* La pill "sin etiqueta" aparece solo si hay tareas sin etiqueta (o si está activa) */
     ((cuenta._||filtroTag==='_')
-      ? '<button class="filtro-pill'+(filtroTag==='_'?' activo':'')+'" style="--tc:#767676" onclick="setFiltro(-2)" title="Sin etiqueta">— <span class="filtro-num">'+(cuenta._||0)+'</span></button>'
+      ? '<button class="filtro-pill'+(filtroTag==='_'?' activo':'')+'" style="--tc:var(--t4)" onclick="setFiltro(-2)" title="Sin etiqueta">— <span class="filtro-num">'+(cuenta._||0)+'</span></button>'
       : '');
 
   var nota=document.getElementById('filtro-nota');
@@ -1680,15 +1848,15 @@ function importarDatos(input){
 
 /* ═══════════════════ HABIT TRACKER ═══════════════════ */
 var HABITS=[
-  {id:0,name:'Dormir 7hrs',       icon:'🛏️',color:'#7B7BF0'},
-  {id:1,name:'Comer Saludable',   icon:'🍎',color:'#86E88F'},
-  {id:2,name:'Higiene',           icon:'🫧',color:'#7FC4F5'},
-  {id:3,name:'Disciplina',        icon:'🎯',color:'#F0512E'},
-  {id:4,name:'3hr de Celu',       icon:'📵',color:'#F2EE87'},
-  {id:5,name:'Ejercicio',         icon:'🏋️',color:'#FF9E4A'},
-  {id:6,name:'UNI 90min',         icon:'📖',color:'#5AA9FF', minutos:90},
-  {id:7,name:'30min Aprendizaje', icon:'✏️',color:'#5EE0C0', minutos:30},
-  {id:8,name:'1 Prioridad del día',icon:'⭐',color:'#FFD166'}
+  {id:0,name:'Dormir 7hrs',       icon:'🛏️',color:'var(--peri)'},
+  {id:1,name:'Comer Saludable',   icon:'🍎',color:'var(--lime)'},
+  {id:2,name:'Higiene',           icon:'🫧',color:'var(--sky)'},
+  {id:3,name:'Disciplina',        icon:'🎯',color:'var(--coral)'},
+  {id:4,name:'3hr de Celu',       icon:'📵',color:'var(--butter)'},
+  {id:5,name:'Ejercicio',         icon:'🏋️',color:'var(--tang)'},
+  {id:6,name:'UNI 90min',         icon:'📖',color:'var(--azul)', minutos:90},
+  {id:7,name:'30min Aprendizaje', icon:'✏️',color:'var(--menta)', minutos:30},
+  {id:8,name:'1 Prioridad del día',icon:'⭐',color:'var(--oro)'}
 ];
 
 function mkDefault(){return{checks:Array.from({length:9},function(){return Array(7).fill(false)}),priorities:Array(7).fill('')};}
@@ -1923,8 +2091,8 @@ function beep(){
 function makeRingSVG(pct,color,size){
   size=size||34;var r=(size-5)/2,circ=2*Math.PI*r,dash=(pct/100)*circ;
   return '<svg width="'+size+'" height="'+size+'" style="position:absolute;top:0;left:0;transform:rotate(-90deg)">'+
-    '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" stroke="#333333" stroke-width="3"/>'+
-    '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" stroke="'+color+'" stroke-width="3" '+
+    '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" style="stroke:var(--line2)" stroke-width="3"/>'+
+    '<circle cx="'+(size/2)+'" cy="'+(size/2)+'" r="'+r+'" fill="none" style="stroke:'+color+'" stroke-width="3" '+
     'stroke-dasharray="'+dash.toFixed(1)+' '+circ.toFixed(1)+'" stroke-linecap="round"/>'+
   '</svg>';
 }
@@ -1939,12 +2107,12 @@ function renderHabits(){
 
   /* Day scroller */
   document.getElementById('hb-days').innerHTML=hbDates.map(function(date,i){
-    var isT=i===hbTodayIdx,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/HABITS.length)*100),ringColor=isA?'#0A0A0A':'#86E88F';
+    var isT=i===hbTodayIdx,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/HABITS.length)*100),ringColor=isA?'var(--on-accent)':'var(--lime)';
     return '<button class="hday-btn'+(isT?' today':'')+(isA?' active':'')+'" onclick="selectHabitDay('+i+')">'+
       '<div class="hday-ds">'+DS[i]+'</div><div class="hday-num">'+date.getDate()+'</div>'+
       '<div class="hday-ring-wrap" style="width:34px;height:34px;position:relative">'+
         makeRingSVG(pct,ringColor,34)+
-        '<span class="hday-ring-lbl" style="color:'+(isA?'#0A0A0A':'#86E88F')+'">'+dayTotals[i]+'</span>'+
+        '<span class="hday-ring-lbl" style="color:'+(isA?'var(--on-accent)':'var(--lime)')+'">'+dayTotals[i]+'</span>'+
       '</div></button>';
   }).join('');
 
@@ -1953,7 +2121,7 @@ function renderHabits(){
     document.getElementById('hb-content').innerHTML=
       '<div style="display:flex;align-items:center;gap:8px;margin-bottom:16px">'+
         '<span style="font-size:16px;font-weight:600;color:var(--t1);font-weight:800;letter-spacing:-0.8px">'+DF[hbActiveDay]+'</span>'+
-        (hbActiveDay===hbTodayIdx?'<span style="font-size:9px;background:#86E88F;color:#0A0A0A;padding:4px 10px;border-radius:99px;font-weight:800;letter-spacing:0.5px;font-family:sans-serif">HOY</span>':'')+
+        (hbActiveDay===hbTodayIdx?'<span style="font-size:9px;background:var(--lime);color:var(--on-accent);padding:4px 10px;border-radius:var(--r-pill);font-weight:800;letter-spacing:0.5px;font-family:var(--ui)">HOY</span>':'')+
         '<span style="margin-left:auto;font-size:12px;color:var(--t3)">'+dayTotals[hbActiveDay]+'/9</span>'+
       '</div>'+
       '<div class="habit-grid">'+
@@ -1961,7 +2129,7 @@ function renderHabits(){
           var done=hbData.checks[h.id][hbActiveDay],isPrio=h.id===8;
           var dots=Array.from({length:7},function(_,d){
             var cls='hb-dot'+(d===hbActiveDay?' today-ring':'')+(hbData.checks[h.id][d]?' filled':'');
-            return '<div class="'+cls+'" style="--hc:'+h.color+';'+(hbData.checks[h.id][d]?'background:'+(done?'#0A0A0A':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(0,0,0,0.55)':h.color):'')+'"></div>';
+            return '<div class="'+cls+'" style="--hc:'+h.color+';'+(hbData.checks[h.id][d]?'background:'+(done?'var(--on-accent)':h.color):'')+(d===hbActiveDay?';border:1.5px solid '+(done?'rgba(var(--scrim-rgb),0.55)':h.color):'')+'"></div>';
           }).join('');
           /* Racha: se muestra recién a partir de 2 días, con 1 no dice nada */
           var racha=_rachasCache[h.id]||0;
@@ -1985,7 +2153,7 @@ function renderHabits(){
               '<span class="hb-icon">'+h.icon+'</span>'+
               '<div class="hb-info"><div class="hb-name'+(done?' done':'')+'">'+esc(h.name)+rachaHTML+'</div><div class="hb-dots">'+dots+'</div></div>'+
               timerHTML+
-              '<div class="hb-check" style="'+(done?'background:#0A0A0A;border-color:#0A0A0A;color:'+h.color:'border-color:var(--line2)')+'">'+(done?'✓':'')+'</div>'+
+              '<div class="hb-check" style="'+(done?'background:var(--on-accent);border-color:var(--on-accent);color:'+h.color:'border-color:var(--line2)')+'">'+(done?'✓':'')+'</div>'+
             '</div>'+
             (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(hbData.priorities[hbActiveDay])+'" placeholder="Escribí tu prioridad de hoy..." oninput="setPriority('+hbActiveDay+',this.value)" onclick="event.stopPropagation()"/></div>':'')+
           '</div>';
@@ -1998,7 +2166,7 @@ function renderHabits(){
         var done=hbData.checks[h.id][d],cls='hb-cell'+(d===hbTodayIdx?' today-ring':'')+( done?' filled':'');
         return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hbTodayIdx?'border-color:'+h.color:'')+';" onclick="toggleHabit('+h.id+','+d+')">'+(done?'✓':'')+'</div></td>';
       }).join('');
-      var sc=habTotals[h.id]===7?'#86E88F':habTotals[h.id]>=5?'#7FC4F5':habTotals[h.id]>=3?'#F2EE87':'#525252';
+      var sc=habTotals[h.id]===7?'var(--lime)':habTotals[h.id]>=5?'var(--sky)':habTotals[h.id]>=3?'var(--butter)':'var(--muted)';
       var rc=_rachasCache[h.id]||0;
       /* Icono y nombre van separados para poder esconder el nombre en el celular */
       return '<tr><td><span class="hb-row-label" title="'+esc(h.name)+'">'+
@@ -2006,16 +2174,16 @@ function renderHabits(){
           '<span class="hb-nombre">'+esc(h.name.length>14?h.name.slice(0,13)+'…':h.name)+'</span>'+
         '</span></td>'+cells+
         '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+sc+'">'+habTotals[h.id]+'/7</span></td>'+
-        '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+(rc>=2?'#FF9E4A':'#525252')+'">'+(rc>=2?'🔥 '+rc:'—')+'</span></td></tr>';
+        '<td style="text-align:center;padding-left:8px"><span class="hb-sem" style="color:'+(rc>=2?'var(--tang)':'var(--muted)')+'">'+(rc>=2?'🔥 '+rc:'—')+'</span></td></tr>';
     }).join('');
     var mejorRacha=Math.max.apply(null,_rachasCache);
     var totalRow='<tr class="hb-total-row"><td style="color:var(--t3);padding-right:8px">Total</td>'+
-      dayTotals.map(function(t,i){return'<td style="text-align:center"><span style="font-size:11px;font-weight:700;color:'+(i===hbTodayIdx?'#86E88F':'#525252')+'">'+t+'</span></td>';}).join('')+
-      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:#86E88F">'+total+'</span></td>'+
-      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:'+(mejorRacha>=2?'#FF9E4A':'#525252')+'">'+(mejorRacha>=2?mejorRacha:'—')+'</span></td></tr>';
+      dayTotals.map(function(t,i){return'<td style="text-align:center"><span style="font-size:11px;font-weight:700;color:'+(i===hbTodayIdx?'var(--lime)':'var(--muted)')+'">'+t+'</span></td>';}).join('')+
+      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:var(--lime)">'+total+'</span></td>'+
+      '<td style="text-align:center;padding-left:8px"><span style="font-size:11px;font-weight:800;color:'+(mejorRacha>=2?'var(--tang)':'var(--muted)')+'">'+(mejorRacha>=2?mejorRacha:'—')+'</span></td></tr>';
     var hasPrios=hbData.priorities.some(Boolean);
     var priosHtml='<div class="habit-prios-box"><div class="habit-prios-label">Prioridades de la semana</div>'+
-      (hasPrios?hbData.priorities.map(function(p,i){return p?'<div class="hb-prio-line"><span class="hb-prio-day" style="color:'+(i===hbTodayIdx?'#86E88F':'#525252')+'">'+DS[i]+'</span><span style="font-size:12.5px;color:var(--t2)">'+esc(p)+'</span></div>':'';}).join(''):'<div style="font-size:12px;color:var(--t4)">Sin prioridades registradas aún.</div>')+
+      (hasPrios?hbData.priorities.map(function(p,i){return p?'<div class="hb-prio-line"><span class="hb-prio-day" style="color:'+(i===hbTodayIdx?'var(--lime)':'var(--muted)')+'">'+DS[i]+'</span><span style="font-size:12.5px;color:var(--t2)">'+esc(p)+'</span></div>':'';}).join(''):'<div style="font-size:12px;color:var(--t4)">Sin prioridades registradas aún.</div>')+
     '</div>';
     document.getElementById('hb-content').innerHTML='<div style="overflow-x:auto"><table class="habit-table"><thead>'+thead+'</thead><tbody>'+tbody+totalRow+'</tbody></table></div>'+priosHtml;
   }
@@ -2393,7 +2561,37 @@ function actualizarMails(){
   });
 }
 
+/* ═══════════════════ TEMAS ═══════════════════ */
+/* Tres identidades completas (colores, tipografías, radios) definidas en el
+   CSS como tokens. El tema es POR DISPOSITIVO: se guarda directo en
+   localStorage y está en NO_SINCRONIZAR para que un respaldo importado
+   tampoco lo suba a la nube. */
+var TEMAS=['nocturno','papel','terminal'];
+var TEMA_NOMBRE={nocturno:'Nocturno', papel:'Papel', terminal:'Terminal'};
+
+function temaActual(){ return document.documentElement.getAttribute('data-tema')||'nocturno'; }
+
+function aplicarTema(nombre){
+  if(TEMAS.indexOf(nombre)<0) nombre='nocturno';
+  /* Nocturno es el :root, así que va sin atributo */
+  if(nombre==='nocturno') document.documentElement.removeAttribute('data-tema');
+  else document.documentElement.setAttribute('data-tema',nombre);
+  try{ localStorage.setItem('tema',nombre); }catch(e){}
+  /* La barra del navegador / de la app instalada toma el color de fondo del tema */
+  var ink=getComputedStyle(document.documentElement).getPropertyValue('--ink').trim();
+  var meta=document.querySelector('meta[name="theme-color"]');
+  if(meta && ink) meta.setAttribute('content',ink);
+  var lbl=document.getElementById('tema-nombre'); if(lbl) lbl.textContent=TEMA_NOMBRE[nombre];
+}
+
+function cicloTema(){
+  var sig=TEMAS[(TEMAS.indexOf(temaActual())+1)%TEMAS.length];
+  aplicarTema(sig);
+  mostrarToast('Tema: '+TEMA_NOMBRE[sig]);
+}
+
 /* ═══════════════════ INIT ═══════════════════ */
+aplicarTema(temaActual());   /* el script del <head> ya puso el atributo; acá se completan meta y botón */
 setupHeader();
 renderFrase();
 loadPrefs();

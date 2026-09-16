@@ -5,8 +5,12 @@
    "hago un cambio y no lo veo nunca". Asi siempre se pide la ultima version, y
    la copia guardada se usa solo si no hay conexion.
 
+   Las fuentes de Google van en un cache aparte, CACHE FIRST: una vez bajadas
+   no cambian, y asi los tres temas se ven bien tambien sin internet.
+
    Para subir una version nueva, cambiar el numero de CACHE. */
-const CACHE = 'dashboard-v1';
+const CACHE = 'dashboard-v2';
+const CACHE_FUENTES = 'fuentes-v1';
 const ESENCIALES = [
   './',
   './index.html',
@@ -29,7 +33,7 @@ self.addEventListener('activate', ev => {
   ev.waitUntil(
     caches.keys()
       .then(claves => Promise.all(
-        claves.filter(k => k !== CACHE).map(k => caches.delete(k))   /* limpiar versiones viejas */
+        claves.filter(k => k !== CACHE && k !== CACHE_FUENTES).map(k => caches.delete(k))   /* limpiar versiones viejas */
       ))
       .then(() => self.clients.claim())
   );
@@ -40,7 +44,21 @@ self.addEventListener('fetch', ev => {
   if (req.method !== 'GET') return;
 
   const url = new URL(req.url);
-  /* Solo se cachea lo propio: nada de Supabase ni Google Fonts */
+
+  /* Google Fonts: primero el cache, y si no esta se baja y se guarda.
+     La hoja de googleapis llega "opaca" (el <link> es no-cors) y los woff2 de
+     gstatic llegan con CORS: las dos se pueden guardar. */
+  if (url.hostname === 'fonts.googleapis.com' || url.hostname === 'fonts.gstatic.com') {
+    ev.respondWith(
+      caches.open(CACHE_FUENTES).then(c => c.match(req).then(hit => hit || fetch(req).then(resp => {
+        if (resp.ok || resp.type === 'opaque') c.put(req, resp.clone()).catch(() => {});
+        return resp;
+      })))
+    );
+    return;
+  }
+
+  /* Solo se cachea lo propio: nada de Supabase */
   if (url.origin !== self.location.origin) return;
 
   ev.respondWith(

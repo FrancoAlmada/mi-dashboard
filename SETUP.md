@@ -188,14 +188,18 @@ git push
 
 **Para probar antes de subir**, no abras el archivo con doble click: desde un
 archivo local Supabase no puede conectarse y no vas a ver tus datos. Levantá
-un servidor:
+el servidor que viene en el proyecto:
 
 ```bash
-python -m http.server 5599
+node serve.js
 ```
 
 y entrá a `http://localhost:5599`. Ahí funciona igual que el sitio real,
 sincronización incluida.
+
+> No uses `python -m http.server`: en Windows a veces entrega el `index.html`
+> recortado y la página aparece rota sin ningún error visible. `serve.js` no
+> tiene dependencias, solo usa lo que ya trae Node.
 
 **Si la app instalada no muestra el cambio**: cerrala y volvé a abrirla, o
 hacé `Ctrl + F5` dentro de su ventana.
