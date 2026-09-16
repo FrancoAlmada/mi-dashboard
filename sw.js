@@ -9,7 +9,7 @@
    no cambian, y asi los tres temas se ven bien tambien sin internet.
 
    Para subir una version nueva, cambiar el numero de CACHE. */
-const CACHE = 'dashboard-v2';
+const CACHE = 'dashboard-v3';
 const CACHE_FUENTES = 'fuentes-v1';
 const ESENCIALES = [
   './',

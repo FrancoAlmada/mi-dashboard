@@ -890,6 +890,137 @@
     .modal-grande.hecha .modal-grande-num { background: var(--on-butter); border-color: var(--on-butter); color: var(--butter); }
     .modal-grande:not(.hecha) span:last-child { opacity: 0.6; }
 
+    /* ══════════ NOTAS RÁPIDAS ══════════ */
+    /* Botón flotante: SIEMPRE visible (en el celular no hay tecla N). Al abrir el
+       panel pasa a ser el botón de cerrar, por eso queda por encima del panel. */
+    .notas-fab {
+      position: fixed; right: 22px; bottom: 22px; z-index: 70;
+      width: 54px; height: 54px; border-radius: var(--r-pill); border: none; cursor: pointer;
+      background: var(--lime); color: var(--on-lime); font-size: 22px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      box-shadow: var(--shadow-toast); transition: transform .18s, background .16s;
+    }
+    .notas-fab:hover { background: var(--lime-hover); transform: translateY(-2px); }
+    .notas-fab.abierto { background: var(--surf3); color: var(--t1); border: 1px solid var(--line2); }
+    .notas-badge {
+      position: absolute; top: -4px; right: -4px; min-width: 20px; height: 20px; padding: 0 6px;
+      border-radius: var(--r-pill); background: var(--t1); color: var(--on-accent);
+      font-size: 10px; font-weight: 800; font-variant-numeric: tabular-nums;
+      display: flex; align-items: center; justify-content: center; border: 2px solid var(--ink);
+    }
+    .notas-badge:empty { display: none; }
+    /* Velo detrás del panel: click afuera cierra */
+    .notas-fondo {
+      position: fixed; inset: 0; z-index: 49; background: rgba(var(--scrim-rgb),0.45);
+      opacity: 0; pointer-events: none; transition: opacity .22s ease;
+    }
+    .notas-fondo.visible { opacity: 1; pointer-events: auto; }
+    /* Panel deslizante desde la derecha. Va DEBAJO del toast (60): en el celular
+       ocupa toda la pantalla y el "Deshacer" de una nota borrada tiene que verse. */
+    .notas-panel {
+      position: fixed; top: 0; right: 0; bottom: 0; z-index: 50;
+      width: min(440px, 100%); height: 100vh; height: 100dvh;
+      background: var(--surf); border-left: 1px solid var(--line); box-shadow: var(--shadow-modal);
+      display: flex; flex-direction: column;
+      transform: translateX(100%); visibility: hidden;
+      transition: transform .26s cubic-bezier(.2,.8,.2,1), visibility 0s linear .26s;
+    }
+    .notas-panel.abierto { transform: translateX(0); visibility: visible; transition: transform .26s cubic-bezier(.2,.8,.2,1), visibility 0s; }
+    .notas-hd { display: flex; align-items: flex-start; justify-content: space-between; gap: 10px; padding: 26px 24px 0; margin-bottom: 18px; }
+    .notas-cerrar {
+      position: relative; flex-shrink: 0; width: 34px; height: 34px; border-radius: var(--r-pill);
+      border: 1px solid var(--line2); background: transparent; color: var(--t2); cursor: pointer;
+      transition: border-color .16s, color .16s;
+    }
+    .notas-cerrar:hover { border-color: var(--coral); color: var(--coral); }
+    .notas-cerrar::before, .notas-cerrar::after {
+      content: ''; position: absolute; top: 50%; left: 50%; width: 14px; height: 1.8px; border-radius: 1px; background: currentColor;
+    }
+    .notas-cerrar::before { transform: translate(-50%,-50%) rotate(45deg); }
+    .notas-cerrar::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+    /* Caja de escribir: toma el color elegido en el borde de arriba (--nc la pone el JS) */
+    .notas-form {
+      margin: 0 24px 12px; padding: 10px 12px 10px;
+      background: var(--surf2); border: 1px solid var(--line); border-top: 3px solid var(--nc, var(--butter));
+      border-radius: var(--r-in); transition: border-color .16s;
+    }
+    .notas-txt {
+      width: 100%; min-height: 44px; max-height: 40vh; resize: none; overflow-y: auto;
+      background: transparent; border: none; outline: none;
+      color: var(--t1); font-size: 14px; font-weight: 500; line-height: 1.5; font-family: var(--ui); padding: 6px 2px 8px;
+    }
+    .notas-txt::placeholder { color: var(--t4); }
+    .notas-form-row { display: flex; align-items: center; gap: 8px; padding-top: 8px; border-top: 1px solid var(--line); }
+    .notas-colores { display: flex; gap: 7px; margin-right: auto; }
+    .nota-color-btn {
+      width: 20px; height: 20px; border-radius: 50%; padding: 0; cursor: pointer;
+      background: var(--nc); border: 2px solid transparent; transition: transform .14s, border-color .14s;
+    }
+    .nota-color-btn:hover { transform: scale(1.12); }
+    .nota-color-btn.activo { border-color: var(--t1); }
+    .notas-fijar {
+      width: 30px; height: 30px; border-radius: var(--r-pill); border: 1px solid var(--line2); background: transparent;
+      cursor: pointer; font-size: 13px; opacity: 0.5; transition: all .16s;
+    }
+    .notas-fijar.activo { opacity: 1; border-color: var(--butter); }
+    .notas-guardar {
+      border: none; cursor: pointer; border-radius: var(--r-pill); padding: 8px 14px;
+      background: var(--t1); color: var(--on-accent); font-size: 12px; font-weight: 800; font-family: var(--ui); transition: opacity .16s;
+    }
+    .notas-guardar:hover { opacity: 0.85; }
+    .notas-buscar {
+      margin: 0 24px 12px; width: calc(100% - 48px); -webkit-appearance: none; appearance: none;
+      background: var(--surf2); border: 1px solid var(--line); border-radius: var(--r-pill);
+      padding: 9px 14px; color: var(--t1); font-size: 13px; font-weight: 500; font-family: var(--ui); outline: none; transition: border-color .16s;
+    }
+    .notas-buscar::placeholder { color: var(--t4); }
+    .notas-buscar:focus { border-color: var(--line2); }
+    /* Grilla tipo post-it: columnas CSS, cada nota entera en una columna.
+       El padding de abajo deja lugar al botón flotante en el celular. */
+    .notas-grid {
+      flex: 1; overflow-y: auto; padding: 4px 24px 120px;
+      columns: 2 170px; column-gap: 10px;
+      scrollbar-width: thin; scrollbar-color: var(--line2) transparent;
+    }
+    .nota {
+      position: relative; display: inline-block; width: 100%; vertical-align: top; break-inside: avoid;
+      margin: 0 0 10px; padding: 14px 14px 8px; overflow: hidden;
+      background: var(--surf2); border: 1px solid var(--line); border-top: 3px solid var(--nc);
+      border-radius: var(--r-sm); box-shadow: var(--shadow-card);
+    }
+    /* Tinte del color SIN tripleta RGB: una capa del acento a baja opacidad */
+    .nota::before { content: ''; position: absolute; inset: 0; background: var(--nc); opacity: 0.07; pointer-events: none; }
+    .nota.fijada { border-color: var(--nc); }
+    .nota-txt { position: relative; font-size: 13.5px; font-weight: 500; line-height: 1.5; color: var(--t1); white-space: pre-wrap; word-break: break-word; margin-bottom: 8px; }
+    .nota-ft { position: relative; display: flex; align-items: center; gap: 2px; }
+    .nota-fecha { font-size: 10.5px; font-weight: 700; color: var(--t4); margin-right: auto; }
+    /* Acciones siempre visibles (celular): apagadas, se prenden al pasar */
+    .nota-btn {
+      width: 26px; height: 26px; border-radius: var(--r-pill); border: none; background: transparent; color: var(--t4);
+      cursor: pointer; font-size: 12px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center; transition: background .16s, color .16s, opacity .16s;
+    }
+    .nota-btn:hover { background: var(--surf4); color: var(--t1); }
+    .nota-pin { opacity: 0.45; }
+    .nota.fijada .nota-pin { opacity: 1; }
+    .nota-del { position: relative; }
+    .nota-del::before, .nota-del::after { content: ''; position: absolute; top: 50%; left: 50%; width: 10px; height: 1.4px; border-radius: 1px; background: currentColor; }
+    .nota-del::before { transform: translate(-50%,-50%) rotate(45deg); }
+    .nota-del::after  { transform: translate(-50%,-50%) rotate(-45deg); }
+    .nota-del:hover { background: var(--coral); color: var(--on-coral-hi); }
+    .notas-vacio { font-size: 13px; color: var(--t4); font-weight: 500; padding: 14px 4px; }
+    /* Celular: el panel ocupa todo, el body no scrollea detrás, y el botón sube
+       para no tapar el toast (que ahí va a todo el ancho, bottom 14px) */
+    @media (max-width: 560px) {
+      .notas-panel { width: 100%; border-left: none; }
+      .notas-fab { right: 14px; bottom: 74px; width: 50px; height: 50px; }
+      body.notas-abiertas { overflow: hidden; }
+      .main { padding-bottom: 130px; }   /* que el botón flotante no tape los botones del pie */
+    }
+    @media (prefers-reduced-motion: reduce) {
+      .notas-panel, .notas-fondo, .notas-fab { transition: none; }
+    }
+
     /* ══════════ TEMA: PAPEL EDITORIAL ══════════ */
     /* Cuaderno impreso: crema, tinta sepia, acentos como tintas (oscuros y
        legibles), serif de display, bordes finos y sombra de hoja apoyada. */
@@ -988,7 +1119,9 @@
     [data-tema="terminal"] .stat::before, [data-tema="terminal"] .em-dot, [data-tema="terminal"] .live-dot,
     [data-tema="terminal"] .hb-dot, [data-tema="terminal"] .heat-c, [data-tema="terminal"] .barra,
     [data-tema="terminal"] .dia-card .tag-pill, [data-tema="terminal"] .grande-num, [data-tema="terminal"] .modal-grande-num { border-radius: 0; }
-    [data-tema="terminal"] .hito-dias, [data-tema="terminal"] .hito-add-btn { text-transform: lowercase; letter-spacing: 0; }
+    [data-tema="terminal"] .hito-dias, [data-tema="terminal"] .hito-add-btn, [data-tema="terminal"] .notas-guardar { text-transform: lowercase; letter-spacing: 0; }
+    [data-tema="terminal"] .nota-color-btn, [data-tema="terminal"] .notas-badge { border-radius: 0; }
+    [data-tema="terminal"] .notas-fab { box-shadow: 0 0 0 1px var(--lime), 0 0 18px rgba(74,246,38,0.18); }
     [data-tema="terminal"] .hb-cell { border-radius: var(--r-ctl); }
     [data-tema="terminal"] .live-dot { animation-duration: 1s; }
     [data-tema="terminal"] input, [data-tema="terminal"] textarea { caret-color: var(--lime); }
@@ -1211,6 +1344,31 @@
 
 <div class="toast" id="toast"></div>
 
+<!-- Notas rápidas: botón flotante siempre visible (en el celular no hay tecla N) + panel lateral -->
+<div class="notas-fondo" id="notas-fondo" onclick="cerrarNotas()"></div>
+<aside class="notas-panel" id="notas-panel" aria-hidden="true" aria-label="Notas rápidas">
+  <div class="notas-hd">
+    <div>
+      <div class="card-label" style="color:var(--butter)">· Notas rápidas ·</div>
+      <div class="card-title">Anotá y seguí</div>
+    </div>
+    <button class="notas-cerrar" onclick="cerrarNotas()" title="Cerrar (Esc)" aria-label="Cerrar"></button>
+  </div>
+  <div class="notas-form" id="notas-form">
+    <textarea class="notas-txt" id="notas-txt" rows="1" placeholder="Escribí una nota... Enter guarda, Shift+Enter baja de línea" oninput="autosizeNota(this)" onkeydown="onNotaKey(event,this)"></textarea>
+    <div class="notas-form-row">
+      <div class="notas-colores" id="notas-colores"></div>
+      <button class="notas-fijar" id="notas-fijar" onclick="toggleFijarNueva()" title="Fijar arriba" aria-label="Fijar arriba">📌</button>
+      <button class="notas-guardar" onclick="guardarNotaDesdeInput()">Guardar</button>
+    </div>
+  </div>
+  <input class="notas-buscar" id="notas-buscar" type="search" placeholder="Buscar en las notas..." oninput="onNotasBuscar(this.value)">
+  <div class="notas-grid" id="notas-grid"></div>
+</aside>
+<button class="notas-fab" id="notas-fab" onclick="toggleNotas()" title="Notas rápidas (N)" aria-label="Notas rápidas">
+  <span class="notas-fab-ico" id="notas-fab-ico">✎</span><span class="notas-badge" id="notas-badge"></span>
+</button>
+
 <!-- Login: solo aparece si config.js tiene los datos de Supabase -->
 <div class="login-fondo" id="login-fondo">
   <div class="login-caja">
@@ -1367,10 +1525,10 @@ function subirPendientes(){
 /* Después de bajar datos nuevos hay que volver a dibujar todo */
 function recargarDesdeStorage(){
   _semanaVista=0;   /* bajó algo de la nube: se vuelve a la semana en curso */
-  loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario(); loadGrandes(); loadHitos();
+  loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario(); loadGrandes(); loadHitos(); loadNotas();
   /* Se pone al día también el guardián de fecha, así no vuelve a dibujar todo */
   _semanaEnMemoria=getWeekKey(); _diaEnMemoria=hbTodayIdx=getTodayIdx(); hbDates=getWeekDates();
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos(); renderNotas();
   if(editorAbierto()) renderEditorHabitos();
 }
 
@@ -2138,6 +2296,17 @@ function deshacer(){
     saveHitos(); renderHitos();
     return;
   }
+  if(u.tipo==='nota'){
+    notas.splice(Math.min(u.idx,notas.length),0,u.item);
+    saveNotas(); renderNotas();
+    /* Si venía de "→ tarea", la tarea creada también se va */
+    if(u.tareaId){
+      var diaN=tareasData.dias[u.dia]||[];
+      for(var q=0;q<diaN.length;q++) if(diaN[q].id===u.tareaId){ diaN.splice(q,1); break; }
+      saveTareas(); renderTareas();
+    }
+    return;
+  }
   /* Un movimiento se deshace sacándola del destino y devolviéndola a su lugar */
   if(u.tipo==='mover'){
     var dest=tareasData.dias[u.destino];
@@ -2481,7 +2650,7 @@ function verificarCambioDeFecha(){
        reset; todas las mutaciones anteriores ya estaban guardadas, no se pierde nada. */
     loadTareas(); loadHabits(); loadDiario();
   }
-  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos();
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso(); renderNavSemana(); renderGrandes(); renderHitos(); renderNotas();
   quizasAbrirResumen();
   return que;
 }
@@ -3179,6 +3348,128 @@ function renderHitos(){
     : '<div class="empty-msg">Nada en el horizonte. Carg\u00e1 una entrega, un examen, un cumplea\u00f1os...</div>';
 }
 
+/* ═══════════════════ NOTAS RÁPIDAS ═══════════════════ */
+/* Clave 'notas': [ {id,texto,color,fijada,creada} ]. Panel lateral que abre el
+   botón flotante (siempre visible: en el celular no hay tecla N) o la tecla N. */
+var NOTAS_KEY='notas';
+var NOTA_COLORES=['butter','lime','sky','peri','tang'];   /* nombres de tokens: var(--butter), ... */
+var notas=[];
+var _notaColor='butter', _notaFijar=false, _notasFiltro='';
+
+function loadNotas(){
+  notas=[];
+  try{
+    var d=JSON.parse(localStorage.getItem(NOTAS_KEY));
+    if(Array.isArray(d)) notas=d.filter(function(n){ return n && typeof n.texto==='string'; });
+  }catch(e){}
+}
+function saveNotas(){ lsSet(NOTAS_KEY,JSON.stringify(notas)); }
+function colorNota(c){ return 'var(--'+(NOTA_COLORES.indexOf(c)>=0?c:'butter')+')'; }
+function buscarNota(id){ for(var i=0;i<notas.length;i++) if(notas[i].id===id) return i; return -1; }
+
+/* ── Abrir / cerrar ── */
+function notasAbiertas(){ var p=document.getElementById('notas-panel'); return !!(p && p.classList.contains('abierto')); }
+function abrirNotas(){
+  var p=document.getElementById('notas-panel');
+  p.classList.add('abierto'); p.setAttribute('aria-hidden','false');
+  document.getElementById('notas-fondo').classList.add('visible');
+  document.getElementById('notas-fab').classList.add('abierto');
+  document.getElementById('notas-fab-ico').textContent='\u00d7';
+  document.body.classList.add('notas-abiertas');
+  /* Solo con mouse: en el celular enfocar levanta el teclado y tapa media pantalla */
+  if(window.matchMedia('(hover: hover)').matches){ var t=document.getElementById('notas-txt'); if(t) t.focus(); }
+}
+function cerrarNotas(){
+  var p=document.getElementById('notas-panel');
+  p.classList.remove('abierto'); p.setAttribute('aria-hidden','true');
+  document.getElementById('notas-fondo').classList.remove('visible');
+  document.getElementById('notas-fab').classList.remove('abierto');
+  document.getElementById('notas-fab-ico').textContent='\u270e';
+  document.body.classList.remove('notas-abiertas');
+  if(esCampoDeTexto(document.activeElement) && p.contains(document.activeElement)) document.activeElement.blur();
+}
+function toggleNotas(){ if(notasAbiertas()) cerrarNotas(); else abrirNotas(); }
+
+/* ── Caja de escribir ── */
+/* El textarea crece con el texto; el tope lo pone el CSS (max-height) */
+function autosizeNota(el){ el.style.height='auto'; el.style.height=el.scrollHeight+'px'; }
+function onNotaKey(ev){
+  if(ev.key==='Enter' && !ev.shiftKey){ ev.preventDefault(); guardarNotaDesdeInput(); }   /* Shift+Enter = salto de línea */
+}
+function setNotaColor(c){ _notaColor=c; renderNotasColores(); }
+function toggleFijarNueva(){
+  _notaFijar=!_notaFijar;
+  document.getElementById('notas-fijar').classList.toggle('activo',_notaFijar);
+}
+function renderNotasColores(){
+  document.getElementById('notas-colores').innerHTML=NOTA_COLORES.map(function(c){
+    return '<button class="nota-color-btn'+(c===_notaColor?' activo':'')+'" style="--nc:'+colorNota(c)+'" onclick="setNotaColor(\''+c+'\')" title="'+c+'" aria-label="Color '+c+'"></button>';
+  }).join('');
+  var form=document.getElementById('notas-form'); if(form) form.style.setProperty('--nc',colorNota(_notaColor));
+}
+function guardarNotaDesdeInput(){
+  var el=document.getElementById('notas-txt');
+  var txt=el.value.replace(/\s+$/,''); if(!txt.trim()) return;
+  notas.unshift({id:nuevoId(), texto:txt, color:_notaColor, fijada:_notaFijar, creada:new Date().toISOString()});
+  el.value=''; autosizeNota(el);
+  if(_notaFijar) toggleFijarNueva();   /* fijar es por nota: no queda pegado para la siguiente */
+  saveNotas(); renderNotas();
+}
+
+/* ── Acciones sobre una nota ── */
+function toggleFijarNota(id){
+  var i=buscarNota(id); if(i<0) return;
+  notas[i].fijada=!notas[i].fijada;
+  saveNotas(); renderNotas();
+}
+function borrarNota(id){
+  var i=buscarNota(id); if(i<0) return;
+  var n=notas.splice(i,1)[0];
+  _undo={tipo:'nota', idx:i, item:n};
+  mostrarUndo('Nota borrada');
+  saveNotas(); renderNotas();
+}
+/* La nota pasa a ser una tarea de hoy (su primera línea, con la etiqueta activa) y se va
+   del panel. Deshacer devuelve la nota Y saca la tarea, así no quedan duplicados. */
+function notaATarea(id){
+  var i=buscarNota(id); if(i<0) return;
+  var n=notas[i];
+  var texto=(n.texto.split('\n')[0]||'').trim() || n.texto.replace(/\s+/g,' ').trim();
+  if(!texto) return;
+  var hoy=getTodayIdx();
+  addTarea(hoy,texto,tagActiva);                       /* guarda y redibuja las tareas */
+  var lista=tareasData.dias[hoy], tarea=lista[lista.length-1];
+  notas.splice(i,1);
+  _undo={tipo:'nota', idx:i, item:n, tareaId:tarea?tarea.id:null, dia:hoy};
+  mostrarUndo('Pasada a las tareas de hoy');
+  saveNotas(); renderNotas();
+}
+function onNotasBuscar(v){ _notasFiltro=(v||'').trim().toLowerCase(); renderNotas(); }
+
+function renderNotas(){
+  var grid=document.getElementById('notas-grid'); if(!grid) return;
+  var badge=document.getElementById('notas-badge');
+  if(badge) badge.textContent = notas.length ? String(notas.length) : '';   /* la cantidad total, no la filtrada */
+
+  var lista=notas.filter(function(n){ return !_notasFiltro || n.texto.toLowerCase().indexOf(_notasFiltro)>=0; });
+  /* Fijadas arriba; dentro de cada grupo, la más nueva primero */
+  lista.sort(function(a,b){ return ((b.fijada?1:0)-(a.fijada?1:0)) || (b.creada>a.creada?1:b.creada<a.creada?-1:0); });
+
+  grid.innerHTML = lista.length
+    ? lista.map(function(n){
+        return '<div class="nota'+(n.fijada?' fijada':'')+'" style="--nc:'+colorNota(n.color)+'">'+
+          '<div class="nota-txt">'+esc(n.texto)+'</div>'+
+          '<div class="nota-ft">'+
+            '<span class="nota-fecha">'+esc(relDate(n.creada))+'</span>'+
+            '<button class="nota-btn nota-pin" onclick="toggleFijarNota(\''+n.id+'\')" title="'+(n.fijada?'Soltar':'Fijar arriba')+'" aria-label="Fijar">\ud83d\udccc</button>'+
+            '<button class="nota-btn" onclick="notaATarea(\''+n.id+'\')" title="Pasar a tareas de hoy" aria-label="Pasar a tareas de hoy">\u2192</button>'+
+            '<button class="nota-btn nota-del" onclick="borrarNota(\''+n.id+'\')" title="Borrar" aria-label="Borrar"></button>'+
+          '</div>'+
+        '</div>';
+      }).join('')
+    : '<div class="notas-vacio">'+(_notasFiltro ? 'Ninguna nota dice \u201c'+esc(_notasFiltro)+'\u201d.' : 'Todav\u00eda no hay notas. Escrib\u00ed arriba y Enter.')+'</div>';
+}
+
 /* ═══════════════════ PUNTOS Y NIVEL (gamificación discreta) ═══════════════════ */
 /* Los puntos NO se guardan: se calculan cada vez desde tareas, hábitos y grandes
    de la semana. Son un espejo del estado (destildar resta), igual que todos los
@@ -3377,16 +3668,20 @@ function quizasAbrirResumen(){
   try{ if(localStorage.getItem('resumen_visto_'+getWeekKey())) return; }catch(e){}
   abrirResumen();
 }
+/* Un solo listener de teclado para toda la app:
+   Escape cierra lo que esté abierto (resumen → editor de hábitos → notas);
+   N abre/cierra las notas; ←/→ navegan semanas. Las letras y flechas nunca
+   actúan mientras escribís en un campo ni con algo abierto por encima. */
 document.addEventListener('keydown',function(e){
   var modal=document.getElementById('modal-fondo').classList.contains('visible');
   if(e.key==='Escape'){
-    if(modal) cerrarResumen(); else if(editorAbierto()) cerrarEditorHabitos();
+    if(modal) cerrarResumen(); else if(editorAbierto()) cerrarEditorHabitos(); else if(notasAbiertas()) cerrarNotas();
     return;
   }
-  /* ←/→ navegan semanas, pero nunca mientras escribís ni con un modal abierto */
   if(modal || editorAbierto()) return;
-  var tag=(e.target && e.target.tagName)||'';
-  if(tag==='INPUT'||tag==='TEXTAREA'||tag==='SELECT'||e.altKey||e.ctrlKey||e.metaKey||e.shiftKey) return;
+  if(esCampoDeTexto(e.target) || e.altKey || e.ctrlKey || e.metaKey) return;
+  if((e.key==='n'||e.key==='N') && !e.shiftKey){ e.preventDefault(); toggleNotas(); return; }
+  if(notasAbiertas() || e.shiftKey) return;
   if(e.key==='ArrowLeft'){ e.preventDefault(); irSemana(-1); }
   else if(e.key==='ArrowRight'){ e.preventDefault(); irSemana(1); }
 });
@@ -3513,11 +3808,12 @@ loadHabitosDef();       /* antes que loadHabits y loadTimer: los dos necesitan H
 loadTareas();
 loadHabits();
 loadTimer();            /* antes de dibujar: los renders necesitan saber si hay cronómetro corriendo */
-loadGrandes(); loadHitos();   /* antes de renderTareas: refrescarStats → refrescarNivel lee los grandes */
+loadGrandes(); loadHitos(); loadNotas();   /* antes de renderTareas: refrescarStats → refrescarNivel lee los grandes */
 renderTareas();
 renderHabits();
 renderGrandes();
 renderHitos();
+renderNotasColores(); renderNotas();
 loadDiario();
 renderDiario();
 renderNavSemana();
