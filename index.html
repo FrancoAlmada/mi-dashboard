@@ -622,6 +622,7 @@
       transition: opacity .2s ease, transform .2s ease;
     }
     .toast.visible { opacity: 1; transform: translateY(0); pointer-events: auto; }
+    .toast.sin-boton { padding: 11px 20px; }   /* sin el botón de deshacer, el padding vuelve a ser parejo */
     .toast-btn {
       border: none; cursor: pointer; border-radius: 100px; padding: 7px 15px;
       background: var(--lime); color: #0A1A0C; font-size: 12px; font-weight: 800; font-family: var(--ui);
@@ -646,7 +647,7 @@
   <h1 class="hero-title">Dashboard</h1>
   <p class="hero-sub" id="hero-sub">Buenos días, Franco — esto es lo que te espera hoy.</p>
   <div class="stats">
-    <div class="stat"><div class="stat-num" id="s-tasks">0</div><div class="stat-label">Tareas hoy</div></div>
+    <div class="stat"><div class="stat-num" id="s-tasks">0</div><div class="stat-label">Faltan hoy</div></div>
     <div class="stat"><div class="stat-num" id="s-pendientes">0</div><div class="stat-label">Pendientes</div></div>
     <div class="stat"><div class="stat-num" id="s-emails">0</div><div class="stat-label">Sin responder</div></div>
     <div class="stat"><div class="stat-num" id="s-habits">0</div><div class="stat-label">Hábitos hoy</div></div>
@@ -806,7 +807,7 @@
    Este es el ÚNICO punto por el que pasan las escrituras. */
 
 /* Estas claves NO viajan: son de este dispositivo o descartables */
-var NO_SINCRONIZAR = ['timer_activo','mails_cache','ultima_frase','sync_meta'];
+var NO_SINCRONIZAR = ['timer_activo','mails_cache','ultima_frase','sync_meta','filtro_tag','tag_activa'];
 var META_KEY='sync_meta';          /* {clave: cuándo cambió acá} */
 var _pendientes={};                /* claves esperando subir */
 var _subirTimer=null;
@@ -871,6 +872,7 @@ function bajarTodo(){
     if(res.error){ estadoSync('Error al sincronizar'); return; }
     var m=leerMeta(), cambio=false;
     (res.data||[]).forEach(function(fila){
+      if(!seSincroniza(fila.clave)) return;   /* preferencias de UI: cada dispositivo las suyas */
       var remoto=new Date(fila.actualizado).getTime();
       var local=m[fila.clave]||0;
       /* Gana el último que guardó */
@@ -897,8 +899,8 @@ function bajarTodo(){
 
 function subirPendientes(){
   if(!syncActivo()) return;
-  var claves=Object.keys(_pendientes);
-  if(!claves.length) return;
+  var claves=Object.keys(_pendientes).filter(seSincroniza);
+  if(!claves.length){ _pendientes={}; return; }
   var m=leerMeta();
   var filas=claves.map(function(k){
     var v=localStorage.getItem(k);
@@ -916,7 +918,8 @@ function subirPendientes(){
 /* Después de bajar datos nuevos hay que volver a dibujar todo */
 function recargarDesdeStorage(){
   loadPrefs(); loadTareas(); loadHabits(); loadDiario();
-  hbDates=getWeekDates(); hbTodayIdx=getTodayIdx();
+  /* Se pone al día también el guardián de fecha, así no vuelve a dibujar todo */
+  _semanaEnMemoria=getWeekKey(); _diaEnMemoria=hbTodayIdx=getTodayIdx(); hbDates=getWeekDates();
   renderTareas(); renderHabits(); renderDiario(); renderProgreso();
 }
 
@@ -1061,7 +1064,8 @@ function loadPrefs(){
   try{
     /* Ojo: '' guardado significa "sin etiqueta", que es distinto de "nunca elegí" */
     var t=localStorage.getItem('tag_activa'); if(t!==null) tagActiva = tagById(t) ? t : null;
-    var f=localStorage.getItem('filtro_tag'); if(f&&tagById(f)) filtroTag=f;
+    /* '' o una clave inválida = sin filtro. Antes '' no apagaba el filtro. */
+    var f=localStorage.getItem('filtro_tag'); if(f!==null) filtroTag = (f==='_'||tagById(f)) ? f : null;
   }catch(e){}
 }
 /* i es el índice en TAGS; -1 significa "sin etiqueta" */
@@ -1071,14 +1075,17 @@ function setTagActiva(i){
   renderTagChips();
   var el=document.getElementById('add-hoy'); if(el) el.focus();
 }
-/* i es el índice en TAGS; -1 significa "todas" */
+/* i es el índice en TAGS; -1 significa "todas", -2 "sin etiqueta" */
 function setFiltro(i){
-  filtroTag = i<0 ? null : TAGS[i].id;
+  filtroTag = i===-1 ? null : i===-2 ? '_' : TAGS[i].id;
   lsSet('filtro_tag', filtroTag||'');
   renderTareas();
 }
-/* Una tarea pasa el filtro si no hay filtro o si coincide su etiqueta */
-function pasaFiltro(t){ return !filtroTag || t.tag===filtroTag; }
+/* Una tarea pasa el filtro si no hay filtro, si coincide su etiqueta,
+   o si el filtro es "sin etiqueta" ('_') y la tarea no tiene */
+function pasaFiltroTag(tag){ return !filtroTag || (filtroTag==='_' ? !tag : tag===filtroTag); }
+function pasaFiltro(t){ return pasaFiltroTag(t.tag); }
+function nombreFiltro(){ var tg=tagById(filtroTag); return tg ? tg.label : 'sin etiqueta'; }
 
 function renderTagChips(){
   document.getElementById('tag-chips').innerHTML=
@@ -1091,10 +1098,12 @@ function renderTagChips(){
 }
 
 function renderFiltro(){
-  /* El número de cada pill son las tareas SIN completar de esta semana */
-  var cuenta={}; var total=0;
-  tareasData.dias.forEach(function(dia){
+  /* Cada pill cuenta las tareas SIN completar de esta semana con esa etiqueta.
+     "Todas" es la suma de todas, incluidas las que no tienen etiqueta. */
+  var cuenta={}, total=0, ocultasSem=0, ocultasHoy=0, hoyIdx=getTodayIdx();
+  tareasData.dias.forEach(function(dia,d){
     dia.forEach(function(t){
+      if(!pasaFiltro(t)){ ocultasSem++; if(d===hoyIdx) ocultasHoy++; }
       if(t.hecha) return;
       total++;
       var k=t.tag||'_';
@@ -1108,10 +1117,16 @@ function renderFiltro(){
     TAGS.map(function(tg,i){
       return '<button class="filtro-pill'+(filtroTag===tg.id?' activo':'')+'" style="--tc:'+tg.color+'" '+
         'onclick="setFiltro('+i+')">'+tg.label+' <span class="filtro-num">'+(cuenta[tg.id]||0)+'</span></button>';
-    }).join('');
+    }).join('')+
+    /* La pill "sin etiqueta" aparece solo si hay tareas sin etiqueta (o si está activa) */
+    ((cuenta._||filtroTag==='_')
+      ? '<button class="filtro-pill'+(filtroTag==='_'?' activo':'')+'" style="--tc:#767676" onclick="setFiltro(-2)" title="Sin etiqueta">— <span class="filtro-num">'+(cuenta._||0)+'</span></button>'
+      : '');
 
   var nota=document.getElementById('filtro-nota');
-  nota.textContent = filtroTag ? 'Filtrando por '+tagById(filtroTag).label+' — hay más tareas ocultas' : '';
+  nota.textContent = filtroTag
+    ? 'Filtrando por '+nombreFiltro()+' — '+ocultasSem+' tarea'+(ocultasSem===1?'':'s')+' oculta'+(ocultasSem===1?'':'s')+' esta semana'+(ocultasHoy?' ('+ocultasHoy+' de hoy)':'')
+    : '';
 }
 
 /* ═══════════════════ TAREAS (hoy + semana, misma fuente) ═══════════════════ */
@@ -1140,7 +1155,11 @@ function loadTareas(){
   }catch(e){}
 }
 function saveTareas(){
+  /* Si la semana cambió con la pestaña abierta, la memoria acaba de recargarse
+     y lo que disparó este guardado se aplicó sobre datos viejos: no se escribe */
+  if(verificarCambioDeFecha()==='semana'){ mostrarToast('Cambió la semana: volvé a cargar eso'); return; }
   lsSet(getTareasKey(),JSON.stringify(tareasData));
+  programarProgreso();
 }
 
 /* ── Acceso a semanas que ya pasaron ──────────────────────────────
@@ -1159,6 +1178,7 @@ function leerSemanaKey(key){
 }
 function guardarSemanaKey(key,data){
   lsSet(key,JSON.stringify(data));
+  programarProgreso();
 }
 /* Devuelve las semanas anteriores a la actual, de la más vieja a la más nueva */
 function listaSemanasViejas(){
@@ -1260,52 +1280,74 @@ function renderTareas(){
   renderTagChips();
   renderFiltro();
   renderPendientes(hoyIdx);
+  refrescarStats();
+}
+
+/* ═══════════════════ CONTADORES ═══════════════════ */
+/* ÚNICO lugar donde se escriben los números del hero y de las tarjetas.
+   Todos son GLOBALES: el filtro por etiqueta solo oculta listas, nunca
+   cambia un número. Se llama al final de renderTareas y de renderHabits,
+   que es por donde pasa cualquier mutación (tareas, hábitos, cronómetro, sync). */
+var _pendTotal=0;   /* lo cuenta renderPendientes, que ya recorre todas las semanas */
+
+function refrescarStats(){
+  var hoyIdx=getTodayIdx();
+  var hoy=tareasData.dias[hoyIdx]||[];
+  var hechasHoy=hoy.filter(function(t){return t.hecha;}).length;
+  var pctHoy = hoy.length ? Math.round((hechasHoy/hoy.length)*100) : 0;
+
+  var totalSem=0, hechasSem=0;
+  tareasData.dias.forEach(function(d){ d.forEach(function(t){ totalSem++; if(t.hecha) hechasSem++; }); });
+
+  var hbMax=HABITS.length*7;
+  var hbTotal=hbData.checks.flat().filter(Boolean).length;
+  var hbPct=Math.round((hbTotal/hbMax)*100);
+  var hbHoy=hbData.checks.filter(function(r){return r[hbTodayIdx];}).length;
+
+  document.getElementById('s-tasks').textContent=hoy.length-hechasHoy;     /* "Faltan hoy" */
+  document.getElementById('s-pendientes').textContent=_pendTotal;
+  document.getElementById('s-habits').textContent=hbHoy;
+  document.getElementById('hoy-count').textContent=hechasHoy+' / '+hoy.length;
+  document.getElementById('hoy-bar').style.width=pctHoy+'%';
+  document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
+  document.getElementById('hb-pct').textContent=hbPct+'%';
+  document.getElementById('hb-bar').style.width=hbPct+'%';
 }
 
 /* ── Tarjeta de hoy: progreso arriba, tareas en columnas ── */
 function renderHoy(hoyIdx,fechas){
   var hoy=tareasData.dias[hoyIdx];
-  var visibles=hoy.filter(pasaFiltro);
-  var hechas=visibles.filter(function(t){return t.hecha;}).length;
-  var pct = visibles.length ? Math.round((hechas/visibles.length)*100) : 0;
+  var visibles=hoy.filter(pasaFiltro);   /* el filtro solo decide qué se dibuja; los números van en refrescarStats */
 
   document.getElementById('hoy-label').textContent='· Tareas del '+DF[hoyIdx].toLowerCase()+' ·';
   document.getElementById('hoy-titulo').textContent=DF[hoyIdx]+' '+fechas[hoyIdx].getDate();
-  document.getElementById('hoy-count').textContent=hechas+' / '+visibles.length;
-  document.getElementById('hoy-bar').style.width=pct+'%';
-  document.getElementById('s-tasks').textContent=visibles.length;
 
   document.getElementById('lista-hoy').innerHTML = visibles.length
-    ? '<div class="hoy-grid">'+itemsOrdenados(hoy).map(function(x){ return tareaHTML(hoyIdx,x.t,x.i,false); }).join('')+'</div>'
-    : '<div class="empty-msg">'+(filtroTag?'Nada de '+tagById(filtroTag).label+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
+    ? '<div class="hoy-grid">'+itemsOrdenados(visibles).map(function(x){ return tareaHTML(hoyIdx,x.t,x.i,false); }).join('')+'</div>'
+    : '<div class="empty-msg">'+(filtroTag?'Nada de '+nombreFiltro()+' para hoy.':'Sin tareas para hoy. Agregá una abajo.')+'</div>';
 }
 
 /* ── La semana: una tarjeta por día dentro de un grid adaptable ── */
 function renderSemana(hoyIdx,fechas){
-  var totalSem=0, hechasSem=0;
-  tareasData.dias.forEach(function(d){
-    d.forEach(function(t){ if(!pasaFiltro(t))return; totalSem++; if(t.hecha) hechasSem++; });
-  });
   document.getElementById('semana-rango').textContent=
     fechas[0].getDate()+' '+MN2[fechas[0].getMonth()]+' — '+fechas[6].getDate()+' '+MN2[fechas[6].getMonth()];
-  document.getElementById('semana-count').textContent=hechasSem+' / '+totalSem;
 
   document.getElementById('lista-semana').innerHTML='<div class="semana-grid">'+fechas.map(function(fecha,d){
     var tareas=tareasData.dias[d];
     var visibles=tareas.filter(pasaFiltro);
-    var hechas=visibles.filter(function(t){return t.hecha;}).length;
+    var hechas=tareas.filter(function(t){return t.hecha;}).length;   /* el contador del día es global */
     var cls='dia-card'+(d===hoyIdx?' es-hoy':'')+(d<hoyIdx?' pasado':'');
     return '<div class="'+cls+'" data-dia-card="'+d+'"'+
       ' ondragover="onDragOver(event,'+d+')" ondragleave="onDragLeave(event,'+d+')" ondrop="onDrop(event,'+d+')">'+
       '<div class="dia-hd">'+
         '<span class="dia-chip">'+(d===hoyIdx?'HOY':DS3[d])+'</span>'+
         '<span class="dia-num">'+fecha.getDate()+' '+MN2[fecha.getMonth()]+'</span>'+
-        (visibles.length?'<span class="dia-cant">'+hechas+'/'+visibles.length+'</span>':'')+
+        (tareas.length?'<span class="dia-cant">'+hechas+'/'+tareas.length+'</span>':'')+
       '</div>'+
       (visibles.length
-        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(tareas).map(function(x){ return tareaHTML(d,x.t,x.i,true); }).join('')+'</div>'+
+        ? '<div class="dia-tareas" data-dia="'+d+'">'+itemsOrdenados(visibles).map(function(x){ return tareaHTML(d,x.t,x.i,true); }).join('')+'</div>'+
           '<div class="dia-mas" id="dia-mas-'+d+'" style="display:none"></div>'
-        : '<div class="dia-vacio">Sin tareas</div>')+
+        : '<div class="dia-vacio">'+(tareas.length?'Nada de '+nombreFiltro():'Sin tareas')+'</div>')+
       '<div class="add-wrap">'+
         '<span class="add-plus">+</span>'+
         '<input class="add-input" id="add-dia-'+d+'" type="text" placeholder="Agregar..." onkeydown="onAddKey(event,'+d+',this)">'+
@@ -1438,7 +1480,7 @@ function renderPendientes(hoyIdx){
   listaSemanasViejas().forEach(function(sem){
     sem.data.dias.forEach(function(dia,d){
       dia.forEach(function(t,i){
-        if(t.hecha || !pasaFiltro(t)) return;
+        if(t.hecha) return;
         var fecha=new Date(sem.lunes); fecha.setDate(sem.lunes.getDate()+d);
         _pendCache.push({
           key:sem.key, dia:d, idx:i, texto:t.texto, tag:t.tag,
@@ -1451,24 +1493,28 @@ function renderPendientes(hoyIdx){
   /* Días ya pasados de la semana en curso */
   for(var d=0; d<hoyIdx; d++){
     tareasData.dias[d].forEach(function(t,i){
-      if(t.hecha || !pasaFiltro(t)) return;
+      if(t.hecha) return;
       _pendCache.push({key:null, dia:d, idx:i, texto:t.texto, tag:t.tag, etiqueta:DS3[d]});
     });
   }
 
-  document.getElementById('s-pendientes').textContent=_pendCache.length;
+  /* El total es global; el filtro solo decide cuáles se dibujan. Se guarda el
+     índice real en _pendCache para que los botones sigan apuntando bien. */
+  _pendTotal=_pendCache.length;
+  var visibles=[];
+  _pendCache.forEach(function(p,i){ if(pasaFiltroTag(p.tag)) visibles.push({p:p,i:i}); });
 
   var cont=document.getElementById('lista-pendientes');
-  if(!_pendCache.length){ cont.innerHTML=''; return; }   /* si no hay nada, el bloque no existe */
+  if(!visibles.length){ cont.innerHTML=''; return; }   /* si no hay nada que mostrar, el bloque no existe */
 
-  var visibles=_pendCache.slice(0,PEND_TOPE);
-  var resto=_pendCache.length-visibles.length;
+  var mostrar=visibles.slice(0,PEND_TOPE);
+  var resto=visibles.length-mostrar.length;
 
   cont.innerHTML='<div class="pend-box">'+
-    '<div class="pend-title">⚠ Tareas No Completadas <span style="margin-left:auto;opacity:.75">'+_pendCache.length+'</span></div>'+
+    '<div class="pend-title">⚠ Tareas No Completadas <span style="margin-left:auto;opacity:.75">'+_pendTotal+'</span></div>'+
     '<div class="pend-lista">'+
-    visibles.map(function(p,i){
-      var tg=tagById(p.tag);
+    mostrar.map(function(x){
+      var p=x.p, i=x.i, tg=tagById(p.tag);
       return '<div class="pend-item">'+
         '<span class="pend-day">'+p.etiqueta+'</span>'+
         '<span class="pend-text" onclick="togglePend('+i+')" title="Marcar como hecha">'+esc(p.texto)+'</span>'+
@@ -1523,11 +1569,20 @@ function mostrarUndo(texto){
   clearTimeout(_undoTimer);
   var el=document.getElementById('toast'); if(!el) return;
   el.innerHTML='<span>'+esc(texto)+'</span><button class="toast-btn" onclick="deshacer()">Deshacer</button>';
+  el.classList.remove('sin-boton');
   el.classList.add('visible');
   _undoTimer=setTimeout(function(){ ocultarUndo(); _undo=null; },6000);
 }
 function ocultarUndo(){
   var el=document.getElementById('toast'); if(el) el.classList.remove('visible');
+}
+/* Aviso corto sin botón. Comparte el toast con deshacer, así que lo limpia */
+function mostrarToast(texto,ms){
+  clearTimeout(_undoTimer); _undo=null;
+  var el=document.getElementById('toast'); if(!el) return;
+  el.innerHTML='<span>'+esc(texto)+'</span>';
+  el.classList.add('visible','sin-boton');
+  _undoTimer=setTimeout(function(){ ocultarUndo(); },ms||2400);
 }
 function deshacer(){
   if(!_undo) return;
@@ -1640,10 +1695,48 @@ function mkDefault(){return{checks:Array.from({length:9},function(){return Array
 
 var hbData=mkDefault(),hbActiveDay=getTodayIdx(),hbView='day',hbDates=getWeekDates(),hbTodayIdx=getTodayIdx();
 
-function loadHabits(){try{var s=localStorage.getItem(getWeekKey());if(s){hbData=JSON.parse(s);while(hbData.checks.length<9)hbData.checks.push(Array(7).fill(false));}}catch(e){}}
-function saveHabits(){ lsSet(getWeekKey(),JSON.stringify(hbData)); }
+function loadHabits(){
+  /* Arranca vacío: si la clave de esta semana no existe, en memoria NO puede
+     quedar la semana anterior. Antes pasaba, y el primer toggle la copiaba
+     entera a la semana nueva (y de ahí a la nube). */
+  hbData=mkDefault();
+  try{
+    var s=localStorage.getItem(getWeekKey());
+    if(s){
+      var d=JSON.parse(s);
+      if(d&&Array.isArray(d.checks)){
+        hbData=d;
+        while(hbData.checks.length<HABITS.length) hbData.checks.push(Array(7).fill(false));
+        /* Objetos viejos sin priorities hacían explotar setPriority */
+        if(!Array.isArray(hbData.priorities)) hbData.priorities=Array(7).fill('');
+        while(hbData.priorities.length<7) hbData.priorities.push('');
+      }
+    }
+  }catch(e){}
+}
+function saveHabits(){
+  /* Si la semana cambió con la pestaña abierta, la memoria acaba de recargarse
+     y lo que disparó este guardado se aplicó sobre datos viejos: no se escribe */
+  if(verificarCambioDeFecha()==='semana'){ mostrarToast('Cambió la semana: volvé a marcar eso'); return; }
+  lsSet(getWeekKey(),JSON.stringify(hbData));
+  programarProgreso();
+}
 function toggleHabit(hId,dIdx){hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];saveHabits();renderHabits();}
 function setPriority(dIdx,txt){hbData.priorities[dIdx]=txt;saveHabits();}
+
+/* Reparación puntual (se llama desde la consola: limpiarHabitosFuturos()).
+   Si una semana arrancó con los tildes heredados de la anterior —bug corregido
+   en loadHabits—, los días que todavía no llegaron no pueden estar marcados.
+   Los días ya pasados se destildan a mano en Vista Semana. Guarda con lsSet,
+   así el arreglo también llega a la nube y al resto de los dispositivos. */
+function limpiarHabitosFuturos(){
+  var hoy=getTodayIdx(), n=0;
+  hbData.checks.forEach(function(fila){
+    for(var d=hoy+1; d<7; d++) if(fila[d]){ fila[d]=false; n++; }
+  });
+  if(n){ saveHabits(); renderHabits(); }
+  return n+' tildes futuros borrados';
+}
 function setHbView(v){
   hbView=v;
   document.getElementById('btn-day').className='habit-toggle-btn'+(v==='day'?' active':'');
@@ -1651,6 +1744,32 @@ function setHbView(v){
   renderHabits();
 }
 function selectHabitDay(i){hbActiveDay=i;renderHabits();}
+
+/* ═══════════ GUARDIÁN DE FECHA ═══════════
+   La pestaña (o la app instalada) puede quedar abierta días. "Hoy" y "esta
+   semana" se calcularon al abrir; acá se detecta que cambiaron y se corrige
+   TODO antes de que algo se guarde bajo la clave equivocada.
+   Devuelve false si no cambió nada, 'dia' o 'semana' si sí. */
+var _semanaEnMemoria=getWeekKey();
+var _diaEnMemoria=getTodayIdx();
+
+function verificarCambioDeFecha(){
+  var semana=getWeekKey(), dia=getTodayIdx();
+  if(semana===_semanaEnMemoria && dia===_diaEnMemoria) return false;
+  var que = semana!==_semanaEnMemoria ? 'semana' : 'dia';
+  _semanaEnMemoria=semana; _diaEnMemoria=dia;
+
+  hbDates=getWeekDates(); hbTodayIdx=dia; hbActiveDay=dia;
+  setupHeader();
+  if(que==='semana'){
+    /* Lo que hay en memoria es de la semana que terminó. Se vuelve a leer con
+       reset; todas las mutaciones anteriores ya estaban guardadas, no se pierde nada. */
+    loadTareas(); loadHabits(); loadDiario();
+  }
+  renderTareas(); renderHabits(); renderDiario(); renderProgreso();
+  quizasAbrirResumen();
+  return que;
+}
 
 /* ═══════════ RACHAS ═══════════
    Los hábitos se vienen guardando por semana bajo 'wk_AAAA_M_D'.
@@ -1815,16 +1934,12 @@ function renderHabits(){
   var dayTotals=Array.from({length:7},function(_,d){return hbData.checks.filter(function(r){return r[d];}).length;});
   var habTotals=hbData.checks.map(function(r){return r.filter(Boolean).length;});
   var total=hbData.checks.flat().filter(Boolean).length;
-  var pctAll=Math.round((total/63)*100);
   var dr=hbDates[0].getDate()+' '+MN2[hbDates[0].getMonth()]+' — '+hbDates[6].getDate()+' '+MN2[hbDates[6].getMonth()];
   document.getElementById('hb-week-range').textContent=dr;
-  document.getElementById('hb-pct').textContent=pctAll+'%';
-  document.getElementById('hb-bar').style.width=pctAll+'%';
-  document.getElementById('s-habits').textContent=dayTotals[hbTodayIdx];
 
   /* Day scroller */
   document.getElementById('hb-days').innerHTML=hbDates.map(function(date,i){
-    var isT=i===hbTodayIdx,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/9)*100),ringColor=isA?'#0A0A0A':'#86E88F';
+    var isT=i===hbTodayIdx,isA=i===hbActiveDay,pct=Math.round((dayTotals[i]/HABITS.length)*100),ringColor=isA?'#0A0A0A':'#86E88F';
     return '<button class="hday-btn'+(isT?' today':'')+(isA?' active':'')+'" onclick="selectHabitDay('+i+')">'+
       '<div class="hday-ds">'+DS[i]+'</div><div class="hday-num">'+date.getDate()+'</div>'+
       '<div class="hday-ring-wrap" style="width:34px;height:34px;position:relative">'+
@@ -1904,6 +2019,7 @@ function renderHabits(){
     '</div>';
     document.getElementById('hb-content').innerHTML='<div style="overflow-x:auto"><table class="habit-table"><thead>'+thead+'</thead><tbody>'+tbody+totalRow+'</tbody></table></div>'+priosHtml;
   }
+  refrescarStats();
 }
 
 /* ═══════════════════ DIARIO DE LA SEMANA ═══════════════════ */
@@ -2032,6 +2148,11 @@ function nivelHeat(n){
   return ' n4';
 }
 
+/* Tras una mutación el panel se redibuja con un pequeño retraso: armarHistorial
+   recorre localStorage y no vale la pena hacerlo por cada tecla o tilde */
+var _progTimer=null;
+function programarProgreso(){ clearTimeout(_progTimer); _progTimer=setTimeout(renderProgreso,300); }
+
 function renderProgreso(){
   var hist=armarHistorial();
   var hoy=new Date(); hoy.setHours(0,0,0,0);
@@ -2120,7 +2241,7 @@ function armarResumen(){
   });
   var pct = total ? Math.round((hechas/total)*100) : 0;
   var hbTotal=hbData.checks.flat().filter(Boolean).length;
-  var hbPct=Math.round((hbTotal/63)*100);
+  var hbPct=Math.round((hbTotal/(HABITS.length*7))*100);
   var rachas=calcularRachas();
   var vivas=HABITS.map(function(h,i){ return {name:h.name, icon:h.icon, r:rachas[i]}; })
                   .filter(function(x){ return x.r>=2; })
@@ -2159,7 +2280,7 @@ function abrirResumen(){
       ? '<div class="modal-seccion"><div class="modal-h">Lo que hiciste</div>'+dias+'</div>'
       : '<div class="modal-seccion"><div class="modal-vacio">No tildaste ninguna tarea esta semana.</div></div>')+
     (chipsTag ? '<div class="modal-seccion"><div class="modal-h">Por contexto</div><div class="modal-chips">'+chipsTag+'</div></div>' : '')+
-    '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de 63)</div>'+
+    '<div class="modal-seccion"><div class="modal-h">H\u00e1bitos \u00b7 '+r.hbPct+'% ('+r.hbTotal+' de '+(HABITS.length*7)+')</div>'+
       '<div class="modal-chips">'+rachasHTML+'</div></div>'+
     '<div class="modal-acciones">'+
       '<button class="modal-btn" onclick="irAlDiario()">Escribir mi semana \u2193</button>'+
@@ -2308,11 +2429,16 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
   });
 }
 
-/* Refresco automático de los mails: cada 5 min y al volver a la pestaña */
+/* Refresco automático: mails cada 5 min; la fecha cada minuto, al volver a
+   la pestaña y al enfocar la ventana (ver GUARDIÁN DE FECHA) */
 setInterval(actualizarMails,5*60*1000);
+setInterval(verificarCambioDeFecha,60*1000);
 document.addEventListener('visibilitychange',function(){
-  if(!document.hidden) actualizarMails();
+  if(document.hidden) return;
+  verificarCambioDeFecha();
+  actualizarMails();
 });
+window.addEventListener('focus',verificarCambioDeFecha);
 </script>
 </body>
 </html>
