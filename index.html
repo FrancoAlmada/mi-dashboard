@@ -256,6 +256,32 @@
     .task:hover .task-del { opacity: 1; }
     .task-del:hover { background: var(--coral); color: var(--on-coral-hi); }
 
+    /* ── Editar una tarea: mismo ✎ que los Tres grandes ── */
+    .task-edit {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--r-pill); border: none; cursor: pointer;
+      background: transparent; color: var(--t4); font-size: 13px; line-height: 1; font-family: var(--ui);
+      display: flex; align-items: center; justify-content: center;
+      opacity: 0; transition: opacity .16s, background .16s, color .16s;
+    }
+    .task:hover .task-edit { opacity: 1; }
+    .task-edit:hover, .pend-btn.editar:hover { background: var(--surf4); color: var(--t1); }
+    /* La fila en edición: [texto] [✓] [×], con los botones siempre visibles */
+    .task.editando { cursor: default; background: var(--surf3); box-shadow: inset 0 0 0 1px var(--line2); }
+    .edit-input {
+      flex: 1; min-width: 0; background: var(--surf2); border: 1px solid var(--line2); border-radius: var(--r-ctl);
+      padding: 6px 9px; color: var(--t1); font-size: 14px; font-weight: 500; font-family: var(--ui); outline: none;
+    }
+    .edit-input:focus { border-color: var(--sky); }
+    .dia-card .edit-input, .pend-item .edit-input { font-size: 13px; padding: 4px 7px; }
+    .task-ok {
+      flex-shrink: 0; width: 24px; height: 24px; border-radius: var(--r-pill); border: none; cursor: pointer;
+      background: transparent; color: var(--lime); font-size: 13px; font-weight: 800; line-height: 1;
+      font-family: var(--ui); display: flex; align-items: center; justify-content: center;
+      transition: background .16s, color .16s;
+    }
+    .task-ok:hover { background: var(--lime); color: var(--on-lime); }
+    .editando .task-del { opacity: 1; }
+
     /* ── Input de alta ── */
     .add-wrap { display: flex; align-items: center; gap: 10px; margin-top: 10px; padding: 0 12px; }
     .add-plus { color: var(--t4); font-size: 18px; font-weight: 700; flex-shrink: 0; width: 20px; text-align: center; }
@@ -398,7 +424,10 @@
       border-radius: var(--r-md); padding: 20px 22px 16px;
     }
     /* A todo el ancho la lista quedaria estirada, asi que tambien va en columnas */
-    .pend-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(340px,1fr)); gap: 2px 12px; }
+    /* Con 360px de minimo nunca entran 4 (igual que en .hoy-grid): con el
+       boton de editar, cuatro columnas le dejaban al texto menos de 100px.
+       El min() evita que en pantallas angostas la columna desborde. */
+    .pend-lista { display: grid; grid-template-columns: repeat(auto-fill, minmax(min(360px,100%),1fr)); gap: 2px 12px; }
     .pend-title {
       font-size: 10px; letter-spacing: 0.6px; text-transform: uppercase; color: var(--coral);
       font-weight: 800; margin-bottom: 14px; display: flex; align-items: center; gap: 8px;
@@ -421,6 +450,7 @@
     .pend-item:hover .pend-btn { opacity: 1; }
     .pend-btn.mover:hover { background: var(--lime); color: var(--on-lime); }
     .pend-btn.tirar:hover { background: var(--coral); color: var(--on-coral-hi); }
+    .pend-item.editando { background: rgba(var(--coral-rgb),0.1); box-shadow: inset 0 0 0 1px rgba(var(--coral-rgb),0.42); }
     .pend-mas { font-size: 11px; font-weight: 600; color: var(--t4); padding: 10px 8px 2px; font-style: italic; }
 
     /* ══════════ HABIT TRACKER ══════════ */
@@ -716,9 +746,25 @@
       /* El texto llena la primera linea y empuja todo lo demas a la segunda */
       .hoy-grid .task .task-text { flex: 1 1 calc(100% - 32px); }
       /* Visible y tocable: hasta ahora no se podia ni borrar desde el celular */
+      .hoy-grid .task .task-edit,
       .hoy-grid .task .task-del { opacity: 1; width: 28px; height: 28px; }
       /* Alinea la etiqueta, primera de la segunda linea, con el texto de arriba */
       .hoy-grid .task .tag-pill { margin-left: 32px; }
+
+      /* En la semana el lapiz reemplaza al ×, que antes era invisible pero
+         igual se podia tocar: borrar pasa a ser lapiz → ×. Mide 28px para el
+         dedo pero ocupa lo mismo que el viejo × de 24: los margenes negativos
+         se meten en el padding de la fila, que no crece. */
+      .dia-card .task .task-edit { opacity: 1; width: 28px; height: 28px; margin: -2px -4px -2px 0; }
+      .editando .task-ok, .editando .task-del { width: 28px; height: 28px; }
+
+      /* Recuadro rojo: mismo tratamiento que Hoy. El texto se lleva la
+         primera linea; dia, etiqueta y botones bajan a la segunda. Antes
+         → y × eran invisibles en el celular pero se podian tocar. */
+      .pend-item:not(.editando) { flex-wrap: wrap; row-gap: 8px; }
+      .pend-item .pend-text { flex: 1 1 100%; order: -1; }
+      .pend-item .pend-btn { opacity: 1; width: 28px; height: 28px; }
+      .pend-item .pend-btn.editar { margin-left: auto; }
     }
 
     /* ══════════ TABLA DE HÁBITOS EN EL CELULAR ══════════ */
@@ -1943,7 +1989,118 @@ function addTarea(diaIdx,texto,tag){
 function toggleTarea(diaIdx,i){
   var t=tareasData.dias[diaIdx][i]; if(!t)return;
   t.hecha=!t.hecha;                 /* queda tachada pero visible */
+  /* Al completar hay deshacer: salva el toque sin querer (por ejemplo, errarle
+     a la etiqueta). Destildar no avisa, y si era la del aviso, lo cierra. */
+  if(t.hecha){
+    _undo={tipo:'tildar', key:getTareasKey(), dia:diaIdx, id:t.id};
+    mostrarUndo('Tarea completada');
+  } else if(_undo && _undo.tipo==='tildar' && _undo.id===t.id){
+    _undo=null; clearTimeout(_undoTimer); ocultarUndo();
+  }
   saveTareas(); renderTareas();
+}
+
+/* ═══════════ EDITAR UNA TAREA ═══════════
+   Un solo estado. 'donde' hace falta porque la misma tarea se dibuja en dos
+   lugares a la vez (la de hoy en Hoy y en la grilla; las de días pasados en
+   la grilla y en el recuadro rojo): sin él se abrirían dos inputs.
+   Misma idea que la edición de los Tres grandes (Enter guarda, Escape
+   cancela, salir del campo guarda), pero con las trampas del redibujo
+   resueltas: acá la lista se redibuja entera a cada rato. */
+var _edit=null;          /* {donde:'hoy'|'semana'|'pend', key, dia, id, borrador} */
+var _renderizando=false; /* mientras se redibuja, el blur del input que desaparece no cuenta */
+
+function iniciarEdicion(donde,dia,id,ev,key){
+  if(ev) ev.stopPropagation();
+  if(_edit) guardarEdicion();          /* abrir otra guarda la que estaba abierta */
+  key=key||getTareasKey();
+  var r=buscarPorId(semanaPorKey(key),dia,id); if(!r) return;
+  _edit={donde:donde, key:key, dia:r.dia, id:id, borrador:r.t.texto};
+  renderTareas();
+}
+function editarPend(i,ev){
+  var p=_pendCache[i]; if(!p) return;
+  iniciarEdicion('pend',p.dia,p.id,ev,p.key);
+}
+function onEditInput(el){ if(_edit) _edit.borrador=el.value; }
+function onEditKey(ev){
+  if(ev.key==='Enter'){ ev.preventDefault(); guardarEdicion(); }
+  else if(ev.key==='Escape'){ ev.preventDefault(); ev.stopPropagation(); cancelarEdicion(); }
+}
+/* Click afuera = guardar. No cuenta si se está redibujando (Chrome dispara
+   blur al sacar del DOM el input con foco) ni si la ventana perdió el foco:
+   cambiar de app para copiar algo no cierra la edición. */
+function onEditBlur(){
+  if(_renderizando || !_edit) return;
+  setTimeout(function(){
+    if(!_edit || !document.hasFocus()) return;
+    var inp=document.getElementById('edit-input');
+    if(inp && document.activeElement===inp) return;   /* volvió el foco: fue un redibujo */
+    guardarEdicion();
+  },0);
+}
+function cancelarEdicion(){
+  _edit=null;
+  renderTareas();
+}
+function guardarEdicion(ev){
+  if(ev) ev.stopPropagation();
+  if(!_edit) return;
+  var e=_edit; _edit=null;             /* ANTES de redibujar: si no, el blur del input volvería a guardar */
+  var nuevo=(e.borrador||'').trim();
+  var data=semanaPorKey(e.key);
+  var r=buscarPorId(data,e.dia,e.id);
+  /* Texto vacío = cancelar (no borra) · mismo texto = nada */
+  if(!r || !nuevo || nuevo===r.t.texto){ renderTareas(); return; }
+  var antes=r.t.texto;
+  r.t.texto=nuevo;
+  guardarSemanaPorKey(e.key,data);
+  _undo={tipo:'editar', key:e.key, dia:r.dia, id:e.id, antes:antes, nuevo:nuevo};
+  mostrarUndo('Tarea editada');
+  renderTareas();
+}
+/* Desde la edición también se borra (en la semana el × vive acá adentro) */
+function borrarDesdeEdicion(ev){
+  if(ev) ev.stopPropagation();
+  var e=_edit; if(!e) return;
+  _edit=null;
+  var data=semanaPorKey(e.key);
+  var r=buscarPorId(data,e.dia,e.id);
+  if(r){
+    data.dias[r.dia].splice(r.i,1);
+    guardarSemanaPorKey(e.key,data);
+    _undo={tipo:'borrar', key:e.key, dia:r.dia, idx:r.i, tarea:r.t};
+    mostrarUndo(e.donde==='pend'?'Tarea descartada':'Tarea borrada');
+  }
+  renderTareas();
+}
+/* La fila en edición: [texto] [✓] [×]. Los botones llevan onmousedown
+   preventDefault para que el input no pierda el foco antes del click: si
+   no, el blur guarda, se redibuja todo y el click cae en un botón que ya
+   no existe. */
+function edicionHTML(){
+  return '<input class="edit-input" id="edit-input" type="text" maxlength="200" value="'+esc(_edit.borrador)+'"'+
+      ' oninput="onEditInput(this)" onkeydown="onEditKey(event)" onblur="onEditBlur()"'+
+      ' onclick="event.stopPropagation()" aria-label="Texto de la tarea">'+
+    '<button class="task-ok" onmousedown="event.preventDefault()" onclick="guardarEdicion(event)" title="Guardar" aria-label="Guardar">✓</button>'+
+    '<button class="task-del" onmousedown="event.preventDefault()" onclick="borrarDesdeEdicion(event)" '+
+      'title="'+(_edit.donde==='pend'?'Descartar':'Borrar')+'" aria-label="Borrar"></button>';
+}
+function esEditada(donde,id){ return !!(_edit && _edit.donde===donde && _edit.id===id); }
+/* Después de cada redibujo, el foco vuelve al input con el cursor al final */
+function enfocarEdicion(){
+  if(!_edit) return;
+  var inp=document.getElementById('edit-input');
+  if(!inp){
+    /* La tarea ya no existe (se borró o se movió desde otro lado): se suelta */
+    if(!buscarPorId(semanaPorKey(_edit.key),_edit.dia,_edit.id)) _edit=null;
+    return;
+  }
+  if(document.activeElement!==inp){
+    inp.focus();
+    var n=inp.value.length;
+    try{ inp.setSelectionRange(n,n); }catch(e){}
+  }
 }
 function deleteTarea(diaIdx,i,ev){
   if(ev) ev.stopPropagation();      /* que el click no dispare también el toggle */
@@ -1984,9 +2141,21 @@ function tareaHTML(diaIdx,t,i,arrastrable,soloLectura){
         (tg?'<span class="tag-pill ro" style="--tc:'+tg.color+'" title="'+tg.label+'">'+tg.label+'</span>':'')+
       '</div>';
   }
+  var donde = arrastrable ? 'semana' : 'hoy';
+  /* En edici\u00f3n la fila no tilda ni se arrastra: si no, seleccionar texto con
+     el mouse arrastrar\u00eda la tarea */
+  if(esEditada(donde,t.id)) return '<div class="task editando">'+edicionHTML()+'</div>';
   var pill = tg
     ? '<button class="tag-pill" style="--tc:'+tg.color+'" onclick="cambiarTag('+diaIdx+','+i+',event)" title="'+tg.label+' \u2014 click para cambiar">'+tg.label+'</button>'
     : '<button class="tag-pill vacia" onclick="cambiarTag('+diaIdx+','+i+',event)" title="Poner etiqueta">+</button>';
+  /* El l\u00e1piz lleva onmousedown preventDefault: si hab\u00eda otra fila en edici\u00f3n,
+     su input no pierde el foco antes de tiempo e iniciarEdicion() la guarda */
+  var editHTML='<button class="task-edit" onmousedown="event.preventDefault()" '+
+    'onclick="iniciarEdicion(\''+donde+'\','+diaIdx+',\''+t.id+'\',event)" title="Editar" aria-label="Editar">\u270e</button>';
+  /* En la semana no hay \u00d7 en la fila: vive adentro de la edici\u00f3n. As\u00ed el texto
+     no pierde lugar, y en el celular se puede borrar (antes el \u00d7 era invisible). */
+  var delHTML = arrastrable ? '' :
+    '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar" aria-label="Borrar"></button>';
 
   /* El arrastre va SOLO en el grid de la semana. Se identifica la tarea por id
      y no por indice: al soltar, el array de origen se reordena y el indice
@@ -2001,7 +2170,8 @@ function tareaHTML(diaIdx,t,i,arrastrable,soloLectura){
       '<div class="task-box'+(t.hecha?' checked':'')+'"></div>'+
       '<span class="task-text'+(t.hecha?' done':'')+'">'+esc(t.texto)+'</span>'+
       pill+
-      '<button class="task-del" onclick="deleteTarea('+diaIdx+','+i+',event)" title="Borrar" aria-label="Borrar"></button>'+
+      editHTML+
+      delHTML+
     '</div>';
 }
 
@@ -2018,11 +2188,15 @@ function itemsOrdenados(tareas){
 
 function renderTareas(){
   var hoyIdx=getTodayIdx(), fechas=getWeekDates();
-  renderHoy(hoyIdx,fechas);
-  renderSemana(hoyIdx,getWeekDatesVista());   /* la tarjeta de la semana sigue a la vista; "Hoy" no */
-  renderTagChips();
-  renderFiltro();
-  renderPendientes(hoyIdx);
+  _renderizando=true;
+  try{
+    renderHoy(hoyIdx,fechas);
+    renderSemana(hoyIdx,getWeekDatesVista());   /* la tarjeta de la semana sigue a la vista; "Hoy" no */
+    renderTagChips();
+    renderFiltro();
+    renderPendientes(hoyIdx);
+  } finally { _renderizando=false; }
+  enfocarEdicion();
   refrescarStats();
 }
 
@@ -2261,10 +2435,14 @@ function renderPendientes(hoyIdx){
     '<div class="pend-lista">'+
     mostrar.map(function(x){
       var p=x.p, i=x.i, tg=tagById(p.tag);
+      if(esEditada('pend',p.id)){
+        return '<div class="pend-item editando"><span class="pend-day">'+p.etiqueta+'</span>'+edicionHTML()+'</div>';
+      }
       return '<div class="pend-item">'+
         '<span class="pend-day">'+p.etiqueta+'</span>'+
         '<span class="pend-text" onclick="togglePend('+i+')" title="Marcar como hecha">'+esc(p.texto)+'</span>'+
         (tg?'<span class="tag-pill" style="--tc:'+tg.color+';cursor:default">'+tg.label+'</span>':'')+
+        '<button class="pend-btn editar" onmousedown="event.preventDefault()" onclick="editarPend('+i+',event)" title="Editar" aria-label="Editar">✎</button>'+
         '<button class="pend-btn mover" onclick="moverPendAHoy('+i+')" title="Pasar a hoy">→</button>'+
         '<button class="pend-btn tirar" onclick="descartarPend('+i+')" title="Descartar" aria-label="Descartar"></button>'+
       '</div>';
@@ -2283,20 +2461,27 @@ function quitarDeOrigen(p){
   guardarSemanaPorKey(p.key,data);
   return r;
 }
+/* Al tacharla desaparece del recuadro: el deshacer la trae de vuelta */
 function togglePend(i){
   var p=_pendCache[i]; if(!p) return;
   var data=semanaPorKey(p.key);
   var r=buscarPorId(data,p.dia,p.id); if(!r) return;
   r.t.hecha=true;
   guardarSemanaPorKey(p.key,data);
+  _undo={tipo:'tildar', key:p.key, dia:r.dia, id:p.id};
+  mostrarUndo('Tarea completada');
   renderTareas();
 }
+/* Ahora que el → se ve en el celular, un toque sin querer tiene que tener vuelta */
 function moverPendAHoy(i){
   var p=_pendCache[i]; if(!p) return;
   var r=quitarDeOrigen(p); if(!r) return;
   r.t.hecha=false;                        /* conserva su etiqueta */
   tareasData.dias[getTodayIdx()].push(r.t);
-  saveTareas(); renderTareas();
+  saveTareas();
+  _undo={tipo:'a-hoy', key:p.key, dia:r.dia, idx:r.i, id:p.id};
+  mostrarUndo('Tarea pasada a hoy');
+  renderTareas();
 }
 function descartarPend(i){
   var p=_pendCache[i]; if(!p) return;
@@ -2315,7 +2500,20 @@ function mostrarUndo(texto){
   el.innerHTML='<span>'+esc(texto)+'</span><button class="toast-btn" onclick="deshacer()">Deshacer</button>';
   el.classList.remove('sin-boton');
   el.classList.add('visible');
-  _undoTimer=setTimeout(function(){ ocultarUndo(); _undo=null; },6000);
+  _undoTimer=setTimeout(function(){
+    ocultarUndo(); _undo=null;
+    /* Se cerró solo: ahora sí sale el aviso que estaba esperando */
+    if(_avisoEnEspera){ var a=_avisoEnEspera; _avisoEnEspera=null; setTimeout(function(){ mostrarToast(a.texto,a.ms); },250); }
+  },6000);
+}
+/* Avisos de festejo (subir de nivel, día perfecto): NO pisan un Deshacer.
+   Si completar una tarea te sube de nivel, el deshacer de esa misma tarea
+   tiene que seguir ahí; el festejo sale cuando se cierra. Si deshacés, se
+   descarta: el nivel que festejaba ya no existe. */
+var _avisoEnEspera=null;
+function avisoSinPisar(texto,ms){
+  if(_undo){ _avisoEnEspera={texto:texto, ms:ms}; return; }
+  mostrarToast(texto,ms);
 }
 function ocultarUndo(){
   var el=document.getElementById('toast'); if(el) el.classList.remove('visible');
@@ -2332,6 +2530,36 @@ function deshacer(){
   if(!_undo) return;
   var u=_undo; _undo=null;
   clearTimeout(_undoTimer); ocultarUndo();
+  _avisoEnEspera=null;
+  /* Edición: vuelve el texto de antes (si no lo cambiaste de nuevo mientras tanto) */
+  if(u.tipo==='editar'){
+    var de=semanaPorKey(u.key), re=buscarPorId(de,u.dia,u.id);
+    if(re && re.t.texto===u.nuevo){ re.t.texto=u.antes; guardarSemanaPorKey(u.key,de); }
+    renderTareas();
+    return;
+  }
+  /* Pasada a hoy: sale de hoy y vuelve a su semana, en su lugar */
+  if(u.tipo==='a-hoy'){
+    var rh=buscarPorId(tareasData,getTodayIdx(),u.id);
+    if(rh){
+      tareasData.dias[rh.dia].splice(rh.i,1);
+      saveTareas();
+      var orig=semanaPorKey(u.key);
+      if(orig && !buscarPorId(orig,u.dia,u.id)){
+        orig.dias[u.dia].splice(u.idx,0,rh.t);
+        guardarSemanaPorKey(u.key,orig);
+      }
+    }
+    renderTareas();
+    return;
+  }
+  /* Completada: se destilda, no se invierte (si ya la destildaste, queda así) */
+  if(u.tipo==='tildar'){
+    var dt=semanaPorKey(u.key), rt=buscarPorId(dt,u.dia,u.id);
+    if(rt && rt.t.hecha){ rt.t.hecha=false; guardarSemanaPorKey(u.key,dt); }
+    renderTareas();
+    return;
+  }
   if(u.tipo==='grande'){
     if(!Array.isArray(grandes[u.semana])) grandes[u.semana]=[];
     if(grandes[u.semana].length>=GRANDES_MAX){ mostrarToast('Ya hay tres: no entra el que borraste'); return; }
@@ -3239,6 +3467,10 @@ function hoyCero(){ var h=new Date(); h.setHours(0,0,0,0); return h; }
 var GRANDES_KEY='grandes', GRANDES_MAX=3;
 var grandes={};
 var _grandeEditando=null;   /* id del objetivo con el input de edición abierto */
+/* Borrador y guarda del redibujo: con bajadas cada 2 minutos, una que llega
+   mientras editás redibuja la lista; sin esto el blur del input que se va
+   guardaba a medias y cerraba la edición */
+var _grandeBorrador='', _renderizandoGrandes=false;
 
 function loadGrandes(){
   grandes={};
@@ -3282,12 +3514,13 @@ function deleteGrande(id,ev){
 /* Edición inline: el texto se vuelve input; Enter guarda, Escape cancela, salir del campo guarda */
 function editarGrande(id,ev){
   if(ev) ev.stopPropagation();
+  var i=buscarGrande(id); if(i<0) return;
   _grandeEditando=id;
-  renderGrandes();
-  var el=document.getElementById('grande-edit-'+id);
-  if(el){ el.focus(); el.setSelectionRange(el.value.length,el.value.length); }
+  _grandeBorrador=grandesSemana(false)[i].texto;
+  renderGrandes();   /* deja el foco en el input, con el cursor al final */
 }
 function guardarEdicionGrande(id,valor){
+  if(_renderizandoGrandes) return;    /* el blur del input que se redibuja no cuenta */
   if(_grandeEditando!==id) return;    /* el blur que sigue al Enter (o al Escape) llega tarde: se ignora */
   _grandeEditando=null;
   var i=buscarGrande(id), txt=(valor||'').trim();
@@ -3310,13 +3543,15 @@ function renderGrandes(){
   var hechas=lista.filter(function(g){return g.hecha;}).length;
   document.getElementById('grandes-count').textContent=hechas+' / '+GRANDES_MAX;
 
+  _renderizandoGrandes=true;
   cont.innerHTML = lista.length
     ? lista.map(function(g,i){
         var editando = _grandeEditando===g.id;
         return '<div class="grande'+(g.hecha?' hecha':'')+'"'+(editando?'':' onclick="toggleGrande(\''+g.id+'\')"')+'>'+
           '<div class="grande-num">'+(g.hecha?'\u2713':(i+1))+'</div>'+
           (editando
-            ? '<input class="grande-input" id="grande-edit-'+g.id+'" type="text" maxlength="120" value="'+esc(g.texto)+'" '+
+            ? '<input class="grande-input" id="grande-edit-'+g.id+'" type="text" maxlength="120" value="'+esc(_grandeBorrador)+'" '+
+                'oninput="_grandeBorrador=this.value" '+
                 'onkeydown="onGrandeEditKey(event,\''+g.id+'\',this)" onblur="guardarEdicionGrande(\''+g.id+'\',this.value)" onclick="event.stopPropagation()">'
             : '<span class="grande-txt">'+esc(g.texto)+'</span>'+
               '<button class="grande-edit" onclick="editarGrande(\''+g.id+'\',event)" title="Editar" aria-label="Editar">\u270e</button>'+
@@ -3324,6 +3559,10 @@ function renderGrandes(){
         '</div>';
       }).join('')
     : '<div class="empty-msg">Elegí hasta tres cosas que, si pasan, hacen que la semana valga. Agregá una abajo.</div>';
+  _renderizandoGrandes=false;
+  /* La edición abierta vuelve con el foco y el cursor al final */
+  var ed=_grandeEditando && document.getElementById('grande-edit-'+_grandeEditando);
+  if(ed && document.activeElement!==ed){ ed.focus(); ed.setSelectionRange(ed.value.length,ed.value.length); }
 
   var add=document.getElementById('grandes-add'), nota=document.getElementById('grandes-nota');
   if(add) add.style.display = lista.length>=GRANDES_MAX ? 'none' : '';
@@ -3599,7 +3838,7 @@ function refrescarNivel(){
   bar.style.width=nv.pct+'%';
   if(pill) pill.title='Tareas '+p.tareas+' \u00b7 H\u00e1bitos '+p.habitos+' \u00b7 Tres grandes '+p.grandes+' \u00b7 D\u00edas perfectos '+p.perfectos+
     (nv.sig!==null ? ' \u2014 faltan '+nv.faltan+' para Nivel '+(nv.n+1) : ' \u2014 nivel m\u00e1ximo');
-  if(_nivelPrevio!==null && nv.n>_nivelPrevio) mostrarToast('Subiste a Nivel '+nv.n+' \u00b7 '+nv.nombre);
+  if(_nivelPrevio!==null && nv.n>_nivelPrevio) avisoSinPisar('Subiste a Nivel '+nv.n+' \u00b7 '+nv.nombre);
   _nivelPrevio=nv.n;
 }
 /* Día perfecto: recién ahora quedaron TODOS los de hoy (pasó de N-1 a N) */
@@ -3609,7 +3848,7 @@ function detectarDiaPerfecto(antes,dIdx){
   var despues=habitosDelDia(dIdx);
   if(despues===act && antes===act-1){
     lanzarConfetti();
-    mostrarToast('D\u00eda perfecto +'+PTS.diaPerfecto+' \ud83c\udf89',3200);
+    avisoSinPisar('D\u00eda perfecto +'+PTS.diaPerfecto+' \ud83c\udf89',3200);
   }
 }
 
