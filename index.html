@@ -745,6 +745,15 @@
     .diario-flecha { font-size: 10px; color: var(--t4); transition: transform .18s; flex-shrink: 0; width: 12px; }
     .diario-vieja.abierta .diario-flecha { transform: rotate(90deg); }
     .diario-fecha { font-size: 12px; font-weight: 800; color: var(--butter); flex-shrink: 0; white-space: nowrap; }
+    /* "Editar" una semana vieja del diario: aparece al pasar el mouse (en el celular, siempre) */
+    .diario-editar {
+      margin-left: auto; flex-shrink: 0; border: 1px solid var(--line2); background: transparent; color: var(--t3);
+      border-radius: var(--r-pill); padding: 4px 11px; font-size: 10.5px; font-weight: 800; font-family: var(--ui);
+      cursor: pointer; opacity: 0; transition: opacity .16s, border-color .16s, color .16s;
+    }
+    .diario-vieja-hd:hover .diario-editar { opacity: 1; }
+    .diario-editar:hover { border-color: var(--butter); color: var(--t1); }
+    @media (hover: none), (max-width: 720px) { .diario-editar { opacity: 1; } }
     .diario-preview { font-size: 12.5px; color: var(--t4); font-weight: 500; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
     .diario-vieja.abierta .diario-preview { display: none; }
     .diario-cuerpo { display: none; font-size: 13.5px; line-height: 1.7; color: var(--t2); padding: 2px 4px 16px 27px; white-space: pre-wrap; }
@@ -1726,17 +1735,28 @@ function tareasDeVista(){
   while(d.dias.length<7) d.dias.push([]);
   return d;
 }
+/* En el historial se relee SIEMPRE del almacenamiento (nunca una copia en
+   memoria): después de una bajada la copia quedaría vieja y la próxima tilde
+   pisaría lo que marcaste en el celular. */
 function habitsDeVista(){
   if(!enHistorial()) return hbData;
   try{
     var d=JSON.parse(localStorage.getItem(getWeekKeyVista()));
     if(d && Array.isArray(d.checks)){
+      /* Una semana vieja puede tener menos filas que hábitos hay hoy */
+      while(d.checks.length<slotsNecesarios()) d.checks.push(Array(7).fill(false));
       if(!Array.isArray(d.priorities)) d.priorities=Array(7).fill('');
       while(d.priorities.length<7) d.priorities.push('');
       return d;
     }
   }catch(e){}
   return mkDefault();
+}
+/* Guarda una semana de hábitos que NO es la actual, con su propia clave.
+   Solo se llama al tildar o escribir: mirar una semana no crea nada. */
+function guardarHabitosDe(key,D){
+  lsSet(key,JSON.stringify(D));
+  programarProgreso();   /* el heatmap y las barras también cuentan esa semana */
 }
 /* En el historial se muestran los activos MÁS los pausados que esa semana tuvieron algún tilde */
 function habitosParaVista(D){
@@ -1778,7 +1798,7 @@ function renderNavSemana(){
     var f=getWeekDatesVista(), n=-_semanaVista;
     document.getElementById('vista-banner-txt').innerHTML=
       'Viendo la semana del <b>'+f[0].getDate()+' '+MN2[f[0].getMonth()]+' al '+f[6].getDate()+' '+MN2[f[6].getMonth()]+'</b>'+
-      ' ('+(n===1?'la semana pasada':'hace '+n+' semanas')+') \u00b7 solo lectura';
+      ' ('+(n===1?'la semana pasada':'hace '+n+' semanas')+') \u00b7 pod\u00e9s completar h\u00e1bitos y diario';
   }
   b.classList.toggle('visible',ro);
 }
@@ -2788,14 +2808,29 @@ function saveHabits(){
   programarProgreso();
 }
 function toggleHabit(hId,dIdx){
-  if(enHistorial()){ mostrarToast('Estás viendo una semana pasada: volvé a hoy para editar'); return; }
+  /* Semana pasada: se completa lo que quedó sin marcar. Se relee, se cambia
+     y se guarda con SU clave. Sin confetti: el día perfecto es solo de hoy. */
+  if(enHistorial()){
+    var key=getWeekKeyVista(), D=habitsDeVista();
+    while(D.checks.length<=hId) D.checks.push(Array(7).fill(false));
+    D.checks[hId][dIdx]=!D.checks[hId][dIdx];
+    guardarHabitosDe(key,D); renderHabits();
+    return;
+  }
   while(hbData.checks.length<=hId) hbData.checks.push(Array(7).fill(false));   /* hábito recién agregado */
   var antes=habitosDelDia(dIdx);
   hbData.checks[hId][dIdx]=!hbData.checks[hId][dIdx];
   saveHabits(); renderHabits();
   detectarDiaPerfecto(antes,dIdx);
 }
-function setPriority(dIdx,txt){ if(enHistorial()) return; hbData.priorities[dIdx]=txt; saveHabits(); }
+function setPriority(dIdx,txt){
+  if(enHistorial()){
+    var key=getWeekKeyVista(), D=habitsDeVista();
+    D.priorities[dIdx]=txt; guardarHabitosDe(key,D);
+    return;
+  }
+  hbData.priorities[dIdx]=txt; saveHabits();
+}
 
 /* Reparación puntual (se llama desde la consola: limpiarHabitosFuturos()).
    Si una semana arrancó con los tildes heredados de la anterior —bug corregido
@@ -3078,7 +3113,8 @@ function completarTimer(){
   renderHabits();
   detectarDiaPerfecto(antesTimer,hbTodayIdx);
   beep();
-  var card=document.getElementById('hb-card-'+hId);
+  /* Si estás mirando otra semana, esa tarjeta no es la de hoy: no se marca */
+  var card=!enHistorial() && document.getElementById('hb-card-'+hId);
   if(card) card.classList.add('listo');
 }
 function arrancarTick(){
@@ -3121,8 +3157,10 @@ function makeRingSVG(pct,color,size){
 }
 
 function renderHabits(){
-  /* En el historial (_semanaVista<0) se dibuja una semana vieja en solo lectura:
-     sin handlers, sin cronómetro, sin rachas, ningún día es "hoy". */
+  /* En el historial (_semanaVista<0) se dibuja una semana vieja que SE PUEDE
+     completar (tildes y prioridades, que toggleHabit/setPriority guardan en
+     su clave). Lo que no aplica: cronómetro, rachas (se cuentan desde hoy)
+     y marcas de "hoy". 'ro' quedó con el nombre viejo: ahora es "historial". */
   var ro=enHistorial(), D=habitsDeVista(), lista=habitosParaVista(D);
   var fechas = ro ? getWeekDatesVista() : hbDates;
   var hoyI = ro ? -1 : hbTodayIdx;
@@ -3187,14 +3225,15 @@ function renderHabits(){
               : '<button class="hb-timer-btn'+(done?' on-color':'')+'" onclick="arrancarTimer('+h.id+',event)" '+
                   'title="Arrancar cronómetro de '+h.minutos+' minutos">▶ '+h.minutos+'min</button>';
           }
-          return '<div class="hb-item'+(corriendo?' corriendo':'')+(ro?' ro':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
-            '<div class="hb-body"'+(ro?'':' onclick="toggleHabit('+h.id+','+hbActiveDay+')"')+'>'+
+          /* En el historial también se tilda: es para completar lo que quedó sin marcar */
+          return '<div class="hb-item'+(corriendo?' corriendo':'')+'" id="hb-card-'+h.id+'" style="--hc:'+h.color+';border-color:'+(done?h.color:'var(--line)')+';background:'+(done?h.color:'var(--surf2)')+'">'+
+            '<div class="hb-body" onclick="toggleHabit('+h.id+','+hbActiveDay+')">'+
               '<span class="hb-icon">'+esc(h.icon)+'</span>'+
               '<div class="hb-info"><div class="hb-name'+(done?' done':'')+'">'+esc(h.name)+rachaHTML+'</div><div class="hb-dots">'+dots+'</div></div>'+
               timerHTML+
               '<div class="hb-check" style="'+(done?'background:var(--on-accent);border-color:var(--on-accent);color:'+h.color:'border-color:var(--line2)')+'">'+(done?'✓':'')+'</div>'+
             '</div>'+
-            (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(D.priorities[hbActiveDay])+'" placeholder="'+(ro?'Sin prioridad ese día':'Escribí tu prioridad de hoy...')+'"'+(ro?' readonly':' oninput="setPriority('+hbActiveDay+',this.value)"')+' onclick="event.stopPropagation()"/></div>':'')+
+            (isPrio?'<div class="hb-prio-wrap"><input class="hb-prio-input'+(done?' on-color':'')+'" type="text" value="'+esc(D.priorities[hbActiveDay])+'" placeholder="'+(ro?'Prioridad de ese día...':'Escribí tu prioridad de hoy...')+'" oninput="setPriority('+hbActiveDay+',this.value)" onclick="event.stopPropagation()"/></div>':'')+
           '</div>';
         }).join('')+
       '</div>';
@@ -3202,8 +3241,8 @@ function renderHabits(){
     var thead='<tr><th></th>'+DS.map(function(d,i){return'<th class="'+(i===hoyI?'today-col':'')+'">'+d+'</th>';}).join('')+'<th style="padding-left:8px;text-align:center">sem</th><th style="padding-left:8px;text-align:center">racha</th></tr>';
     var tbody=lista.map(function(h){
       var cells=Array.from({length:7},function(_,d){
-        var done=tilde(D,h.id,d),cls='hb-cell'+(d===hoyI?' today-ring':'')+( done?' filled':'')+(ro?' ro':'');
-        return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hoyI?'border-color:'+h.color:'')+';"'+(ro?'':' onclick="toggleHabit('+h.id+','+d+')"')+'>'+(done?'✓':'')+'</div></td>';
+        var done=tilde(D,h.id,d),cls='hb-cell'+(d===hoyI?' today-ring':'')+( done?' filled':'');
+        return '<td style="text-align:center"><div class="'+cls+'" style="--hc:'+h.color+';'+(done?'background:'+h.color+';border-color:'+h.color:d===hoyI?'border-color:'+h.color:'')+';" onclick="toggleHabit('+h.id+','+d+')">'+(done?'✓':'')+'</div></td>';
       }).join('');
       var sc=habTotals[h.id]===7?'var(--lime)':habTotals[h.id]>=5?'var(--sky)':habTotals[h.id]>=3?'var(--butter)':'var(--muted)';
       var rc=ro?0:(_rachasCache[h.id]||0);
@@ -3255,8 +3294,7 @@ function loadDiario(){
    La semana sale del propio textarea (data-key, puesto al dibujarlo): si
    cambia el día o la vista justo después de tipear, lo escrito no cae en otra. */
 function onDiarioInput(el){
-  if(enHistorial()) return;   /* el textarea es readonly en el historial; esto es cinturón y tiradores */
-  var key=el.getAttribute('data-key')||getWeekKey();
+  var key=el.getAttribute('data-key')||getWeekKeyVista();
   diario[key]=el.value;
   _diarioPend={key:key, texto:el.value};
   clearTimeout(_diarioTimer);
@@ -3301,14 +3339,33 @@ function renderDiario(){
     f[0].getDate()+' '+MN2[f[0].getMonth()]+' \u2014 '+f[6].getDate()+' '+MN2[f[6].getMonth()];
   var el=document.getElementById('diario-txt');
   if(el){
-    /* En el historial se pisa siempre (no hay nada a medio escribir que proteger).
-       Mientras escribís no se toca, salvo que la semana del textarea haya cambiado */
-    if(ro || el!==document.activeElement || el.getAttribute('data-key')!==key) el.value=diario[key]||'';
+    /* En el historial también se escribe: es para el diario que no llegaste a
+       hacer. Mientras escribís no se toca el texto, salvo que la semana del
+       textarea haya cambiado (lo pendiente se guarda con SU clave, data-key) */
+    if(el!==document.activeElement || el.getAttribute('data-key')!==key) el.value=diario[key]||'';
     el.setAttribute('data-key',key);
-    el.readOnly=ro;
-    el.placeholder = ro ? 'No escribiste nada esa semana.' : '¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar...';
+    el.readOnly=false;
+    el.placeholder = ro
+      ? '¿Cómo te fue la semana del '+f[0].getDate()+' '+MN2[f[0].getMonth()]+'? Nunca es tarde para escribirla...'
+      : '¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar...';
   }
   renderDiarioHistorial();
+}
+/* "Editar" en una entrada del historial: lleva las flechas a esa semana
+   (hábitos y grilla incluidos) y deja el cursor en el diario */
+function editarDiarioDe(key,ev){
+  if(ev) ev.stopPropagation();
+  var m=/^wk_(\d+)_(\d+)_(\d+)$/.exec(key); if(!m) return;
+  var n=Math.round((getMonday()-new Date(+m[1],+m[2],+m[3]))/(7*86400000));
+  if(n<0) return;                           /* el futuro no existe */
+  guardarDiarioPendiente();
+  _semanaVista=-n;
+  renderVista();
+  var t=document.getElementById('diario-txt');
+  if(t){
+    t.scrollIntoView({behavior:'smooth', block:'center'});
+    t.focus(); t.setSelectionRange(t.value.length,t.value.length);
+  }
 }
 function renderDiarioHistorial(){
   var vista=getWeekKeyVista();
@@ -3330,6 +3387,7 @@ function renderDiarioHistorial(){
         '<span class="diario-flecha">\u25b8</span>'+
         '<span class="diario-fecha">'+rangoDeWeekKey(k)+'</span>'+
         '<span class="diario-preview">'+esc(preview)+'</span>'+
+        '<button class="diario-editar" onclick="editarDiarioDe(\''+k+'\',event)" title="Seguir escribiendo esa semana">✎ Editar</button>'+
       '</div>'+
       '<div class="diario-cuerpo">'+esc(txt)+'</div>'+
     '</div>';
@@ -3993,6 +4051,7 @@ function cerrarResumen(){
 }
 function irAlDiario(){
   cerrarResumen();
+  volverAHoy();   /* el resumen es de ESTA semana: el diario también */
   var d=document.getElementById('diario');
   if(d) d.scrollIntoView({behavior:'smooth', block:'center'});
   setTimeout(function(){ var t=document.getElementById('diario-txt'); if(t) t.focus(); },600);
