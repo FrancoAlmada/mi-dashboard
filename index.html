@@ -412,11 +412,26 @@
     /* En las tarjetas angostas la etiqueta se reduce a un punto de color:
        el texto de la tarea gana todo el ancho y deja de partirse en 3 lineas.
        Sigue siendo clickeable para ciclar de etiqueta. */
+    /* El punto se VE de 12px, pero la zona tocable es de 28x28: antes era de
+       9x9, y errarle por un pelo tildaba la tarea. Los margenes negativos
+       meten esa zona en los huecos de la fila (el gap de 9px a cada lado y
+       el padding de arriba y abajo), asi la fila no crece y el texto no
+       pierde lugar. */
     .dia-card .tag-pill {
-      width: 9px; height: 9px; padding: 0; border-radius: 50%;
+      position: relative; width: 28px; height: 28px; padding: 0; margin: -5px -9px;
+      border-radius: 50%; border: none; background: transparent;
       font-size: 0; line-height: 0; overflow: hidden;
     }
-    .dia-card .tag-pill.vacia { border-style: dashed; }
+    .dia-card .tag-pill::before {
+      content: ''; position: absolute; top: 50%; left: 50%;
+      width: 12px; height: 12px; border-radius: 50%; box-sizing: border-box;
+      transform: translate(-50%,-50%); background: var(--tc);
+    }
+    /* Al pasar el mouse, un anillo suave marca que se puede tocar */
+    .dia-card .tag-pill:not(.ro):hover { opacity: 1; background: var(--surf4); }
+    .dia-card .tag-pill.vacia { border: none; }
+    .dia-card .tag-pill.vacia::before { background: transparent; border: 1.5px dashed var(--line2); }
+    .dia-card .tag-pill.vacia:hover::before { border-color: var(--t3); }
 
     /* ── Tareas No Completadas ── */
     .pend-box {
@@ -748,8 +763,9 @@
       /* Visible y tocable: hasta ahora no se podia ni borrar desde el celular */
       .hoy-grid .task .task-edit,
       .hoy-grid .task .task-del { opacity: 1; width: 28px; height: 28px; }
-      /* Alinea la etiqueta, primera de la segunda linea, con el texto de arriba */
-      .hoy-grid .task .tag-pill { margin-left: 32px; }
+      /* Alinea la etiqueta, primera de la segunda linea, con el texto de arriba.
+         Tambien se agranda para el dedo: 28px de alto */
+      .hoy-grid .task .tag-pill { margin-left: 32px; min-height: 28px; padding: 0 11px; display: inline-flex; align-items: center; }
 
       /* En la semana el lapiz reemplaza al ×, que antes era invisible pero
          igual se podia tocar: borrar pasa a ser lapiz → ×. Mide 28px para el
@@ -1166,7 +1182,8 @@
     /* Puntos → cuadraditos */
     [data-tema="terminal"] .stat::before, [data-tema="terminal"] .em-dot, [data-tema="terminal"] .live-dot,
     [data-tema="terminal"] .hb-dot, [data-tema="terminal"] .heat-c, [data-tema="terminal"] .barra,
-    [data-tema="terminal"] .dia-card .tag-pill, [data-tema="terminal"] .grande-num, [data-tema="terminal"] .modal-grande-num { border-radius: 0; }
+    [data-tema="terminal"] .dia-card .tag-pill, [data-tema="terminal"] .dia-card .tag-pill::before,
+    [data-tema="terminal"] .grande-num, [data-tema="terminal"] .modal-grande-num { border-radius: 0; }
     [data-tema="terminal"] .hito-dias, [data-tema="terminal"] .hito-add-btn, [data-tema="terminal"] .notas-guardar { text-transform: lowercase; letter-spacing: 0; }
     [data-tema="terminal"] .nota-color-btn, [data-tema="terminal"] .notas-badge { border-radius: 0; }
     [data-tema="terminal"] .notas-fab { box-shadow: 0 0 0 1px var(--lime), 0 0 18px rgba(74,246,38,0.18); }
