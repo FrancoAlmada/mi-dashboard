@@ -1474,10 +1474,13 @@ function initSupabase(){
 }
 
 /* Baja todo y se queda con lo más nuevo, clave por clave */
+var _bajando=false, _ultimaBajada=0;
 function bajarTodo(){
-  if(!syncActivo()) return Promise.resolve();
+  if(!syncActivo() || _bajando) return Promise.resolve();
+  _bajando=true; _ultimaBajada=Date.now();
   estadoSync('Sincronizando...');
   return sb.from('datos').select('clave,valor,actualizado').then(function(res){
+    _bajando=false;
     if(res.error){ estadoSync('Error al sincronizar'); return; }
     var m=leerMeta(), cambio=false;
     (res.data||[]).forEach(function(fila){
@@ -1489,6 +1492,7 @@ function bajarTodo(){
         try{
           localStorage.setItem(fila.clave, typeof fila.valor==='string'?fila.valor:JSON.stringify(fila.valor));
           m[fila.clave]=remoto; cambio=true;
+          delete _pendientes[fila.clave];  /* lo de acá perdió: ya no hay nada que subir */
         }catch(e){}
       } else if(local>remoto){
         _pendientes[fila.clave]=true;      /* lo de acá es más nuevo: hay que subirlo */
@@ -1497,13 +1501,30 @@ function bajarTodo(){
     escribirMeta(m);
     /* Lo que existe acá y no está en la nube todavía */
     Object.keys(m).forEach(function(k){
+      if(!seSincroniza(k)) return;
       var estaAllá=(res.data||[]).some(function(f){ return f.clave===k; });
       if(!estaAllá && localStorage.getItem(k)!==null) _pendientes[k]=true;
     });
     if(cambio) recargarDesdeStorage();
     estadoSync('Sincronizado');
     if(Object.keys(_pendientes).length) encolarSubida();
-  }).catch(function(){ estadoSync('Sin conexión'); });
+  }).catch(function(){ _bajando=false; estadoSync('Sin conexión'); });
+}
+
+/* Baja si pasó un rato desde la última. Se llama al volver a la app y cada
+   minuto con la app a la vista: una PC que queda abierta toda la noche se
+   entera de lo que tildaste en el celular antes de que la toques. */
+function bajarSiHaceFalta(minMs){
+  if(!syncActivo()) return;
+  if(Date.now()-_ultimaBajada < minMs) return;
+  bajarTodo();
+}
+
+/* Sube YA lo pendiente, sin el respiro de 1,5s: se usa cuando la app pasa a
+   segundo plano, que puede ser lo último que alcance a hacer */
+function subirYa(){
+  clearTimeout(_subirTimer);
+  subirPendientes();
 }
 
 function subirPendientes(){
@@ -1519,14 +1540,21 @@ function subirPendientes(){
   estadoSync('Guardando...');
   sb.from('datos').upsert(filas,{onConflict:'user_id,clave'}).then(function(res){
     if(res.error){ estadoSync('Error al guardar'); return; }
-    claves.forEach(function(k){ delete _pendientes[k]; });
+    /* Solo se da por subida si no cambió mientras viajaba: si la tocaste en
+       el medio, queda pendiente para la próxima */
+    var ahora=leerMeta();
+    filas.forEach(function(f){
+      if(new Date(ahora[f.clave]||0).toISOString()===f.actualizado) delete _pendientes[f.clave];
+    });
     estadoSync('Sincronizado');
   }).catch(function(){ estadoSync('Sin conexión'); });
 }
 
-/* Después de bajar datos nuevos hay que volver a dibujar todo */
+/* Después de bajar datos nuevos hay que volver a dibujar todo.
+   NO vuelve a la semana actual: con bajadas cada 2 minutos te sacaría de la
+   semana pasada mientras la estás completando. La tarea en edición también
+   sobrevive (vive en _edit y el redibujo la respeta). */
 function recargarDesdeStorage(){
-  _semanaVista=0;   /* bajó algo de la nube: se vuelve a la semana en curso */
   loadHabitosDef(); loadPrefs(); loadTareas(); loadHabits(); loadDiario(); loadGrandes(); loadHitos(); loadNotas();
   /* Se pone al día también el guardián de fecha, así no vuelve a dibujar todo */
   _semanaEnMemoria=getWeekKey(); _diaEnMemoria=hbTodayIdx=getTodayIdx(); hbDates=getWeekDates();
@@ -1868,6 +1896,25 @@ function guardarSemanaKey(key,data){
   lsSet(key,JSON.stringify(data));
   programarProgreso();
 }
+
+/* ── Un solo camino para tocar tareas de CUALQUIER semana ──
+   Lo que se puede deshacer o editar guarda la clave real de la semana
+   (nunca null) y el id de la tarea (nunca el índice, que se corre). */
+function esSemanaActual(key){ return !key || key===getTareasKey(); }
+function semanaPorKey(key){ return esSemanaActual(key) ? tareasData : leerSemanaKey(key); }
+function guardarSemanaPorKey(key,data){
+  if(esSemanaActual(key)) saveTareas(); else guardarSemanaKey(key,data);
+}
+/* Busca por id en su día y, si se movió, en toda la semana. Devuelve {t, i, dia} o null */
+function buscarPorId(data,dia,id){
+  if(!data || !Array.isArray(data.dias)) return null;
+  var orden=[dia]; for(var d=0; d<7; d++) if(d!==dia) orden.push(d);
+  for(var k=0; k<orden.length; k++){
+    var lista=data.dias[orden[k]]; if(!lista) continue;
+    for(var i=0;i<lista.length;i++) if(lista[i].id===id) return {t:lista[i], i:i, dia:orden[k]};
+  }
+  return null;
+}
 /* Devuelve las semanas anteriores a la actual, de la más vieja a la más nueva */
 function listaSemanasViejas(){
   var lunesHoy=getMonday(), out=[];
@@ -1901,7 +1948,7 @@ function toggleTarea(diaIdx,i){
 function deleteTarea(diaIdx,i,ev){
   if(ev) ev.stopPropagation();      /* que el click no dispare también el toggle */
   var t=tareasData.dias[diaIdx].splice(i,1)[0];
-  _undo={key:null, dia:diaIdx, idx:i, tarea:t};   /* guardamos DE DÓNDE salió, para devolverla ahí */
+  _undo={tipo:'borrar', key:getTareasKey(), dia:diaIdx, idx:i, tarea:t};   /* guardamos DE DÓNDE salió, para devolverla ahí */
   mostrarUndo('Tarea borrada');
   saveTareas(); renderTareas();
 }
@@ -2157,7 +2204,7 @@ function moverTareaADia(diaOrigen,tareaId,diaDestino){
   var t=origen.splice(pos,1)[0];
   tareasData.dias[diaDestino].push(t);
 
-  _undo={tipo:'mover', key:null, dia:diaOrigen, idx:pos, tarea:t, destino:diaDestino};
+  _undo={tipo:'mover', key:getTareasKey(), dia:diaOrigen, idx:pos, tarea:t, destino:diaDestino};
   mostrarUndo('Tarea movida al '+DF[diaDestino].toLowerCase());
 
   saveTareas(); renderTareas();
@@ -2181,7 +2228,7 @@ function renderPendientes(hoyIdx){
         if(t.hecha) return;
         var fecha=new Date(sem.lunes); fecha.setDate(sem.lunes.getDate()+d);
         _pendCache.push({
-          key:sem.key, dia:d, idx:i, texto:t.texto, tag:t.tag,
+          key:sem.key, dia:d, id:t.id, texto:t.texto, tag:t.tag,
           etiqueta: DS3[d]+' · '+fecha.getDate()+' '+MN2[fecha.getMonth()]
         });
       });
@@ -2189,10 +2236,11 @@ function renderPendientes(hoyIdx){
   });
 
   /* Días ya pasados de la semana en curso */
+  var claveActual=getTareasKey();
   for(var d=0; d<hoyIdx; d++){
-    tareasData.dias[d].forEach(function(t,i){
+    tareasData.dias[d].forEach(function(t){
       if(t.hecha) return;
-      _pendCache.push({key:null, dia:d, idx:i, texto:t.texto, tag:t.tag, etiqueta:DS3[d]});
+      _pendCache.push({key:claveActual, dia:d, id:t.id, texto:t.texto, tag:t.tag, etiqueta:DS3[d]});
     });
   }
 
@@ -2226,37 +2274,35 @@ function renderPendientes(hoyIdx){
   '</div>';
 }
 
-/* Saca la tarea de donde esté (semana vieja o día pasado) y la devuelve */
+/* Saca la tarea de donde esté (semana vieja o día pasado) y la devuelve
+   junto con su posición {t, i, dia}, para poder devolverla ahí */
 function quitarDeOrigen(p){
-  if(p.key===null){
-    return tareasData.dias[p.dia].splice(p.idx,1)[0];
-  }
-  var data=leerSemanaKey(p.key); if(!data) return null;
-  var t=data.dias[p.dia].splice(p.idx,1)[0];
-  guardarSemanaKey(p.key,data);
-  return t;
+  var data=semanaPorKey(p.key);
+  var r=buscarPorId(data,p.dia,p.id); if(!r) return null;
+  data.dias[r.dia].splice(r.i,1);
+  guardarSemanaPorKey(p.key,data);
+  return r;
 }
 function togglePend(i){
   var p=_pendCache[i]; if(!p) return;
-  if(p.key===null){ toggleTarea(p.dia,p.idx); return; }
-  var data=leerSemanaKey(p.key); if(!data) return;
-  var t=data.dias[p.dia][p.idx]; if(!t) return;
-  t.hecha=true;
-  guardarSemanaKey(p.key,data);
+  var data=semanaPorKey(p.key);
+  var r=buscarPorId(data,p.dia,p.id); if(!r) return;
+  r.t.hecha=true;
+  guardarSemanaPorKey(p.key,data);
   renderTareas();
 }
 function moverPendAHoy(i){
   var p=_pendCache[i]; if(!p) return;
-  var t=quitarDeOrigen(p); if(!t) return;
-  t.hecha=false;                          /* conserva su etiqueta */
-  tareasData.dias[getTodayIdx()].push(t);
+  var r=quitarDeOrigen(p); if(!r) return;
+  r.t.hecha=false;                        /* conserva su etiqueta */
+  tareasData.dias[getTodayIdx()].push(r.t);
   saveTareas(); renderTareas();
 }
 function descartarPend(i){
   var p=_pendCache[i]; if(!p) return;
-  var t=quitarDeOrigen(p);
-  if(t){ _undo={key:p.key, dia:p.dia, idx:p.idx, tarea:t}; mostrarUndo('Tarea descartada'); }
-  saveTareas(); renderTareas();
+  var r=quitarDeOrigen(p);
+  if(r){ _undo={tipo:'borrar', key:p.key, dia:r.dia, idx:r.i, tarea:r.t}; mostrarUndo('Tarea descartada'); }
+  renderTareas();
 }
 
 /* ═══════════════════ DESHACER ═══════════════════ */
@@ -2309,21 +2355,26 @@ function deshacer(){
     }
     return;
   }
-  /* Un movimiento se deshace sacándola del destino y devolviéndola a su lugar */
+  var data=semanaPorKey(u.key); if(!data){ renderTareas(); return; }
+  /* Un movimiento se deshace sacándola del destino y devolviéndola a su lugar.
+     Se toma la tarea que está AHORA en el destino (no la copia guardada en
+     _undo): si en el medio bajaron datos, esa es la versión al día. */
   if(u.tipo==='mover'){
-    var dest=tareasData.dias[u.destino];
-    for(var k=0;k<dest.length;k++) if(dest[k].id===u.tarea.id){ dest.splice(k,1); break; }
-    tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
-    saveTareas(); renderTareas();
+    var rm=buscarPorId(data,u.destino,u.tarea.id);
+    if(rm){
+      data.dias[rm.dia].splice(rm.i,1);
+      data.dias[u.dia].splice(u.idx,0,rm.t);
+      guardarSemanaPorKey(u.key,data);
+    }
+    renderTareas();
     return;
   }
-  if(u.key===null){
-    /* splice con 0 borrados la reinserta en su posición original, no al final */
-    tareasData.dias[u.dia].splice(u.idx,0,u.tarea);
-    saveTareas();
-  } else {
-    var data=leerSemanaKey(u.key);
-    if(data){ data.dias[u.dia].splice(u.idx,0,u.tarea); guardarSemanaKey(u.key,data); }
+  /* Borrada o descartada: splice con 0 borrados la reinserta en su posición
+     original, no al final. Si ya volvió sola (una bajada trajo la versión de
+     antes), no se duplica. */
+  if(!buscarPorId(data,u.dia,u.tarea.id)){
+    data.dias[u.dia].splice(u.idx,0,u.tarea);
+    guardarSemanaPorKey(u.key,data);
   }
   renderTareas();
 }
@@ -2643,7 +2694,10 @@ function verificarCambioDeFecha(){
   if(semana===_semanaEnMemoria && dia===_diaEnMemoria) return false;
   var que = semana!==_semanaEnMemoria ? 'semana' : 'dia';
   _semanaEnMemoria=semana; _diaEnMemoria=dia;
-  _semanaVista=0;   /* cambió el día real: se vuelve a la semana en curso */
+  /* Solo si cambió la SEMANA se vuelve a la actual: la vista es relativa
+     ("hace 1 semana") y quedaría apuntando a otra. Si solo cambió el día,
+     no te saca de la semana que estabas completando. */
+  if(que==='semana') _semanaVista=0;
 
   hbDates=getWeekDates(); hbTodayIdx=dia; hbActiveDay=dia;
   setupHeader();
@@ -2940,31 +2994,52 @@ function renderHabits(){
 var DIARIO_KEY='journal';
 var diario={};
 var _diarioTimer=null;
-var _diarioAbiertas={};
+var _diarioAbiertas={};   /* por CLAVE de semana: por posición se abrían otras al cambiar la vista */
+var _diarioPend=null;     /* {key, texto}: lo último que tipeaste y falta guardar */
 
 function loadDiario(){
+  diario={};
   try{
     var d=JSON.parse(localStorage.getItem(DIARIO_KEY));
     if(d && typeof d==='object') diario=d;
   }catch(e){}
+  /* Lo tipeado que todavía no se guardó manda sobre lo que acaba de bajar */
+  if(_diarioPend) diario[_diarioPend.key]=_diarioPend.texto;
 }
-function saveDiario(){
-  lsSet(DIARIO_KEY,JSON.stringify(diario));
-}
-/* Guarda con un respiro, para no escribir en localStorage en cada tecla */
+/* Guarda con un respiro, para no escribir en localStorage en cada tecla.
+   La semana sale del propio textarea (data-key, puesto al dibujarlo): si
+   cambia el día o la vista justo después de tipear, lo escrito no cae en otra. */
 function onDiarioInput(el){
   if(enHistorial()) return;   /* el textarea es readonly en el historial; esto es cinturón y tiradores */
-  diario[getWeekKey()]=el.value;
+  var key=el.getAttribute('data-key')||getWeekKey();
+  diario[key]=el.value;
+  _diarioPend={key:key, texto:el.value};
   clearTimeout(_diarioTimer);
-  _diarioTimer=setTimeout(function(){
-    saveDiario();
+  _diarioTimer=setTimeout(function(){ guardarDiarioPendiente(true); },600);
+}
+/* Se relee lo guardado y se cambia SOLO la semana que escribiste. Subir el
+   objeto entero de memoria pisaría una semana escrita en otro dispositivo
+   que llegó con una bajada mientras tanto. */
+function guardarDiarioPendiente(avisar){
+  clearTimeout(_diarioTimer);
+  var p=_diarioPend; if(!p) return;
+  _diarioPend=null;
+  var guardado={};
+  try{
+    var g=JSON.parse(localStorage.getItem(DIARIO_KEY));
+    if(g && typeof g==='object') guardado=g;
+  }catch(e){}
+  guardado[p.key]=p.texto;
+  diario=guardado;
+  lsSet(DIARIO_KEY,JSON.stringify(guardado));
+  if(avisar){
     var av=document.getElementById('diario-guardado');
     if(av){ av.classList.add('visible'); setTimeout(function(){ av.classList.remove('visible'); },1600); }
-    renderDiarioHistorial();
-  },600);
+  }
+  renderDiarioHistorial();
 }
-function toggleDiarioVieja(i){
-  _diarioAbiertas[i]=!_diarioAbiertas[i];
+function toggleDiarioVieja(key){
+  _diarioAbiertas[key]=!_diarioAbiertas[key];
   renderDiarioHistorial();
 }
 /* Reconstruye el rango de fechas a partir de una clave wk_AAAA_M_D */
@@ -2981,8 +3056,10 @@ function renderDiario(){
     f[0].getDate()+' '+MN2[f[0].getMonth()]+' \u2014 '+f[6].getDate()+' '+MN2[f[6].getMonth()];
   var el=document.getElementById('diario-txt');
   if(el){
-    /* En el historial se pisa siempre (no hay nada a medio escribir que proteger) */
-    if(ro || el!==document.activeElement) el.value=diario[key]||'';
+    /* En el historial se pisa siempre (no hay nada a medio escribir que proteger).
+       Mientras escribís no se toca, salvo que la semana del textarea haya cambiado */
+    if(ro || el!==document.activeElement || el.getAttribute('data-key')!==key) el.value=diario[key]||'';
+    el.setAttribute('data-key',key);
     el.readOnly=ro;
     el.placeholder = ro ? 'No escribiste nada esa semana.' : '¿Cómo te fue esta semana? Qué salió bien, qué te costó, qué querés cambiar...';
   }
@@ -3003,8 +3080,8 @@ function renderDiarioHistorial(){
   cont.innerHTML=claves.map(function(k,i){
     var txt=diario[k];
     var preview=txt.replace(/\s+/g,' ').slice(0,90)+(txt.length>90?'\u2026':'');
-    return '<div class="diario-vieja'+(_diarioAbiertas[i]?' abierta':'')+'">'+
-      '<div class="diario-vieja-hd" onclick="toggleDiarioVieja('+i+')">'+
+    return '<div class="diario-vieja'+(_diarioAbiertas[k]?' abierta':'')+'">'+
+      '<div class="diario-vieja-hd" onclick="toggleDiarioVieja(\''+k+'\')">'+
         '<span class="diario-flecha">\u25b8</span>'+
         '<span class="diario-fecha">'+rangoDeWeekKey(k)+'</span>'+
         '<span class="diario-preview">'+esc(preview)+'</span>'+
@@ -3845,15 +3922,29 @@ if('serviceWorker' in navigator && location.protocol.indexOf('http')===0){
 }
 
 /* Refresco automático: mails cada 5 min; la fecha cada minuto, al volver a
-   la pestaña y al enfocar la ventana (ver GUARDIÁN DE FECHA) */
+   la pestaña y al enfocar la ventana (ver GUARDIÁN DE FECHA).
+   Sync: al volver se baja lo nuevo (primero la fecha, después la nube); al
+   irse se sube lo pendiente YA, porque puede ser lo último que alcance a
+   hacer (tildás un hábito, cerrás la app, y si no nunca sale). */
 setInterval(actualizarMails,5*60*1000);
-setInterval(verificarCambioDeFecha,60*1000);
 document.addEventListener('visibilitychange',function(){
-  if(document.hidden) return;
+  if(document.hidden){ guardarDiarioPendiente(); subirYa(); return; }
   verificarCambioDeFecha();
   actualizarMails();
+  bajarSiHaceFalta(30*1000);
 });
-window.addEventListener('focus',verificarCambioDeFecha);
+window.addEventListener('focus',function(){
+  verificarCambioDeFecha();
+  bajarSiHaceFalta(30*1000);
+});
+window.addEventListener('pagehide',function(){ guardarDiarioPendiente(); subirYa(); });
+/* Cada minuto: la fecha y, con la app a la vista, lo nuevo de la nube.
+   110s y no 120: el intervalo nunca cae justo a los 2 minutos de la última
+   bajada, y con 120 terminaría bajando cada 3. */
+setInterval(function(){
+  verificarCambioDeFecha();
+  if(!document.hidden) bajarSiHaceFalta(110*1000);
+},60*1000);
 </script>
 </body>
 </html>
